@@ -1,0 +1,27 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="_customTheme" />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private MudTheme _customTheme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#005cde",      // Your primary blue color
+            Secondary = "#FF4081",    // Your secondary color
+            AppbarBackground = "#1E88E5"
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#90CAF9",
+            Secondary = "#F48FB1"
+        }
+    };
+}

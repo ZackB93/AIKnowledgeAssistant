@@ -1,3 +1,5 @@
 <Solution>
-  <Project Path="KnowledgeAssistant/KnowledgeAssistant.API.csproj" />
+  <Project Path="KnowledgeAssistant.API/KnowledgeAssistant.API.csproj" />
+  <Project Path="KnowledgeAssistant.Application/KnowledgeAssistant.Application.csproj" />
+  <Project Path="KnowledgeAssistant.UI/KnowledgeAssistant.UI.csproj" />
 </Solution>

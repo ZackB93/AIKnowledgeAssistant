@@ -1,0 +1,109 @@
+﻿@using KnowledgeAssistant.Application.DTOs.Authentication
+@using KnowledgeAssistant.Application.Services
+@rendermode InteractiveServer
+
+<MudStack AlignItems="AlignItems.Center" Style="max-width: 400px; margin: 40px auto 0;">
+    <MudImage Src="images/logo.png" Alt="Logo" Width="700" ObjectFit="ObjectFit.Contain" Class="mb-4" />
+</MudStack>
+
+<MudPaper Class="pa-8" Elevation="0" Style="max-width: 400px; margin: 40px auto; border: solid 1px #cfcfcf;">
+    <EditForm FormName="SignInForm" Model="@model" OnValidSubmit="HandleSignIn">
+        <DataAnnotationsValidator />
+
+        <MudTextField T="string"
+                      Label="Email"
+                      @bind-Value="model.EmailAddress"
+                      For="@(() => model.EmailAddress)"
+                      InputType="InputType.Email"
+                      Variant="Variant.Outlined"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Email"
+                      Class="mb-4" />
+
+        <MudTextField T="string"
+                      Label="Password"
+                      @bind-Value="model.Password"
+                      For="@(() => model.Password)"
+                      InputType="@passwordInputType"
+                      Variant="Variant.Outlined"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@passwordInputIcon"
+                      OnAdornmentClick="TogglePasswordVisibility"
+                      AdronmentClickable="true"
+                      AdornmentAriaLabel="Show/Hide Password"
+                      Class="mb-2" />
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4" Dense="true">@errorMessage</MudAlert>
+        }
+
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudLink Href="/forgot-password" Typo="Typo.body2">Forgot password?</MudLink>
+        </MudStack>
+
+        <MudButton ButtonType="ButtonType.Submit"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   FullWidth="true"
+                   Size="Size.Large"
+                   Disabled="@isSubmitting">
+
+            @if (isSubmitting)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Signing in...</MudText>
+            }
+            else
+            {
+                <MudText>Sign In</MudText>
+            }
+        </MudButton>
+    </EditForm>
+</MudPaper>
+
+@code {
+
+    [Inject]
+    private IHttpService HttpService { get; set; } = null!;
+
+    [Inject]
+    private AuthStateProviderService AuthStateProviderService { get; set; } = null!;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = null!;
+
+    private SignIn model = new();
+    private bool isSubmitting;
+    private string? errorMessage;
+
+    private bool passwordVisible;
+    private InputType passwordInputType = InputType.Password;
+    private string passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    private void TogglePasswordVisibility()
+    {
+        passwordVisible = !passwordVisible;
+        passwordInputType = passwordVisible ? InputType.Text : InputType.Password;
+        passwordInputIcon = passwordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
+    }
+
+    private async Task HandleSignIn()
+    {
+        errorMessage = null;
+        isSubmitting = true;
+
+        var Response = await HttpService.PostDataAsync<SignIn>("/User/SignIn", model);
+        if (Response.IsSuccessful && Response.Data is not null)
+        {
+            await AuthStateProviderService.SignInAsync(Response.GetData<SignInResponse>()!);
+            NavigationManager.NavigateTo("/dashboard", true);
+        }
+        else
+        {
+            errorMessage = Response?.Message;
+        }
+
+        isSubmitting = false;      
+    }
+}

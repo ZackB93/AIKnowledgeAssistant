@@ -1,0 +1,6 @@
+@KnowledgeAssistant_HostAddress = https://localhost:5123
+
+GET {{KnowledgeAssistant_HostAddress}}
+Accept: application/json
+
+###
