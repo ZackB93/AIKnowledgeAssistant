@@ -20,7 +20,8 @@ builder.Services.AddHttpClient("ExternalClient", client =>
 
 builder.Services.AddScoped<IHttpService, HttpService>();
 builder.Services.AddScoped<ICacheService, CacheService>();
-builder.Services.AddScoped<AuthenticationStateProvider, AuthStateProviderService>();
+builder.Services.AddScoped<AuthStateProviderService>();
+builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<AuthStateProviderService>());
 
 var app = builder.Build();
 
@@ -32,9 +33,7 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
-
 app.UseAntiforgery();
-
 app.MapStaticAssets();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 

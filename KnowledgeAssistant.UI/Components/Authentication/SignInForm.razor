@@ -1,5 +1,6 @@
 ﻿@using KnowledgeAssistant.Application.DTOs.Authentication
 @using KnowledgeAssistant.Application.Services
+
 @rendermode InteractiveServer
 
 <MudStack AlignItems="AlignItems.Center" Style="max-width: 400px; margin: 40px auto 0;">
@@ -38,10 +39,6 @@
             <MudAlert Severity="Severity.Error" Class="mb-4" Dense="true">@errorMessage</MudAlert>
         }
 
-        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
-            <MudLink Href="/forgot-password" Typo="Typo.body2">Forgot password?</MudLink>
-        </MudStack>
-
         <MudButton ButtonType="ButtonType.Submit"
                    Variant="Variant.Filled"
                    Color="Color.Primary"
@@ -68,7 +65,7 @@
     private IHttpService HttpService { get; set; } = null!;
 
     [Inject]
-    private AuthStateProviderService AuthStateProviderService { get; set; } = null!;
+    private AuthStateProviderService AuthStateProvider{ get; set; } = null!;
 
     [Inject]
     private NavigationManager NavigationManager { get; set; } = null!;
@@ -96,7 +93,7 @@
         var Response = await HttpService.PostDataAsync<SignIn>("/User/SignIn", model);
         if (Response.IsSuccessful && Response.Data is not null)
         {
-            await AuthStateProviderService.SignInAsync(Response.GetData<SignInResponse>()!);
+            await AuthStateProvider.SignInAsync(Response.GetData<SignInResponse>()!);
             NavigationManager.NavigateTo("/dashboard", true);
         }
         else

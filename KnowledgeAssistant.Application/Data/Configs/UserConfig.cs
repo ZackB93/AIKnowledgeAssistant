@@ -50,6 +50,18 @@ namespace KnowledgeAssistant.Application.Data.Configs
                 .WithOne(x => x.User)
                 .HasForeignKey(x => x.UserId);
 
+            // Individual indexes for single-column searches (e.g. search by last name only)
+            builder.HasIndex(x => x.FirstName)
+                .HasDatabaseName("IX_Users_FirstName");
+
+            builder.HasIndex(x => x.LastName)
+                .HasDatabaseName("IX_Users_LastName");
+
+            // Composite index for searching/sorting by last name then first name together
+            // (e.g. "Smith, John" style lookups) - also covers LastName-only queries
+            builder.HasIndex(x => new { x.LastName, x.FirstName })
+                .HasDatabaseName("IX_Users_LastName_FirstName");
+
             builder.HasData(
                 new User { Id = 1, FirstName = "Zack", LastName = "Bucci", AddressLine1 = "5 Grove Nook", Postcode = "HD3 4UD", Location = "Huddersfield" },
                 new User { Id = 2, FirstName = "Bob", LastName = "Smith", AddressLine1 = "123 Main Street", Postcode = "LN1 2AB", Location = "Lincoln" },

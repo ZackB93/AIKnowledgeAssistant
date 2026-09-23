@@ -1,0 +1,27 @@
+﻿@using KnowledgeAssistant.Application.Services
+
+<MudAppBar Elevation="1" Class="knowledge-appbar" Dense="false">
+    <MudText Typo="Typo.h6" Class="ml-3">
+        Knowledge Assistant
+    </MudText>
+
+    <MudSpacer />
+
+    <MudButton StartIcon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="OnSignOut">
+        Sign Out
+    </MudButton>
+</MudAppBar>
+
+@code {
+    [Inject]
+    private AuthStateProviderService AuthStateProvider{ get; set; } = null!;
+
+    [Inject]
+    private NavigationManager Navigation { get; set; } = null!;
+
+    private async Task OnSignOut()
+    {
+        await AuthStateProvider.SignOutAsync();
+        Navigation.NavigateTo("/sign-in");
+    }
+}

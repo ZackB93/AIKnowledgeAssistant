@@ -1,4 +1,24 @@
 ﻿@page "/"
 @layout HomeLayout
 
-<SignInForm />
+@using KnowledgeAssistant.Application.Services
+
+<PageTitle>Knowledge Assistant</PageTitle>
+
+@code {
+    [Inject]
+    private NavigationManager Navigation { get; set; } = null!;
+
+    [Inject]
+    private AuthStateProviderService AuthStateProvider{ get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var AuthenticationState = await AuthStateProvider.GetAuthenticationStateAsync();
+
+        if(!AuthenticationState.User.Identity?.IsAuthenticated ?? false)
+        {
+            Navigation.NavigateTo("/sign-in");
+        }
+    }
+}

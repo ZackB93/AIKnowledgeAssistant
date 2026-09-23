@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using KnowledgeAssistant.Application.DTOs.API;
 
 namespace CallRatingService.API.Middleware
 {
@@ -42,6 +43,7 @@ namespace CallRatingService.API.Middleware
         {
             HttpRequestException => (StatusCodes.Status502BadGateway, "Unable to retrieve data from an upstream service."),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource not found."),
+            ConflictException => (StatusCodes.Status409Conflict, "A conflict occurred with the current state of the resource."),
             _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")
         };
     }

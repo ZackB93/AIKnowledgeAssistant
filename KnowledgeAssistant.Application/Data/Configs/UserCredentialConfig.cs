@@ -22,6 +22,10 @@ namespace KnowledgeAssistant.Application.Data.Configs
                 .WithOne(x => x.Credentials)
                 .HasForeignKey<UserCredential>(x => x.UserId);
 
+            builder.HasIndex(x => x.EmailAddress)
+                .IsUnique()
+                .HasDatabaseName("IX_UserCredentials_EmailAddress");
+
             // Password = test
             builder.HasData(
                 new UserCredential { Id = 1, UserId = 1, EmailAddress = "zack.bucci@example.com", PasswordHash = "AQAAAAEAACcQAAAAENtrqYs0Oo8hJHojnX/bBRVRX1l9ExQGfMOScHNkp1JKfSvwHxJeBXvDpgLAVcHZVA==" },

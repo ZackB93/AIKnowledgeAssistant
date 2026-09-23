@@ -6,12 +6,13 @@
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar>
-        <MudText Typo="Typo.h5">My App</MudText>
-    </MudAppBar>
+    <Banner />
+    <NavMenu @bind-Open="_drawerOpen" />
 
     <MudMainContent>
-        @Body
+        <MudContainer MaxWidth="MaxWidth.False" Class="pa-6" Style="margin-top: 30px;">
+            @Body
+        </MudContainer>
     </MudMainContent>
 </MudLayout>
 
@@ -22,14 +23,22 @@
 </div>
 
 @code {
+    private bool _drawerOpen = true;
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
     private MudTheme _customTheme = new MudTheme()
     {
         PaletteLight = new PaletteLight()
         {
-            Primary = "#005cde",      // Your primary blue color
-            Secondary = "#FF4081",    // Your secondary color
+            Primary = "#1e88e5",
+            Secondary = "#FF4081",
             AppbarBackground = "#1E88E5"
         },
+
         PaletteDark = new PaletteDark()
         {
             Primary = "#90CAF9",

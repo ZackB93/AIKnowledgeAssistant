@@ -6,6 +6,12 @@ a, .btn-link {
     color: #006bb7;
 }
 
+.mud-appbar.knowledge-appbar {
+    height: 100px !important;
+    min-height: 100px !important;
+    display: flex !important;
+}
+
 .btn-primary {
     color: #fff;
     background-color: #1b6ec2;
