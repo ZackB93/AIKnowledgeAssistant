@@ -1,5 +1,7 @@
 ﻿using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Cache;
+using Microsoft.AspNetCore.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -15,11 +17,13 @@ namespace KnowledgeAssistant.Application.Services
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ICacheService _cacheService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public HttpService(IHttpClientFactory httpClientFactory, ICacheService cacheService)
+        public HttpService(IHttpClientFactory httpClientFactory, ICacheService cacheService, IHttpContextAccessor httpContextAccessor)
         {
             _httpClientFactory = httpClientFactory;
             _cacheService = cacheService;
+            _httpContextAccessor = httpContextAccessor; 
         }
 
         public async Task<ApiResult> GetDataAsync(string Endpoint, Cache? CacheData = null, CancellationToken CancellationToken = default)
@@ -37,6 +41,13 @@ namespace KnowledgeAssistant.Application.Services
             try
             {
                 var Client = _httpClientFactory.CreateClient("ExternalClient");
+                var Token = _httpContextAccessor.HttpContext?.User.FindFirst("access_token")?.Value;
+
+                if (!string.IsNullOrEmpty(Token))
+                {
+                    Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+                }
+
                 var Response = await Client.GetAsync(Endpoint, CancellationToken);
 
                 var Result = await Response.Content.ReadFromJsonAsync<ApiResult>(

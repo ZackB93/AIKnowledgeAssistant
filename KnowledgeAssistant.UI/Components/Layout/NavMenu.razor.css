@@ -1,24 +1,50 @@
-.knowledge-nav .mud-nav-link {
-    color: #FFFFFF !important;
+::deep .knowledge-logo-row {
+    border-bottom: 1px solid rgba(255,255,255,0.12);
 }
 
-.knowledge-nav .mud-nav-link .mud-icon-root {
-    color: #FFFFFF !important;
+::deep .knowledge-brand-name {
+    color: #fff;
 }
 
-/* Hover */
-.knowledge-nav .mud-nav-link:hover {
-    background-color: #1976D2 !important;
-    color: #FFFFFF !important;
+::deep .knowledge-nav {
+    padding: 10px 8px;
 }
 
-/* Active / selected */
-.knowledge-nav .mud-nav-link.active span {
-    color: #FFFFFF !important;
-    opacity: 1 !important;
+::deep .knowledge-nav .mud-nav-link {
+    border-left: 2px solid transparent;
+    border-radius: 7px;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 2px;
 }
 
-.knowledge-nav .mud-nav-link.active .mud-icon-root {
-    color: #FFFFFF !important;
-    opacity: 1 !important;
+::deep .knowledge-nav .mud-nav-link .mud-icon-root {
+    color: rgba(255,255,255,0.7);
+}
+
+::deep .knowledge-nav .mud-nav-link.active {
+    background-color: rgba(255,255,255,0.14);
+    border-left-color: #6BB2F5;
+    color: #fff;
+}
+
+::deep .knowledge-nav .mud-nav-link.active .mud-icon-root {
+    color: #fff;
+}
+
+::deep .knowledge-nav .mud-nav-link:hover,
+::deep .knowledge-nav .mud-nav-link:focus-visible {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    text-decoration: none;
+}
+
+::deep .knowledge-nav .mud-nav-link:hover .mud-icon-root,
+::deep .knowledge-nav .mud-nav-link:focus-visible .mud-icon-root {
+    color: #fff;
+}
+
+::deep .knowledge-version {
+    margin-top: auto;
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
 }

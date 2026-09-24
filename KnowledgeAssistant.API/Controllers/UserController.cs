@@ -125,7 +125,7 @@ namespace KnowledgeAssistant.API.Controllers
                 return BadRequest("Email is required.");
             }
                
-            var Exists = await _userService.UserExistsAsync(Email.Trim().ToLowerInvariant());
+            var Exists = await _userService.UserExistsAsync(Email);
 
             return Ok(new ApiResult()
             {

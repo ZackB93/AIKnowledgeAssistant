@@ -35,7 +35,7 @@ namespace KnowledgeAssistant.Application.Services
 
         public async Task<SignInResponse> SignInAsync(SignIn SignIn)
         {
-            // Find credentials and associated user
+            // Find credentials and associated userI w
             var Credentials = await _context.UserCredentials
                 .AsNoTracking()
                 .Include(x => x.User)
@@ -287,7 +287,7 @@ namespace KnowledgeAssistant.Application.Services
                 CreatedDateTime = User.CreatedDateTime
             };
         }
-
+        
         public async Task<bool> UserExistsAsync(string Email)
         {
             var UserExists = await _context.UserCredentials

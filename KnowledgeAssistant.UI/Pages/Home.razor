@@ -1,7 +1,7 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Components.Authorization
 @layout HomeLayout
-
-@using KnowledgeAssistant.Application.Services
+@attribute [AllowAnonymous]
 
 <PageTitle>Knowledge Assistant</PageTitle>
 
@@ -10,15 +10,12 @@
     private NavigationManager Navigation { get; set; } = null!;
 
     [Inject]
-    private AuthStateProviderService AuthStateProvider{ get; set; } = null!;
+    private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        var AuthenticationState = await AuthStateProvider.GetAuthenticationStateAsync();
-
-        if(!AuthenticationState.User.Identity?.IsAuthenticated ?? false)
-        {
-            Navigation.NavigateTo("/sign-in");
-        }
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var redirectUrl = ((authState.User.Identity?.IsAuthenticated ?? false) ? "/dashboard" : "/signin");
+        Navigation.NavigateTo(redirectUrl, forceLoad: true);
     }
 }

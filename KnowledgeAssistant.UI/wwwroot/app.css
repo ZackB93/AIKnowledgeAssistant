@@ -6,10 +6,24 @@ a, .btn-link {
     color: #006bb7;
 }
 
-.mud-appbar.knowledge-appbar {
-    height: 100px !important;
-    min-height: 100px !important;
-    display: flex !important;
+.mud-navmenu.mud-navmenu-default .mud-nav-link.active:not(.mud-nav-link-disabled) {
+    color: #FFFFFF !important;
+}
+
+.knowledge-search .mud-input-outlined {
+    background-color: #fff !important;
+}
+
+.knowledge-search .mud-input-outlined-border {
+    border-color: #fff !important;
+}
+
+.knowledge-search .mud-input-outlined:hover .mud-input-outlined-border {
+    border-color: #fff !important;
+}
+
+.mud-appbar {
+    height: 60px !important;
 }
 
 .btn-primary {
@@ -48,9 +62,9 @@ h1:focus {
     color: white;
 }
 
-    .blazor-error-boundary::after {
-        content: "An error has occurred."
-    }
+.blazor-error-boundary::after {
+    content: "An error has occurred."
+}
 
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
@@ -63,4 +77,55 @@ h1:focus {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
+}
+
+.mud-tabs .mud-tabs-toolbar {
+    background-color: var(--mud-palette-surface) !important;
+    opacity: 1 !important;
+}
+
+.mud-tabs .mud-tab {
+    background-color: var(--mud-palette-surface) !important;
+    opacity: 1 !important;
+}
+
+
+.mud-tabs .mud-tab.mud-tab-active {
+    background-color: var(--mud-palette-primary) !important;
+    color: var(--mud-palette-primary-text) !important;
+    opacity: 1 !important;
+}
+
+/* Panel area under the tabs */
+.mud-tabs .mud-tabs-panels {
+    background-color: var(--mud-palette-surface) !important;
+    opacity: 1 !important;
+}
+
+/* Fallback: some MudBlazor versions wrap the header differently.
+   If the above doesn't catch it, this broader selector will. */
+.mud-tabs-toolbar-wrapper,
+.mud-tabs-header {
+    background-color: var(--mud-palette-surface) !important;
+}
+
+.mud-tabs.mud-tabs-rounded .mud-tabs-tabbar {
+    background: #eaeaea;
+}
+
+.mud-tabs .mud-tab {
+    background: #eaeaea !important;
+}
+
+.mud-paper {
+    border: solid 1px #c7c7c7;
+    box-shadow: none !important;
+}
+
+.mud-grid {
+
+}
+
+h5 {
+    color: #7b7b7b !important;
 }

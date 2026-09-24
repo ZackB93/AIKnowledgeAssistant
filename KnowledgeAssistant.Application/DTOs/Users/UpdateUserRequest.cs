@@ -14,6 +14,5 @@ namespace KnowledgeAssistant.Application.DTOs.Users
         public string? AddressLine3 { get; set; }
         public string Postcode { get; set; }
         public string Location { get; set; }
-        public string Email { get; set; }
     }
 }

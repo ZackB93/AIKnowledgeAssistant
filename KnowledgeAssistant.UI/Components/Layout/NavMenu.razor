@@ -1,28 +1,39 @@
 ﻿<MudDrawer @bind-Open="Open"
            Variant="DrawerVariant.Responsive"
            Elevation="0"
-           Color="Color.Primary">
-    <MudDrawerHeader Style="height: 100px;">
+           Color="Color.Primary"
+           Class="knowledge-drawer">
 
-    </MudDrawerHeader>
+    <div class="d-flex flex-column" style="height: 100%;">
+        <div class="d-flex align-center gap-2 pa-4 knowledge-logo-row">
+            <MudImage Src="images/ai_head.png" Alt="Logo" Width="28" Height="28" />
+            <MudText Typo="Typo.subtitle2" Class="knowledge-brand-name">Knowledge Assistant</MudText>
+        </div>
 
-    <MudNavMenu Class="knowledge-nav">
-        <MudNavLink Href="/dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard" IconColor="Color.Inherit">
-            Dashboard
-        </MudNavLink>
+        <MudNavMenu Class="knowledge-nav">
+            <MudNavLink Href="/dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard" IconColor="Color.Inherit">
+                Dashboard
+            </MudNavLink>
 
-        <MudNavLink Href="/chat" Icon="@Icons.Material.Filled.Chat" IconColor="Color.Inherit">
-            Chat
-        </MudNavLink>
+            <MudNavLink Href="/chat" Icon="@Icons.Material.Filled.Chat" IconColor="Color.Inherit">
+                Chat
+            </MudNavLink>
 
-        <MudNavLink Href="/documents" Icon="@Icons.Material.Filled.Description" IconColor="Color.Inherit">
-            Documents
-        </MudNavLink>
+            <MudNavLink Href="/documents" Icon="@Icons.Material.Filled.Description" IconColor="Color.Inherit">
+                Documents
+            </MudNavLink>
 
-        <MudNavLink Href="/knowledge" Icon="@Icons.Material.Filled.Person" IconColor="Color.Inherit">
-            My Profile
-        </MudNavLink>
-    </MudNavMenu>
+            <MudNavLink Href="/users" Icon="@Icons.Material.Filled.Person" IconColor="Color.Inherit">
+                Users
+            </MudNavLink>
+
+            <MudNavLink Href="/profile" Icon="@Icons.Material.Filled.Person" IconColor="Color.Inherit">
+                My Profile
+            </MudNavLink>
+        </MudNavMenu>
+
+        <div class="knowledge-version pa-4">v1.0.0</div>
+    </div>
 </MudDrawer>
 
 @code {

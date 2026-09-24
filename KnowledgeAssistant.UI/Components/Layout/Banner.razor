@@ -1,27 +1,82 @@
-﻿@using KnowledgeAssistant.Application.Services
+﻿@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 
-<MudAppBar Elevation="1" Class="knowledge-appbar" Dense="false">
-    <MudText Typo="Typo.h6" Class="ml-3">
-        Knowledge Assistant
-    </MudText>
-
+<MudAppBar Elevation="0" Class="knowledge-appbar" Dense="false">
     <MudSpacer />
 
-    <MudButton StartIcon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="OnSignOut">
-        Sign Out
-    </MudButton>
+    <MudIconButton Icon="@Icons.Material.Filled.NotificationsNone"
+                   Color="Color.Inherit"
+                   Class="ml-2"
+                   aria-label="Notifications" />
+
+    <MudDivider Vertical="true" FlexItem="true" Class="mx-3" Style="color: #E4E7EB;" />
+
+    <MudMenu Class="knowledge-user-menu">
+        <ActivatorContent>
+            <div class="d-flex align-center gap-2" style="cursor: pointer;">
+                <MudAvatar Size="Size.Small" Color="Color.Secondary">@userInitials</MudAvatar>
+                <MudText Typo="Typo.body2" Style="color: white;">@userName</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small" Style="color: #9AA0A6;" />
+            </div>
+        </ActivatorContent>
+        <ChildContent>
+            <MudMenuItem Href="/profile" Icon="@Icons.Material.Filled.Person">My profile</MudMenuItem>
+            <MudDivider />
+            <MudMenuItem OnClick="OnSignOut" Icon="@Icons.Material.Filled.Logout">Sign out</MudMenuItem>
+        </ChildContent>
+    </MudMenu>
 </MudAppBar>
 
 @code {
     [Inject]
-    private AuthStateProviderService AuthStateProvider{ get; set; } = null!;
+    private NavigationManager Navigation { get; set; } = null!;
 
     [Inject]
-    private NavigationManager Navigation { get; set; } = null!;
+    private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
+
+    private string _searchTerm = string.Empty;
+    private string userName = string.Empty;
+    private string userInitials = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        userName = user.FindFirst(ClaimTypes.Name)?.Value ?? user.Identity?.Name ?? "Unknown user";
+        userInitials = GetUserInitials(userName);
+
+    }
+
+    private string GetUserInitials(string name)
+    {
+        var parts = name
+            .Split(new[] { ' ', '-' }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(n => char.IsLetter(n[0]))
+            .ToArray();
+
+        if (parts.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        var initials = parts.Length == 1
+            ? parts[0][0].ToString()
+            : $"{parts[0][0]}{parts[^1][0]}";
+
+        return initials.ToUpperInvariant();
+    }
+
+    private void OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_searchTerm))
+        {
+            Navigation.NavigateTo($"/search?q={Uri.EscapeDataString(_searchTerm)}");
+        }
+    }
 
     private async Task OnSignOut()
     {
-        await AuthStateProvider.SignOutAsync();
-        Navigation.NavigateTo("/sign-in");
+        Navigation.NavigateTo("/Account/Logout", forceLoad: true);
     }
 }

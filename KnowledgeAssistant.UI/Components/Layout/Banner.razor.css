@@ -1,1 +1,17 @@
-﻿
+﻿::deep .knowledge-appbar {
+    background-color: #fff !important;
+    color: #1a1a1a !important;
+    border-bottom: 1px solid #E4E7EB;
+}
+
+::deep .knowledge-appbar-title {
+    color: #1a1a1a;
+}
+
+::deep .knowledge-search .mud-input {
+    border-radius: 8px;
+}
+
+::deep .knowledge-divider {
+    border-color: #E4E7EB;
+}

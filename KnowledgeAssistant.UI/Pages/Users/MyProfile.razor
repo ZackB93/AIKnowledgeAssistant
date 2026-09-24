@@ -1,0 +1,247 @@
+﻿@page "/profile"
+@using System.ComponentModel.DataAnnotations
+@using KnowledgeAssistant.Application.DTOs.Users
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using KnowledgeAssistant.Application.Services
+@attribute [Authorize]
+
+<PageTitle>Knowledge Assistant - Profile</PageTitle>
+
+@if (Errored)
+{
+    <Error Text="An error occurred while loading your profile!" />
+}
+else if(Loading)
+{
+    <LoadingSpinner Text="Please wait" />
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h5" Class="mb-4">Profile</MudText>
+
+        <MudForm @ref="_form" Model="_editModel" Validation="@(_validator.ValidateValue)">
+            <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+
+                <MudTabPanel Text="Details" Icon="@Icons.Material.Filled.Person">
+                    <MudGrid Style="padding: 15px;">
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_editModel.FirstName"
+                                          For="@(() => _editModel.FirstName)"
+                                          Label="First Name"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_editModel.LastName"
+                                          For="@(() => _editModel.LastName)"
+                                          Label="Last Name"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField Value="_editModel.Email"
+                                          Label="Email"
+                                          Variant="Variant.Outlined"
+                                          ReadOnly="true" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField Value="@_editModel.CreatedDateTime.ToString("g")"
+                                          Label="Created Date"
+                                          Variant="Variant.Outlined"
+                                          ReadOnly="true" />
+                        </MudItem>
+                    </MudGrid>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Address" Icon="@Icons.Material.Filled.Home">
+                    <MudGrid Style="padding: 15px;">
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_editModel.AddressLine1"
+                                          For="@(() => _editModel.AddressLine1)"
+                                          Label="Address Line 1"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_editModel.AddressLine2"
+                                          Label="Address Line 2"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_editModel.AddressLine3"
+                                          Label="Address Line 3"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_editModel.Postcode"
+                                          For="@(() => _editModel.Postcode)"
+                                          Label="Postcode"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_editModel.Location"
+                                          For="@(() => _editModel.Location)"
+                                          Label="Location"
+                                          Variant="Variant.Outlined" />
+                        </MudItem>
+                    </MudGrid>
+                </MudTabPanel>
+
+            </MudTabs>
+        </MudForm>
+
+        <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4" Spacing="2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save">Save Changes</MudButton>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+}
+
+@code {
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject]
+    private IHttpService HttpService { get; set; } = null!;
+
+    [Inject]
+    private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
+
+    private bool Errored { get; set; } = false;
+    private bool Loading = true;
+    private UserResponse? User = null;
+    private MudForm _form = null!;
+    private UserProfileEditModel _editModel = new();
+    private readonly UserProfileEditModelValidator _validator = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserProfile();
+    }
+
+    private async Task LoadUserProfile()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        var Response = await HttpService.GetDataAsync($"/User/GetById/{userId}");
+        if (Response.IsSuccessful && Response.Data is not null)
+        {
+            User = Response.GetData<UserResponse>();
+            _editModel = MapToEditModel(User);
+            Loading = false;
+        }
+        else
+        {
+            Snackbar.Add("An error has occurred loading your profile!", Severity.Error);
+            Errored = true;
+        }
+
+    }
+
+    private static UserProfileEditModel MapToEditModel(UserResponse dto) => new()
+    {
+        Id = dto.Id,
+        FirstName = dto.FirstName,
+        LastName = dto.LastName,
+        Email = dto.Email,
+        CreatedDateTime = dto.CreatedDateTime,
+        AddressLine1 = dto.AddressLine1,
+        AddressLine2 = dto.AddressLine2 ?? string.Empty,
+        AddressLine3 = dto.AddressLine3 ?? string.Empty,
+        Postcode = dto.Postcode,
+        Location = dto.Location
+    };
+
+    private static UserResponse MapToDto(UserProfileEditModel model, UserResponse original) => new()
+    {
+        Id = model.Id,
+        FirstName = model.FirstName,
+        LastName = model.LastName,
+        Email = original.Email,
+        AddressLine1 = model.AddressLine1,
+        AddressLine2 = string.IsNullOrWhiteSpace(model.AddressLine2) ? null : model.AddressLine2,
+        AddressLine3 = string.IsNullOrWhiteSpace(model.AddressLine3) ? null : model.AddressLine3,
+        Postcode = model.Postcode,
+        Location = model.Location,
+        Enabled = original.Enabled,
+        CreatedDateTime = original.CreatedDateTime,
+        IsDeleted = original.IsDeleted
+    };
+
+    private async Task Save()
+    {
+        await _form.Validate();
+
+        if (!_form.IsValid)
+        {
+            Snackbar.Add("Please fix the highlighted fields.", Severity.Warning);
+            return;
+        }
+
+        var UpdateResponse = await HttpService.PostDataAsync("/User/Update", _editModel);
+        if (UpdateResponse.IsSuccessful && UpdateResponse.Data is not null)
+        {
+            User = MapToDto(_editModel, User);
+            Snackbar.Add("Profile saved!", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("An error occurred while saving the profile.", Severity.Error);
+        }
+
+    }
+
+    public class UserProfileEditModel
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "First name is required")]
+        [StringLength(100)]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Last name is required")]
+        [StringLength(100)]
+        public string LastName { get; set; } = string.Empty;
+
+        public string Email { get; set; } = string.Empty; // readonly in UI
+
+        public DateTime CreatedDateTime { get; set; } // readonly in UI
+
+        [Required(ErrorMessage = "Address line 1 is required")]
+        [StringLength(200)]
+        public string AddressLine1 { get; set; } = string.Empty;
+
+        [StringLength(200)]
+        public string AddressLine2 { get; set; } = string.Empty;
+
+        [StringLength(200)]
+        public string AddressLine3 { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Postcode is required")]
+        [StringLength(20)]
+        public string Postcode { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Location is required")]
+        [StringLength(100)]
+        public string Location { get; set; } = string.Empty;
+    }
+
+    private class UserProfileEditModelValidator
+    {
+        public IEnumerable<string> ValidateValue(object model)
+        {
+            var context = new ValidationContext(model);
+            var results = new List<ValidationResult>();
+            Validator.TryValidateObject(model, context, results, true);
+            return results.Select(r => r.ErrorMessage ?? "Invalid value");
+        }
+    }
+}
