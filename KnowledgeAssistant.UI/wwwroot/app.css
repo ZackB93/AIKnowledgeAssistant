@@ -126,6 +126,11 @@ h1:focus {
 
 }
 
+.mud-table {
+    border: solid 1px #c7c7c7;
+    box-shadow: none !important;
+}
+
 h5 {
     color: #7b7b7b !important;
 }

@@ -1,8 +1,10 @@
 ﻿using KnowledgeAssistant.Application.DTOs.Authentication;
+using KnowledgeAssistant.Application.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Caching.Memory;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 public static class AccountEndpoints
 {
@@ -17,12 +19,18 @@ public static class AccountEndpoints
 
             cache.Remove(code);
 
+            var TokenHandler = new JwtSecurityTokenHandler();
+            var JwtToken = TokenHandler.ReadJwtToken(session.Token);
+            var TokenExpires = JwtToken.ValidTo;
+
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, session.User.Id.ToString()),
                 new(ClaimTypes.Name, $"{session.User.FirstName} {session.User.LastName}"),
                 new(ClaimTypes.Email, session.User.Email),
-                new("access_token", session.Token)
+                new("access_token", session.Token!),
+                new("access_token_expires", TokenExpires.ToString("O")),
+                new("refresh_token", session.RefreshToken!)
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

@@ -1,8 +1,134 @@
-﻿@page "/users"
+﻿@using KnowledgeAssistant.Application.DTOs.API
+@using KnowledgeAssistant.Application.DTOs.Cache
+@using KnowledgeAssistant.Application.DTOs.Users
+@using KnowledgeAssistant.Application.Services
+@using KnowledgeAssistant.UI.Components.User
+
+@page "/users"
 @attribute [Authorize]
 
 <PageTitle>Knowledge Assistant - Users</PageTitle>
 
-@code{
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h5" Class="mb-2">System Users</MudText>
 
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   FullWidth="false"
+                   StartIcon="@Icons.Material.Filled.AddCircle"
+                   Size="Size.Small"
+                   OnClick="() => ToggleUserModal(new(){ Id = -1})"
+                   Class="mb-2">
+
+            <MudText>Add New User</MudText>
+        </MudButton>
+
+        <MudTable @ref="Table" ServerData="LoadUsers" Hover="true" Dense="true" Striped="true" Bordered="true">
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh>Full Name</MudTh>
+                <MudTh>Email</MudTh>
+                <MudTh>Enabled</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd DataLabel="ID">@context.Id</MudTd>
+                <MudTd DataLabel="Full Name">@context.FirstName @context.LastName</MudTd>
+                <MudTd DataLabel="Email">@context.Email</MudTd>
+                <MudTd DataLabel="Enabled">@context.Enabled</MudTd>
+                <MudTd>
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               FullWidth="false"
+                               StartIcon="@Icons.Material.Filled.Edit"
+                               OnClick="() => ToggleUserModal(context)"
+                               Size="Size.Small">
+
+                            <MudText>Edit</MudText>
+                    </MudButton>
+                </MudTd>
+            </RowTemplate>
+
+            <LoadingContent>
+                <div class="d-flex justify-center pa-4">
+                    <LoadingSpinner Text="Please wait" />
+                </div>
+            </LoadingContent>
+
+            <NoRecordsContent>
+                <MudText Class="pa-4">
+                    No users found
+                </MudText>
+            </NoRecordsContent>
+
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
+
+<Modal @bind-Visible="@(UserModalVisible)"
+        Title=@(SelectedUser?.Id == -1 ? "Add New User" : "Edit User")
+        ShowCloseButton="true">
+
+    @if(SelectedUser is not null)
+    {
+        <Details UserId="@SelectedUser.Id" AllowBorder="false" OnUserSaved="() => OnUserSaved()" />
+    }
+
+</Modal>
+
+@code
+{
+    [Inject]
+    private IHttpService HttpService { get; set; } = null!;
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = null!;
+
+    private MudTable<UserResponse>? Table;
+    private UserResponse? SelectedUser = null;
+    private bool UserModalVisible = false;
+
+    private async Task<TableData<UserResponse>> LoadUsers(TableState State, CancellationToken CancellationToken)
+    {
+        var PageNumber = State.Page + 1;
+        var PageSize = State.PageSize;
+        var Response = await HttpService.GetDataAsync($"/User/GetAll/{PageNumber}/{PageSize}");
+
+        if (Response.IsSuccessful && Response.Data is not null)
+        {
+            var PaginatedResponse = Response.GetData<PaginatedResponse<UserResponse>>();
+
+            return new TableData<UserResponse>
+            {
+                Items = PaginatedResponse?.Items,
+                TotalItems = PaginatedResponse!.TotalCount
+            };
+        }
+
+        Snackbar.Add("An error has occurred loading users!", Severity.Error);
+
+        return new TableData<UserResponse>
+        {
+            Items = [],
+            TotalItems = 0
+        };
+    }
+
+    private async Task OnUserSaved()
+    {
+        await Table.ReloadServerData();
+        UserModalVisible = false;
+        SelectedUser = null;
+    }
+
+    private void ToggleUserModal(UserResponse? user)
+    {
+        SelectedUser = user;
+        UserModalVisible = !UserModalVisible;
+    }
 }

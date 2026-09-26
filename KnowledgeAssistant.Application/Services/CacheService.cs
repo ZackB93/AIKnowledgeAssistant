@@ -6,6 +6,7 @@ namespace KnowledgeAssistant.Application.Services
     {
         T? GetFromCache<T>(string Key);
         void SaveToCache<T>(string Key, T Value, TimeSpan Expiration);
+        void RemoveFromCache(string Key);
     }
 
     public class CacheService : ICacheService
@@ -27,6 +28,12 @@ namespace KnowledgeAssistant.Application.Services
             if (Value is null) return;
 
             _cache.Set(Key, Value, Expiration);
+        }
+
+        public void RemoveFromCache(string Key)
+        {
+            _cache.Remove(Key);
+
         }
     }
 }

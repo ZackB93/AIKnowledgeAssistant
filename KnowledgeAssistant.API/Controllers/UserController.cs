@@ -66,7 +66,7 @@ namespace KnowledgeAssistant.API.Controllers
             });
         }
 
-        [HttpGet("GetAll")]
+        [HttpGet("GetAll/{PageNumber}/{PageSize}")]
         [OutputCache(Duration = 60)]
         [Authorize]
         public async Task<ActionResult<ApiResult>> GetUsers(int PageNumber, int? PageSize = 10)

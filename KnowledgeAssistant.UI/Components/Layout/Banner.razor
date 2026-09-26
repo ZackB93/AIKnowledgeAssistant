@@ -11,20 +11,39 @@
 
     <MudDivider Vertical="true" FlexItem="true" Class="mx-3" Style="color: #E4E7EB;" />
 
-    <MudMenu Class="knowledge-user-menu">
-        <ActivatorContent>
-            <div class="d-flex align-center gap-2" style="cursor: pointer;">
-                <MudAvatar Size="Size.Small" Color="Color.Secondary">@userInitials</MudAvatar>
-                <MudText Typo="Typo.body2" Style="color: white;">@userName</MudText>
-                <MudIcon Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small" Style="color: #9AA0A6;" />
+    <div class="user-menu">
+        <button type="button" class="user-menu-trigger" @onclick="ToggleUserMenu">
+
+            <MudAvatar Size="Size.Small" Color="Color.Secondary">
+                @userInitials
+            </MudAvatar>
+
+            <span class="user-menu-name">
+                @userName
+            </span>
+
+            <MudIcon Icon="@Icons.Material.Filled.ExpandMore"
+                     Size="Size.Small"
+                     Class="user-menu-icon" />
+        </button>
+
+        @if (IsUserMenuOpen)
+        {
+            <div class="user-menu-dropdown" @onclick="ToggleUserMenu">
+                <a href="/profile" class="user-menu-item">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                    <span>My profile</span>
+                </a>
+
+                <div class="user-menu-divider"></div>
+
+                <button type="button" class="user-menu-item" @onclick="OnSignOut">
+                    <MudIcon Icon="@Icons.Material.Filled.Logout" Size="Size.Small" />
+                    <span>Sign out</span>
+                </button>
             </div>
-        </ActivatorContent>
-        <ChildContent>
-            <MudMenuItem Href="/profile" Icon="@Icons.Material.Filled.Person">My profile</MudMenuItem>
-            <MudDivider />
-            <MudMenuItem OnClick="OnSignOut" Icon="@Icons.Material.Filled.Logout">Sign out</MudMenuItem>
-        </ChildContent>
-    </MudMenu>
+        }
+    </div>
 </MudAppBar>
 
 @code {
@@ -38,6 +57,8 @@
     private string userName = string.Empty;
     private string userInitials = string.Empty;
 
+    private bool IsUserMenuOpen;
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -46,6 +67,11 @@
         userName = user.FindFirst(ClaimTypes.Name)?.Value ?? user.Identity?.Name ?? "Unknown user";
         userInitials = GetUserInitials(userName);
 
+    }
+
+    private void ToggleUserMenu()
+    {
+        IsUserMenuOpen = !IsUserMenuOpen;
     }
 
     private string GetUserInitials(string name)

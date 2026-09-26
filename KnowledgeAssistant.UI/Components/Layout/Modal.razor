@@ -1,0 +1,53 @@
+﻿@using MudBlazor
+
+<MudOverlay Visible="Visible" DarkBackground="true" ZIndex="9999">
+    <MudPaper Class="modal-container" Elevation="25">
+        <div class="modal-header">
+            <MudText Typo="Typo.h5">@Title</MudText>
+            @if (ShowCloseButton)
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="Close" />
+            }
+        </div>
+
+        <MudDivider />
+
+        <div class="modal-body">
+            @ChildContent
+        </div>
+
+        @if (FooterContent is not null)
+        {
+            <MudDivider />
+            <div class="modal-footer">
+                @FooterContent
+            </div>
+        }
+    </MudPaper>
+</MudOverlay>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> VisibleChanged { get; set; }
+
+    [Parameter]
+    public bool ShowCloseButton { get; set; } = true;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public RenderFragment? FooterContent { get; set; }
+
+    private async Task Close()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(Visible);
+    }
+}

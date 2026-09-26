@@ -49,7 +49,6 @@ namespace KnowledgeAssistant.Application.Services
                 }
 
                 var Response = await Client.GetAsync(Endpoint, CancellationToken);
-
                 var Result = await Response.Content.ReadFromJsonAsync<ApiResult>(
                     new JsonSerializerOptions(JsonSerializerDefaults.Web), cancellationToken: CancellationToken);
 
@@ -84,8 +83,14 @@ namespace KnowledgeAssistant.Application.Services
             try
             {
                 var Client = _httpClientFactory.CreateClient("ExternalClient");
-                var Response = await Client.PostAsJsonAsync(Endpoint, Payload, CancellationToken);
+                var Token = _httpContextAccessor.HttpContext?.User.FindFirst("access_token")?.Value;
 
+                if (!string.IsNullOrEmpty(Token))
+                {
+                    Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+                }
+
+                var Response = await Client.PostAsJsonAsync(Endpoint, Payload, CancellationToken);
                 var Result = await Response.Content.ReadFromJsonAsync<ApiResult>(
                     new JsonSerializerOptions(JsonSerializerDefaults.Web), cancellationToken: CancellationToken);
 
