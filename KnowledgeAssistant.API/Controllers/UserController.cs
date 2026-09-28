@@ -66,8 +66,7 @@ namespace KnowledgeAssistant.API.Controllers
             });
         }
 
-        [HttpGet("GetAll/{PageNumber}/{PageSize}")]
-        [OutputCache(Duration = 60)]
+        [HttpGet("GetAll")]
         [Authorize]
         public async Task<ActionResult<ApiResult>> GetUsers(int PageNumber, int? PageSize = 10)
         {
@@ -81,16 +80,15 @@ namespace KnowledgeAssistant.API.Controllers
         }
 
         [HttpGet("Search")]
-        [OutputCache(Duration = 60)]
         [Authorize]
         public async Task<ActionResult<ApiResult>> Search(string SearchTerm, int PageNumber, int? PageSize = 10)
         {
-            var Users = await _userService.SearchUsersAsync(SearchTerm, PageNumber, (int)PageSize!);
+            var SearchedUsers = await _userService.SearchUsersAsync(SearchTerm, PageNumber, (int)PageSize!);
 
             return Ok(new ApiResult()
             {
                 IsSuccessful = true,
-                Data = Users
+                Data = SearchedUsers
             });
         }
 

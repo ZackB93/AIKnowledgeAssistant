@@ -1,11 +1,11 @@
 ﻿@using KnowledgeAssistant.Application.DTOs.API
-@using KnowledgeAssistant.Application.DTOs.Cache
 @using KnowledgeAssistant.Application.DTOs.Users
 @using KnowledgeAssistant.Application.Services
 @using KnowledgeAssistant.UI.Components.User
 
 @page "/users"
 @attribute [Authorize]
+@implements IDisposable
 
 <PageTitle>Knowledge Assistant - Users</PageTitle>
 
@@ -25,7 +25,38 @@
             <MudText>Add New User</MudText>
         </MudButton>
 
-        <MudTable @ref="Table" ServerData="LoadUsers" Hover="true" Dense="true" Striped="true" Bordered="true">
+        <MudStack Row="true" Spacing="1" Class="mb-2">
+            <MudTextField T="string"
+                          Value="@SearchTerm"
+                          ValueChanged="@(value => SearchTermChanged(value))"
+                          Placeholder="Search user with name or email"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Immediate="true"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Class="flex-grow-1" />
+
+            @if (!string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Default"
+                           StartIcon="@Icons.Material.Filled.Clear"
+                           Size="Size.Small"
+                           OnClick="ClearSearch">
+
+                    Clear
+                </MudButton>
+            }
+        </MudStack>
+
+        <MudTable @ref="Table"
+                  ServerData="LoadUsers"
+                  Hover="true"
+                  Dense="true"
+                  Striped="true"
+                  Bordered="true">
+
             <HeaderContent>
                 <MudTh>ID</MudTh>
                 <MudTh>Created</MudTh>
@@ -49,7 +80,7 @@
                                OnClick="() => ToggleUserModal(context)"
                                Size="Size.Small">
 
-                            <MudText>Edit</MudText>
+                        <MudText>Edit</MudText>
                     </MudButton>
                 </MudTd>
             </RowTemplate>
@@ -69,20 +100,20 @@
             <PagerContent>
                 <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
             </PagerContent>
+
         </MudTable>
 
     </MudPaper>
 </MudContainer>
 
 <Modal @bind-Visible="@(UserModalVisible)"
-        Title=@(SelectedUser?.Id == -1 ? "Add New User" : "Edit User")
-        ShowCloseButton="true">
+       Title=@(SelectedUser?.Id == -1 ? "Add New User" : "Edit User")
+       ShowCloseButton="true">
 
-    @if(SelectedUser is not null)
+    @if (SelectedUser is not null)
     {
         <Details UserId="@SelectedUser.Id" AllowBorder="false" OnUserSaved="() => OnUserSaved()" />
     }
-
 </Modal>
 
 @code
@@ -96,12 +127,53 @@
     private MudTable<UserResponse>? Table;
     private UserResponse? SelectedUser = null;
     private bool UserModalVisible = false;
+    private string SearchTerm = string.Empty;
+    private CancellationTokenSource? SearchCancellationTokenSource;
+
+    private async Task SearchTermChanged(string Value)
+    {
+        SearchTerm = Value;
+
+        SearchCancellationTokenSource?.Cancel();
+        SearchCancellationTokenSource?.Dispose();
+        SearchCancellationTokenSource = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(400, SearchCancellationTokenSource.Token);
+
+            if (Table is not null)
+            {
+                await Table.ReloadServerData();
+            }
+        }
+        catch (TaskCanceledException)
+        {
+            // A new character was typed before the 400ms delay completed.
+        }
+    }
+
+    private async Task ClearSearch()
+    {
+        SearchCancellationTokenSource?.Cancel();
+        SearchTerm = string.Empty;
+
+        if (Table is not null)
+        {
+            await Table.ReloadServerData();
+        }
+    }
 
     private async Task<TableData<UserResponse>> LoadUsers(TableState State, CancellationToken CancellationToken)
     {
         var PageNumber = State.Page + 1;
         var PageSize = State.PageSize;
-        var Response = await HttpService.GetDataAsync($"/User/GetAll/{PageNumber}/{PageSize}");
+
+        var Response = string.IsNullOrWhiteSpace(SearchTerm)
+            ? await HttpService.GetDataAsync($"/User/GetAll?PageNumber={PageNumber}&PageSize={PageSize}",
+                CancellationToken: CancellationToken)
+            : await HttpService.GetDataAsync($"/User/Search?SearchTerm={Uri.EscapeDataString(SearchTerm)}&PageNumber={PageNumber}&PageSize={PageSize}",
+                CancellationToken: CancellationToken);
 
         if (Response.IsSuccessful && Response.Data is not null)
         {
@@ -125,7 +197,7 @@
 
     private async Task OnUserSaved()
     {
-        await Table.ReloadServerData();
+        await Table!.ReloadServerData();
         UserModalVisible = false;
         SelectedUser = null;
     }
@@ -134,5 +206,11 @@
     {
         SelectedUser = user;
         UserModalVisible = !UserModalVisible;
+    }
+
+    public void Dispose()
+    {
+        SearchCancellationTokenSource?.Cancel();
+        SearchCancellationTokenSource?.Dispose();
     }
 }
