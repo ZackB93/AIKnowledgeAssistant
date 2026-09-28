@@ -44,7 +44,6 @@ namespace KnowledgeAssistant.API.Controllers
         }
 
         [HttpGet("GetById/{Id}")]
-        [OutputCache(Duration = 60)]
         [Authorize]
         public async Task<ActionResult<ApiResult>> GetUserDetails(int Id)
         {
