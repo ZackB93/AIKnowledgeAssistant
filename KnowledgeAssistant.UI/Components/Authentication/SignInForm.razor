@@ -2,32 +2,42 @@
 @using KnowledgeAssistant.Application.Services
 @using Microsoft.Extensions.Caching.Memory
 
+<!--
 <MudStack AlignItems="AlignItems.Center" Style="max-width: 400px; margin: 40px auto 0;">
     <MudImage Src="images/logo.png" Alt="Logo" ObjectFit="ObjectFit.Contain" Class="mb-4 home-logo" />
 </MudStack>
+-->
 
+<div class="sign-in-wrapper">
 <MudPaper Class="pa-8 sign-in-form" Elevation="0">
     <EditForm FormName="SignInForm" Model="@model" OnValidSubmit="HandleSignIn">
         <DataAnnotationsValidator />
 
+        <MudText Typo="Typo.h5" Class="mb-1" Style="color: #fff; font-weight: 600;">
+            Welcome back
+        </MudText>
+
+        <MudText Typo="Typo.body2" Class="mb-6" Style="color: rgba(255,255,255,0.65);">
+            Sign in to continue to your Knowledge Assistant workspace.
+        </MudText>
+
         <MudTextField T="string"
-                      Label="Email"
                       @bind-Value="model.EmailAddress"
                       For="@(() => model.EmailAddress)"
                       InputType="InputType.Email"
+                      Placeholder="Email address"
                       Variant="Variant.Outlined"
                       Class="mb-4" />
 
         <MudTextField T="string"
-                      Label="Password"
                       @bind-Value="model.Password"
                       For="@(() => model.Password)"
+                      Placeholder="Enter password"
                       InputType="@passwordInputType"
                       Variant="Variant.Outlined"
                       Adornment="Adornment.End"
                       AdornmentIcon="@passwordInputIcon"
                       OnAdornmentClick="TogglePasswordVisibility"
-                      AdronmentClickable="true"
                       AdornmentAriaLabel="Show/Hide Password"
                       Class="mb-2" />
 
@@ -41,6 +51,7 @@
                    Color="Color.Primary"
                    FullWidth="true"
                    Size="Size.Large"
+                   Style="margin-top: 15px;"
                    Disabled="@isSubmitting">
 
             @if (isSubmitting)
@@ -55,6 +66,7 @@
         </MudButton>
     </EditForm>
 </MudPaper>
+</div>
 
 @code {
     [Inject]
