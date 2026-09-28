@@ -84,14 +84,12 @@ namespace KnowledgeAssistant.Application.Services
             }
 
             var Token = _tokenService.GenerateToken(userId: Credentials.User.Id.ToString(), username: Credentials.User.FirstName);
-            var RefreshToken = _tokenService.GenerateRefreshToken(userId: Credentials.User.Id.ToString());
                 
             return new SignInResponse
             {
                 Success = true,
                 Message = "Sign in successful.",
                 Token = Token,
-                RefreshToken = RefreshToken,
                 User = new UserResponse
                 {
                     Id = Credentials.User.Id,

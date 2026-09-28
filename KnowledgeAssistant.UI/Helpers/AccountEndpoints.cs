@@ -30,7 +30,6 @@ public static class AccountEndpoints
                 new(ClaimTypes.Email, session.User.Email),
                 new("access_token", session.Token!),
                 new("access_token_expires", TokenExpires.ToString("O")),
-                new("refresh_token", session.RefreshToken!)
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

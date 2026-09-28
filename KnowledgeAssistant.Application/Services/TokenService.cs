@@ -10,7 +10,6 @@ namespace KnowledgeAssistant.Application.Services
     public interface ITokenService
     {
         string GenerateToken(string userId, string username, IEnumerable<string>? roles = null);
-        string GenerateRefreshToken(string userId);
     }
 
     public class TokenService : ITokenService
@@ -39,30 +38,6 @@ namespace KnowledgeAssistant.Application.Services
                 audience: jwtSettings["Audience"],
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["ExpiryMinutes"]!)),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        public string GenerateRefreshToken(string userId)
-        {
-            var jwtSettings = _config.GetSection("Jwt");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new List<Claim>
-            {
-                new(JwtRegisteredClaimNames.Sub, userId),
-                new("token_type", "refresh"),
-                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddDays(double.Parse(jwtSettings["RefreshTokenExpiryDays"] ?? "7", CultureInfo.InvariantCulture)),
                 signingCredentials: creds
             );
 
