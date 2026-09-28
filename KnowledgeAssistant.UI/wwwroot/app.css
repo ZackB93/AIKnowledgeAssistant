@@ -146,6 +146,16 @@ h5 {
     padding: 8px;
 }
 
+.mobile-menu-button {
+    display: none;
+}
+
+@media (max-width: 959.98px) {
+    .mobile-menu-button {
+        display: inline-flex;
+    }
+}
+
 @media (max-width: 945px) {
 
     .home-logo {

@@ -1,5 +1,7 @@
 ﻿using KnowledgeAssistant.Application.DTOs.API;
+using KnowledgeAssistant.Application.DTOs.Authentication;
 using KnowledgeAssistant.Application.DTOs.Cache;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -18,12 +20,14 @@ namespace KnowledgeAssistant.Application.Services
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ICacheService _cacheService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly NavigationManager _navigationManager;
 
-        public HttpService(IHttpClientFactory httpClientFactory, ICacheService cacheService, IHttpContextAccessor httpContextAccessor)
+        public HttpService(IHttpClientFactory httpClientFactory, ICacheService cacheService, IHttpContextAccessor httpContextAccessor, NavigationManager navigationManager)
         {
             _httpClientFactory = httpClientFactory;
             _cacheService = cacheService;
-            _httpContextAccessor = httpContextAccessor; 
+            _httpContextAccessor = httpContextAccessor;
+            _navigationManager = navigationManager;
         }
 
         public async Task<ApiResult> GetDataAsync(string Endpoint, Cache? CacheData = null, CancellationToken CancellationToken = default)
@@ -45,6 +49,11 @@ namespace KnowledgeAssistant.Application.Services
 
                 if (!string.IsNullOrEmpty(Token))
                 {
+                    if (TokenExpired())
+                    {
+                        _navigationManager.NavigateTo($"/signin?error=Session+expired&returnUrl={Uri.EscapeDataString(_navigationManager.Uri)}");
+                    }
+
                     Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
                 }
 
@@ -87,6 +96,11 @@ namespace KnowledgeAssistant.Application.Services
 
                 if (!string.IsNullOrEmpty(Token))
                 {
+                    if (TokenExpired())
+                    {
+                        _navigationManager.NavigateTo($"/signin?error=Session+expired&returnUrl={Uri.EscapeDataString(_navigationManager.Uri)}");
+                    }
+
                     Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
                 }
 
@@ -109,5 +123,18 @@ namespace KnowledgeAssistant.Application.Services
                 return new ApiResult { IsSuccessful = false, Message = $"Deserialization failed: {ex.Message}" };
             }
         }
+
+        private bool TokenExpired()
+        {
+            var TokenExpiry = _httpContextAccessor.HttpContext?.User.FindFirst("access_token_expires")?.Value;
+
+            if (!DateTime.TryParse(TokenExpiry, out var Expiry))
+            {
+                return true;
+            }
+
+            return DateTime.UtcNow >= Expiry;
+        }
+
     }
 }

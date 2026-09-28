@@ -20,8 +20,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.LoginPath = "/signin";
-        options.ExpireTimeSpan = TimeSpan.FromHours(1);
-        options.SlidingExpiration = true;
+        options.SlidingExpiration = false;
     });
 
 builder.Services.AddAuthorization();

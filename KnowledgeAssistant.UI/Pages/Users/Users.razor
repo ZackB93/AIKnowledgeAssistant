@@ -11,6 +11,7 @@
 
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudPaper Class="pa-4">
+
         <MudText Typo="Typo.h5" Class="mb-2">System Users</MudText>
 
         <MudButton Variant="Variant.Filled"
@@ -27,6 +28,7 @@
         <MudTable @ref="Table" ServerData="LoadUsers" Hover="true" Dense="true" Striped="true" Bordered="true">
             <HeaderContent>
                 <MudTh>ID</MudTh>
+                <MudTh>Created</MudTh>
                 <MudTh>Full Name</MudTh>
                 <MudTh>Email</MudTh>
                 <MudTh>Enabled</MudTh>
@@ -35,6 +37,7 @@
 
             <RowTemplate>
                 <MudTd DataLabel="ID">@context.Id</MudTd>
+                <MudTd DataLabel="Created">@context.CreatedDateTime.ToString("dd/MM/yyyy hh:mm tt")</MudTd>
                 <MudTd DataLabel="Full Name">@context.FirstName @context.LastName</MudTd>
                 <MudTd DataLabel="Email">@context.Email</MudTd>
                 <MudTd DataLabel="Enabled">@context.Enabled</MudTd>
@@ -67,6 +70,7 @@
                 <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
             </PagerContent>
         </MudTable>
+
     </MudPaper>
 </MudContainer>
 

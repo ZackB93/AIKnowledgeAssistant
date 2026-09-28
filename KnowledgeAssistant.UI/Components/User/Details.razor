@@ -46,15 +46,20 @@ else
                                               ReadOnly="@(!NewUser)" />
                             </MudItem>
 
-                            @if (!NewUser)
-                            {
-                                <MudItem xs="12" sm="6">
+                            <MudItem xs="12" sm="6">
+                                @if (!NewUser)
+                                {
                                     <MudTextField Value="@_viewModel.CreatedDateTime.ToString("dd/MM/yyyy")"
                                                   Label="Created Date"
                                                   Variant="Variant.Outlined"
                                                   ReadOnly="true" />
-                                </MudItem>
-                            }
+                                }
+                             </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudSwitch @bind-Value="@_viewModel.Enabled" Color="@(_viewModel.Enabled ? Color.Success : Color.Error)">
+                                    @(_viewModel.Enabled ? "Enabled" : "Disabled")
+                                </MudSwitch>
+                            </MudItem>
                         </MudGrid>
                     </MudTabPanel>
 
@@ -128,7 +133,7 @@ else
 
             <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4" Spacing="2">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="@Saving">
-                    <MudText>Save</MudText>
+                    <MudText>@(NewUser ? "Create User" : "Save Changes")</MudText>
                 </MudButton>
             </MudStack>
         </MudPaper>

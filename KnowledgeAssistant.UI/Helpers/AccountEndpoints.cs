@@ -37,7 +37,7 @@ public static class AccountEndpoints
             var principal = new ClaimsPrincipal(identity);
 
             await httpContext.SignInAsync( CookieAuthenticationDefaults.AuthenticationScheme, principal,
-                new AuthenticationProperties { IsPersistent = true });
+                new AuthenticationProperties { IsPersistent = true, ExpiresUtc = TokenExpires });
 
             var redirectUrl = string.IsNullOrEmpty(returnUrl) ? "/dashboard" : returnUrl;
             return Results.Redirect(redirectUrl);
