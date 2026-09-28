@@ -17,8 +17,6 @@ namespace KnowledgeAssistant.Application.DTOs.Users
         [StringLength(100)]
         public string LastName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress]
         public string Email { get; set; } = string.Empty;
 
         public DateTime CreatedDateTime { get; set; }
@@ -28,10 +26,10 @@ namespace KnowledgeAssistant.Application.DTOs.Users
         public string AddressLine1 { get; set; } = string.Empty;
 
         [StringLength(200)]
-        public string AddressLine2 { get; set; } = string.Empty;
+        public string? AddressLine2 { get; set; }
 
         [StringLength(200)]
-        public string AddressLine3 { get; set; } = string.Empty;
+        public string? AddressLine3 { get; set; }
 
         [Required(ErrorMessage = "Postcode is required")]
         [StringLength(20)]
@@ -41,11 +39,7 @@ namespace KnowledgeAssistant.Application.DTOs.Users
         [StringLength(100)]
         public string Location { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Password is required")]
-        public string Password { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Re-entered password is required")]
-        [Compare(nameof(Password), ErrorMessage = "Passwords do not match")]
-        public string ReenterPassword { get; set; } = string.Empty;
+        [Required]
+        public bool Enabled { get; set; }
     }
 }

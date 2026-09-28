@@ -38,10 +38,13 @@ namespace KnowledgeAssistant.Application.DTOs.Users
         public string Email { get; set; } = default!;
 
         [Required(ErrorMessage = "Password is required")]
-        public string Password { get; set; } = default!;
+        public string Password { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Rentered password is required")]
         [Compare(nameof(Password), ErrorMessage = "Passwords do not match")]
-        public string ReenterPassword { get; set; } = default!;
+        public string ReenterPassword { get; set; } = string.Empty;
+
+        [Required]
+        public bool Enabled { get; set; } = true;
     }
 }

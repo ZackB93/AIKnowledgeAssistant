@@ -17,7 +17,7 @@ namespace KnowledgeAssistant.Application.Services
         Task<UserResponse> UpdateUserAsync(UpdateUserRequest Request);
         Task<PaginatedResponse<UserResponse>> GetUsersAsync(int PageNumber, int PageSize);
         Task<UserResponse?> GetUserDetailsAsync(int UserId);
-        Task<bool> UserExistsAsync(string Email);
+        Task<UserExistsResponse> UserExistsAsync(string Email);
     }
 
     public class UserService : IUserService
@@ -208,7 +208,7 @@ namespace KnowledgeAssistant.Application.Services
         public async Task<UserResponse> AddUserAsync(CreateUserRequest User)
         {
             var ExistingUser = await UserExistsAsync(User.Email);
-            if(ExistingUser is true)
+            if(ExistingUser.Exists)
             {
                 throw new ConflictException($"User with Email {User.Email} already exists.");
             }
@@ -222,7 +222,7 @@ namespace KnowledgeAssistant.Application.Services
                 AddressLine3 = User.AddressLine3,
                 Postcode = User.Postcode,
                 Location = User.Location,
-                Enabled = true,
+                Enabled = User.Enabled,
                 IsDeleted = false,
                 CreatedDateTime = DateTime.UtcNow,
             };
@@ -271,6 +271,7 @@ namespace KnowledgeAssistant.Application.Services
             User.AddressLine3 = Request.AddressLine3;
             User.Postcode = Request.Postcode;
             User.Location = Request.Location;
+            User.Enabled = Request.Enabled;
 
             await _context.SaveChangesAsync();
 
@@ -279,6 +280,7 @@ namespace KnowledgeAssistant.Application.Services
                 Id = User.Id,
                 FirstName = User.FirstName,
                 LastName = User.LastName,
+                Email = User.Credentials.EmailAddress,
                 AddressLine1 = User.AddressLine1,
                 AddressLine2 = User.AddressLine2,
                 AddressLine3 = User.AddressLine3,
@@ -290,13 +292,13 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
         
-        public async Task<bool> UserExistsAsync(string Email)
+        public async Task<UserExistsResponse> UserExistsAsync(string Email)
         {
             var UserExists = await _context.UserCredentials
                 .AsNoTracking()
                 .AnyAsync(x => x.EmailAddress == Email.Trim().ToLowerInvariant());
 
-            return UserExists;
+            return new UserExistsResponse { Exists = UserExists };
         }
     }
 }

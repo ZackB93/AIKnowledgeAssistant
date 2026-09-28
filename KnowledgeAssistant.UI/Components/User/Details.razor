@@ -7,136 +7,132 @@
 {
     <Error Text="An error occurred while loading profile!" />
 }
-else if(Loading)
+else if (Loading)
 {
     <LoadingSpinner Text="Please wait" />
 }
 else
 {
     <MudContainer MaxWidth="MaxWidth.Medium">
-    <MudPaper Class="pa-4" Style=@(!AllowBorder ? "border: none;" : string.Empty)>
-        @if (AllowBorder)
-        {
-            <MudText Typo="Typo.h5" Class="mb-4">Profile</MudText>
-        }
+        <MudPaper Class="pa-4" Style="@(!AllowBorder ? "border: none;" : string.Empty)">
+            @if (AllowBorder)
+            {
+                <MudText Typo="Typo.h5" Class="mb-4">Profile</MudText>
+            }
 
-        <MudForm @ref="_form" Model="_editModel" Validation="@(_validator.ValidateValue)">
-            <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
-                <MudTabPanel Text="Details" Icon="@Icons.Material.Filled.Person">
-                    <MudGrid Style="padding: 15px;">
-                        <MudItem xs="12" sm="6">
-                            <MudTextField @bind-Value="_editModel.FirstName"
-                                          For="@(() => _editModel.FirstName)"
-                                          Label="First Name"
-                                          Variant="Variant.Outlined" />
-                        </MudItem>
-
-                        <MudItem xs="12" sm="6">
-                            <MudTextField @bind-Value="_editModel.LastName"
-                                          For="@(() => _editModel.LastName)"
-                                          Label="Last Name"
-                                          Variant="Variant.Outlined" />
-                        </MudItem>
-
-                        <MudItem xs="12" sm="6">
-                            <MudTextField Value="_editModel.Email"
-                                          Label="Email"
-                                          Variant="Variant.Outlined"
-                                          ReadOnly="true" />
-                        </MudItem>
-
-                        @if(UserId != -1)
-                        {
-                            <MudItem xs="12" sm="6">
-                                <MudTextField Value="@_editModel.CreatedDateTime.ToString("dd/MM/yyyy")"
-                                          Label="Created Date"
-                                          Variant="Variant.Outlined"
-                                          ReadOnly="true" />
-                            </MudItem>
-                        }
-                    </MudGrid>
-                </MudTabPanel>
-
-                <MudTabPanel Text="Address" Icon="@Icons.Material.Filled.Home">
-                    <MudGrid Style="padding: 15px;">
-                        <MudItem xs="12">
-                            <MudTextField @bind-Value="_editModel.AddressLine1"
-                                          For="@(() => _editModel.AddressLine1)"
-                                          Label="Address Line 1"
-                                          Variant="Variant.Outlined" />
-                        </MudItem>
-
-                        <MudItem xs="12">
-                            <MudTextField @bind-Value="_editModel.AddressLine2"
-                                          Label="Address Line 2"
-                                          Variant="Variant.Outlined" />
-                        </MudItem>
-
-                        <MudItem xs="12">
-                            <MudTextField @bind-Value="_editModel.AddressLine3"
-                                          Label="Address Line 3"
-                                          Variant="Variant.Outlined" />
-                        </MudItem>
-
-                        <MudItem xs="12" sm="6">
-                            <MudTextField @bind-Value="_editModel.Postcode"
-                                          For="@(() => _editModel.Postcode)"
-                                          Label="Postcode"
-                                          Variant="Variant.Outlined" />
-                        </MudItem>
-
-                        <MudItem xs="12" sm="6">
-                            <MudTextField @bind-Value="_editModel.Location"
-                                          For="@(() => _editModel.Location)"
-                                          Label="Location"
-                                          Variant="Variant.Outlined" />
-                        </MudItem>
-                    </MudGrid>
-                </MudTabPanel>
-
-                @if(UserId == -1)
-                {
-                     <MudTabPanel Text="Credentials" Icon="@Icons.Material.Filled.Key">
+            <MudForm @ref="_form" Model="_viewModel" Validation="@_validator.ValidateValue">
+                <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" KeepPanelsAlive="true">
+                    <MudTabPanel Text="Details" Icon="@Icons.Material.Filled.Person">
                         <MudGrid Style="padding: 15px;">
                             <MudItem xs="12" sm="6">
-                                <MudTextField @bind-Value="_editModel.Password"
-                                              For="@(() => _editModel.Password)"
-                                              InputType="@InputType.Password"
-                                              Label="Password"
-                                              Immediate="true"
+                                <MudTextField @bind-Value="_viewModel.FirstName"
+                                              For="@(() => _viewModel.FirstName)"
+                                              Label="First Name"
                                               Variant="Variant.Outlined" />
-
-                                <PasswordRequirements Password="@_editModel.Password" />
                             </MudItem>
 
                             <MudItem xs="12" sm="6">
-                                <MudTextField @bind-Value="_editModel.ReenterPassword"
-                                              For="@(() => _editModel.ReenterPassword)"
-                                              InputType="@InputType.Password"
-                                              Label="Re-enter Password"
+                                <MudTextField @bind-Value="_viewModel.LastName"
+                                              For="@(() => _viewModel.LastName)"
+                                              Label="Last Name"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_viewModel.Email"
+                                              For="@(() => _viewModel.Email)"
+                                              Label="Email"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="@(!NewUser)" />
+                            </MudItem>
+
+                            @if (!NewUser)
+                            {
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField Value="@_viewModel.CreatedDateTime.ToString("dd/MM/yyyy")"
+                                                  Label="Created Date"
+                                                  Variant="Variant.Outlined"
+                                                  ReadOnly="true" />
+                                </MudItem>
+                            }
+                        </MudGrid>
+                    </MudTabPanel>
+
+                    <MudTabPanel Text="Address" Icon="@Icons.Material.Filled.Home">
+                        <MudGrid Style="padding: 15px;">
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="_viewModel.AddressLine1"
+                                              For="@(() => _viewModel.AddressLine1)"
+                                              Label="Address Line 1"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="_viewModel.AddressLine2"
+                                              For="@(() => _viewModel.AddressLine2)"
+                                              Label="Address Line 2"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="_viewModel.AddressLine3"
+                                              For="@(() => _viewModel.AddressLine3)"
+                                              Label="Address Line 3"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_viewModel.Postcode"
+                                              For="@(() => _viewModel.Postcode)"
+                                              Label="Postcode"
+                                              Variant="Variant.Outlined" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="_viewModel.Location"
+                                              For="@(() => _viewModel.Location)"
+                                              Label="Location"
                                               Variant="Variant.Outlined" />
                             </MudItem>
                         </MudGrid>
                     </MudTabPanel>
-                }
-            </MudTabs>
-        </MudForm>
 
-        <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4" Spacing="2">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="@Saving">
-                @if (Saving)
-                {
-                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-                    <MudText Class="ms-2">Saving...</MudText>
-                }
-                else
-                {
+                    @if (NewUser)
+                    {
+                        <MudTabPanel Text="Credentials" Icon="@Icons.Material.Filled.Key">
+                            <MudGrid Style="padding: 15px;">
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_viewModel.Password"
+                                                  For="@(() => _viewModel.Password)"
+                                                  InputType="@InputType.Password"
+                                                  OnlyValidateIfDirty="true"
+                                                  Label="Password"
+                                                  Immediate="true"
+                                                  Variant="Variant.Outlined" />
+                                    <PasswordRequirements Password="@_viewModel.Password" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_viewModel.ReenterPassword"
+                                                  For="@(() => _viewModel.ReenterPassword)"
+                                                  InputType="@InputType.Password"
+                                                  OnlyValidateIfDirty="true"
+                                                  Label="Re-enter Password"
+                                                  Variant="Variant.Outlined" />
+                                </MudItem>
+                            </MudGrid>
+                        </MudTabPanel>
+                    }
+                </MudTabs>
+            </MudForm>
+
+            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4" Spacing="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="@Saving">
                     <MudText>Save</MudText>
-                }
-            </MudButton>
-        </MudStack>
-    </MudPaper>
-</MudContainer>
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudContainer>
 }
 
 @code {
@@ -150,7 +146,7 @@ else
     private ICacheService CacheService { get; set; } = null!;
 
     [Parameter]
-    public int? UserId { get; set; }
+    public int UserId { get; set; }
 
     [Parameter]
     public bool AllowBorder { get; set; } = true;
@@ -158,17 +154,21 @@ else
     [Parameter]
     public EventCallback OnUserSaved { get; set; }
 
-    private bool Errored = false;
-    private bool Loading = false;
-    private bool Saving = false;
-    private UserResponse? User = null;
+    private bool Errored;
+    private bool Loading;
+    private bool Saving;
+    private bool NewUser;
+
     private MudForm _form = null!;
-    private UpdateUserRequest _editModel = new();
-    private readonly UserProfileEditModelValidator _validator = new();
+    private readonly UserViewModelValidator _validator = new();
+    private UserViewModel _viewModel = new();
 
     protected override async Task OnInitializedAsync()
     {
-        if (UserId != -1)
+        // We pass through -1 from the users page if we are creating a new user from the add button.
+        NewUser = UserId == -1;
+
+        if (!NewUser)
         {
             await LoadUserProfile();
         }
@@ -176,31 +176,112 @@ else
 
     private async Task LoadUserProfile()
     {
-        if (UserId is null)
-        {
-            Snackbar.Add("An error has occurred loading profile!", Severity.Error);
-            Errored = true;
-        }
-
         Loading = true;
 
-        var Cache = new Cache() { CacheKey = $"UserProfile:{UserId}", CacheTimeMins = 5 };
+        var Cache = new Cache { CacheKey = $"UserProfile:{UserId}", CacheTimeMins = 5 };
         var Response = await HttpService.GetDataAsync($"/User/GetById/{UserId}", Cache);
 
         if (Response.IsSuccessful && Response.Data is not null)
         {
-            User = Response.GetData<UserResponse>();
-            _editModel = MapToEditModel(User!);
-            Loading = false;
+            var user = Response.GetData<UserResponse>();
+            if (user is not null)
+            {
+                _viewModel = MapToViewModel(user);
+            }
+            else
+            {
+                Snackbar.Add("An error has occurred loading profile!", Severity.Error);
+                Errored = true;
+            }
         }
         else
         {
             Snackbar.Add("An error has occurred loading profile!", Severity.Error);
             Errored = true;
         }
+
+        Loading = false;
     }
 
-    private static UpdateUserRequest MapToEditModel(UserResponse dto) => new()
+    private async Task<bool> EmailAlreadyExists()
+    {
+        var Response = await HttpService.GetDataAsync($"/User/Exists?Email={_viewModel.Email}");
+        var Data = Response.GetData<UserExistsResponse>();
+
+        return Response.IsSuccessful && Data is not null && Data.Exists is true;
+    }
+
+    private async Task Save() 
+    { 
+        await _form.ValidateAsync();
+
+        if (!_form.IsValid)
+        {
+            Snackbar.Add("Please populate any required fields!", Severity.Error);
+            return;
+        }
+
+        if (NewUser && await EmailAlreadyExists())
+        {
+            Snackbar.Add("Email address already exists in system!", Severity.Error);
+            return;
+        }
+
+        Saving = true;
+        
+        var Response = NewUser ? 
+            await HttpService.PostDataAsync("/User/Create", MapToCreateModel(_viewModel)) :
+            await HttpService.PostDataAsync("/User/Update", MapToUpdateModel(_viewModel));
+        
+        if (Response.IsSuccessful && Response.Data is not null)
+        { 
+            var User = Response.GetData<UserResponse>()!;
+            
+            if (NewUser)
+            { 
+                UserId = User.Id;
+            }
+            
+            _viewModel = MapToViewModel(User);
+            CacheService.RemoveFromCache($"UserProfile:{UserId}");
+
+            await OnUserSaved.InvokeAsync();
+            
+            Snackbar.Add("Successfully saved!", Severity.Success);
+        }
+        else
+        { 
+            Snackbar.Add("An error occurred whilst saving!", Severity.Error);
+        }
+        
+        Saving = false;
+     }
+
+    private class UserViewModelValidator
+    {
+        public IEnumerable<string> ValidateValue(object model, string propertyName)
+        {
+            var property = model.GetType().GetProperty(propertyName);
+            if (property is null)
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            var value = property.GetValue(model);
+            var context = new ValidationContext(model)
+            {
+                MemberName = propertyName
+            };
+
+            var results = new List<ValidationResult>();
+            Validator.TryValidateProperty(value, context, results);
+
+            return results.Select(r => r.ErrorMessage ?? "Invalid value");
+        }
+    }
+
+    
+    private static UserViewModel MapToViewModel(UserResponse dto) => new()
     {
         Id = dto.Id,
         FirstName = dto.FirstName,
@@ -211,72 +292,78 @@ else
         AddressLine2 = dto.AddressLine2 ?? string.Empty,
         AddressLine3 = dto.AddressLine3 ?? string.Empty,
         Postcode = dto.Postcode,
-        Location = dto.Location
+        Location = dto.Location,
+        Enabled = dto.Enabled
     };
 
-    private static UserResponse MapToDto(UpdateUserRequest model, UserResponse original) => new()
+    private static UpdateUserRequest MapToUpdateModel(UserViewModel model) => new()
     {
         Id = model.Id,
         FirstName = model.FirstName,
         LastName = model.LastName,
-        Email = original.Email,
+        Email = model.Email,
         AddressLine1 = model.AddressLine1,
         AddressLine2 = string.IsNullOrWhiteSpace(model.AddressLine2) ? null : model.AddressLine2,
         AddressLine3 = string.IsNullOrWhiteSpace(model.AddressLine3) ? null : model.AddressLine3,
         Postcode = model.Postcode,
         Location = model.Location,
-        Enabled = original.Enabled,
-        CreatedDateTime = original.CreatedDateTime,
-        IsDeleted = original.IsDeleted
+        CreatedDateTime = model.CreatedDateTime,
+        Enabled = model.Enabled
     };
 
-    private async Task Save()
+    private static CreateUserRequest MapToCreateModel(UserViewModel model) => new()
     {
-        await _form.ValidateAsync();
+        FirstName = model.FirstName,
+        LastName = model.LastName,
+        Email = model.Email,
+        AddressLine1 = model.AddressLine1,
+        AddressLine2 = string.IsNullOrWhiteSpace(model.AddressLine2) ? null : model.AddressLine2,
+        AddressLine3 = string.IsNullOrWhiteSpace(model.AddressLine3) ? null : model.AddressLine3,
+        Postcode = model.Postcode,
+        Location = model.Location,
+        Password = model.Password,
+        ReenterPassword = model.ReenterPassword,
+        Enabled = model.Enabled
+    };
 
-        if (!_form.IsValid)
-        {
-            Snackbar.Add("Please fix the highlighted fields.", Severity.Warning);
-            return;
-        }
 
-        Saving = true;
-
-        var NewUser = UserId == -1;
-        var Endpoint = NewUser ? "/User/Create" : "/User/Update";
-        var Response = await HttpService.PostDataAsync(Endpoint, _editModel);
-
-        if (Response.IsSuccessful && Response.Data is not null)
-        {
-            User = MapToDto(_editModel, Response.GetData<UserResponse>()!);
-            CacheService.RemoveFromCache($"UserProfile:{UserId}");
-
-            if(NewUser)
-            {
-                UserId = User.Id;
-            }
-
-            await OnUserSaved.InvokeAsync();
-            Snackbar.Add("Successfully saved!", Severity.Success);
-        }
-        else
-        {
-            Snackbar.Add("An error occurred whilst saving!", Severity.Error);
-        }
-
-        Saving = false;
-    }
-
-    private class UserProfileEditModelValidator
+    private class UserViewModel
     {
-        public IEnumerable<string> ValidateValue(object model)
-        {
-            var context = new ValidationContext(model);
-            var results = new List<ValidationResult>();
+        public int Id { get; set; }
 
-            Validator.TryValidateObject(model, context, results, true);
+        [Required(ErrorMessage = "First Name is required.")]
+        public string FirstName { get; set; } = string.Empty;
 
-            return results.Select(r => r.ErrorMessage ?? "Invalid value");
-        }
+        [Required(ErrorMessage = "Last Name is required.")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Invalid Email Address.")]
+        public string Email { get; set; } = string.Empty;
+
+        public DateTime CreatedDateTime { get; set; }
+
+        [Required(ErrorMessage = "Address Line 1 is required.")]
+        public string AddressLine1 { get; set; } = string.Empty;
+
+        public string AddressLine2 { get; set; } = string.Empty;
+
+        public string AddressLine3 { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Postcode is required.")]
+        public string Postcode { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Location is required.")]
+        public string Location { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required.")]
+        [MinLength(8, ErrorMessage = "Password must be at least 8 characters long.")]
+        [RegularExpression(@"^(?=.*\d)(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).+$",ErrorMessage = "Password must contain at least 1 number, 1 capital letter, and 1 special character.")]
+        public string Password { get; set; } = string.Empty;
+
+        [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
+        public string ReenterPassword { get; set; } = string.Empty;
+
+        public bool Enabled { get; set; } = true;
     }
 }

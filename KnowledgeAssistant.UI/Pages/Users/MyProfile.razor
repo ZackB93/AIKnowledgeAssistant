@@ -13,13 +13,13 @@
     [Inject]
     private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
 
-    private int? userId { get; set; }
+    private int userId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var claimValue = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        userId = int.TryParse(claimValue, out var id) ? id : null;
+        userId = int.TryParse(claimValue, out var id) ? id : 0;
     }
 }

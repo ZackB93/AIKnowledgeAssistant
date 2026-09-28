@@ -1,9 +1,9 @@
 ﻿.modal-container {
     min-width: 150vw;
-    min-height:120vh;
-    width: 90vw;
+    min-height: 120vh;
+    width: 150vw;
     max-width: 600px;
-    max-height: 85vh;
+    max-height: 120vh;
     display: flex;
     flex-direction: column;
     border-radius: 8px;

@@ -94,13 +94,18 @@ namespace KnowledgeAssistant.API.Controllers
             });
         }
 
-        [HttpPost("Add")]
+        [HttpPost("Create")]
         [Authorize]
-        public async Task<ActionResult<ApiResult>> Add(CreateUserRequest Request)
+        public async Task<ActionResult<ApiResult>> Create(CreateUserRequest Request)
         {
-            var AddedUser = await _userService.AddUserAsync(Request);
-
-            return CreatedAtAction(nameof(GetUserDetails), new { id = AddedUser.Id }, AddedUser);
+            var addedUser = await _userService.AddUserAsync(Request);
+            var result = new ApiResult
+            {
+                IsSuccessful = true,
+                Data = addedUser,
+                Message = "User created successfully."
+            };
+            return CreatedAtAction(nameof(GetUserDetails), new { id = addedUser.Id }, result);
         }
 
         [HttpPost("Update")]

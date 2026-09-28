@@ -134,3 +134,21 @@ h1:focus {
 h5 {
     color: #7b7b7b !important;
 }
+
+.home-logo {
+    width: 700px;
+}
+
+.sign-in-form {
+    max-width: 400px;
+    margin: 40px auto;
+    border: solid 1px #cfcfcf;
+    padding: 8px;
+}
+
+@media (max-width: 945px) {
+
+    .home-logo {
+        width: 100% !important;
+    }
+}

@@ -3,10 +3,10 @@
 @using Microsoft.Extensions.Caching.Memory
 
 <MudStack AlignItems="AlignItems.Center" Style="max-width: 400px; margin: 40px auto 0;">
-    <MudImage Src="images/logo.png" Alt="Logo" Width="700" ObjectFit="ObjectFit.Contain" Class="mb-4" />
+    <MudImage Src="images/logo.png" Alt="Logo" ObjectFit="ObjectFit.Contain" Class="mb-4 home-logo" />
 </MudStack>
 
-<MudPaper Class="pa-8" Elevation="0" Style="max-width: 400px; margin: 40px auto; border: solid 1px #cfcfcf;">
+<MudPaper Class="pa-8 sign-in-form" Elevation="0">
     <EditForm FormName="SignInForm" Model="@model" OnValidSubmit="HandleSignIn">
         <DataAnnotationsValidator />
 

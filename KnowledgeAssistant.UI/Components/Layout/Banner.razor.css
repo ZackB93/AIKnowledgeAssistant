@@ -89,3 +89,12 @@
 .user-menu-signout {
     font-family: inherit;
 }
+
+button {
+    text-align: left;
+    justify-content: left !important;
+}
+
+::deep .mud-avatar-filled.mud-avatar-filled-secondary {
+    background-color: darkgrey;
+}
