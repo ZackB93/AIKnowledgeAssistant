@@ -121,6 +121,7 @@ namespace KnowledgeAssistant.Application.Services
                     Id = x.Id,
                     FirstName = x.FirstName,
                     LastName = x.LastName,
+                    CreatedDateTime = x.CreatedDateTime
                     Email = x.Credentials.EmailAddress,
                 })
                 .ToListAsync();
