@@ -124,6 +124,16 @@ namespace KnowledgeAssistant.Application.Services
                 {
                     Id = x.Id,
                     UserId = x.UserId,
+                    To = x.To,
+                    Subject = x.Subject,
+                    Body = x.Body,
+                    IsHtml = x.IsHtml,
+                    Status = x.Status,
+                    CreatedAt = x.CreatedAt,
+                    SentAt = x.SentAt,
+                    FailedAt = x.FailedAt,
+                    ErrorMessage = x.ErrorMessage,
+                    RetryCount = x.RetryCount
                 }).ToListAsync();
 
             return emails;
@@ -148,7 +158,17 @@ namespace KnowledgeAssistant.Application.Services
                 .Select(x => new EmailResponse
                 {
                     Id = x.Id,
-                    UserId = x.UserId
+                    UserId = x.UserId,
+                    To = x.To,
+                    Subject = x.Subject,
+                    Body = x.Body,
+                    IsHtml = x.IsHtml,
+                    Status = x.Status,
+                    CreatedAt = x.CreatedAt,
+                    SentAt = x.SentAt,
+                    FailedAt = x.FailedAt,
+                    ErrorMessage = x.ErrorMessage,
+                    RetryCount = x.RetryCount
                 })
                 .ToListAsync();
 
