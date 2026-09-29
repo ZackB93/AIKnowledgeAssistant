@@ -4,4 +4,14 @@
 
 <PageTitle>Knowledge Assistant - Sign In</PageTitle>
 
-<SignInForm />
+<SignInForm error="@error" returnUrl="@returnUrl" />
+
+@code{
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? returnUrl { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? error { get; set; }
+}

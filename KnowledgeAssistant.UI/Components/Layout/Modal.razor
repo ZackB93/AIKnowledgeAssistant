@@ -1,7 +1,7 @@
 ﻿@using MudBlazor
 
 <MudOverlay Visible="Visible" DarkBackground="true" ZIndex="9999">
-    <MudPaper Class="modal-container" Elevation="25">
+    <MudPaper Class="modal-container glass-card-modal" Elevation="25">
         <div class="modal-header">
             <MudText Typo="Typo.h5">@Title</MudText>
             @if (ShowCloseButton)
@@ -10,7 +10,7 @@
             }
         </div>
 
-        <MudDivider />
+        <MudDivider Style="border-color: #4d7fc7" />
 
         <div class="modal-body">
             @ChildContent

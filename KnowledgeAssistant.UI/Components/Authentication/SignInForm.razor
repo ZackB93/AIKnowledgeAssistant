@@ -73,11 +73,9 @@
     private NavigationManager NavigationManager { get; set; } = null!;
 
     [Parameter]
-    [SupplyParameterFromQuery]
     public string? returnUrl { get; set; }
 
     [Parameter]
-    [SupplyParameterFromQuery]
     public string? error { get; set; }
 
     private SignIn model = new();
