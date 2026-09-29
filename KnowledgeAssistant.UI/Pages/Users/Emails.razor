@@ -1,0 +1,195 @@
+﻿@using KnowledgeAssistant.Application.DTOs.API
+@using KnowledgeAssistant.Application.DTOs.Emails
+@using KnowledgeAssistant.Application.Services
+
+@page "/emails"
+@attribute [Authorize]
+
+<PageTitle>Knowledge Assistant - Emails</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudPaper Class="pa-4 glass-card">
+
+        <MudText Typo="Typo.h5" Class="mb-2">System Emails</MudText>
+
+        <MudStack Row="true" Spacing="1" Class="mb-2">
+            <MudTextField T="string"
+                          Value="@SearchTerm"
+                          ValueChanged="@(value => SearchTermChanged(value))"
+                          Placeholder="Search email"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Immediate="true"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Class="flex-grow-1" />
+
+            @if (!string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Default"
+                           StartIcon="@Icons.Material.Filled.Clear"
+                           Size="Size.Small"
+                           OnClick="ClearSearch">
+
+                    Clear
+                </MudButton>
+            }
+        </MudStack>
+
+        <MudTable @ref="Table"
+                  ServerData="LoadEmails"
+                  Hover="true"
+                  Dense="true"
+                  Striped="true"
+                  Bordered="true">
+
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd DataLabel="ID">@context.Id</MudTd>             
+                <MudTd>
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               FullWidth="false"
+                               StartIcon="@Icons.Material.Filled.Email"
+                               OnClick="() => ToggleEmailModal(context)"
+                               Size="Size.Small">
+
+                        <MudText>View</MudText>
+                    </MudButton>
+                </MudTd>
+            </RowTemplate>
+
+            <LoadingContent>
+                <div class="d-flex justify-center table-state-bg">
+                    <LoadingSpinner />
+                </div>
+            </LoadingContent>
+
+            <NoRecordsContent>
+                <MudText Class="table-state-bg">
+                    No emails found
+                </MudText>
+            </NoRecordsContent>
+
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
+            </PagerContent>
+
+        </MudTable>
+
+    </MudPaper>
+</MudContainer>
+
+<Modal @bind-Visible="@(EmailModalVisible)"
+       Title="View Email"
+       ShowCloseButton="true">
+
+    @if (SelectedEmail is not null)
+    {
+        
+    }
+</Modal>
+
+@code
+{
+    [Inject]
+    private IHttpService HttpService { get; set; } = null!;
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = null!;
+
+    private MudTable<EmailResponse>? Table;
+    private EmailResponse? SelectedEmail = null;
+    private bool EmailModalVisible = false;
+    private string SearchTerm = string.Empty;
+    private CancellationTokenSource? SearchCancellationTokenSource;
+
+    private async Task SearchTermChanged(string Value)
+    {
+        SearchTerm = Value;
+
+        SearchCancellationTokenSource?.Cancel();
+        SearchCancellationTokenSource?.Dispose();
+        SearchCancellationTokenSource = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(400, SearchCancellationTokenSource.Token);
+
+            if (Table is not null)
+            {
+                await Table.ReloadServerData();
+            }
+        }
+        catch (TaskCanceledException)
+        {
+            // A new character was typed before the 400ms delay completed.
+        }
+    }
+
+    private async Task ClearSearch()
+    {
+        SearchCancellationTokenSource?.Cancel();
+        SearchTerm = string.Empty;
+
+        if (Table is not null)
+        {
+            await Table.ReloadServerData();
+        }
+    }
+
+    private async Task<TableData<EmailResponse>> LoadEmails(TableState State, CancellationToken CancellationToken)
+    {
+        var PageNumber = State.Page + 1;
+        var PageSize = State.PageSize;
+
+        var Response = string.IsNullOrWhiteSpace(SearchTerm)
+            ? await HttpService.GetDataAsync($"/Email/GetAll?PageNumber={PageNumber}&PageSize={PageSize}",
+                CancellationToken: CancellationToken)
+            : await HttpService.GetDataAsync($"/Email/Search?SearchTerm={Uri.EscapeDataString(SearchTerm)}&PageNumber={PageNumber}&PageSize={PageSize}",
+                CancellationToken: CancellationToken);
+
+        if (Response.IsSuccessful && Response.Data is not null)
+        {
+            var PaginatedResponse = Response.GetData<PaginatedResponse<EmailResponse>>();
+
+            return new TableData<EmailResponse>
+            {
+                Items = PaginatedResponse?.Items,
+                TotalItems = PaginatedResponse!.TotalCount
+            };
+        }
+
+        Snackbar.Add("An error has occurred loading emails!", Severity.Error);
+
+        return new TableData<EmailResponse>
+        {
+            Items = [],
+            TotalItems = 0
+        };
+    }
+
+    private async Task OnUserSaved()
+    {
+        await Table!.ReloadServerData();
+        EmailModalVisible = false;
+        SelectedEmail = null;
+    }
+
+    private void ToggleEmailModal(EmailResponse? email)
+    {
+        SelectedEmail = email;
+        EmailModalVisible = !EmailModalVisible;
+    }
+
+    public void Dispose()
+    {
+        SearchCancellationTokenSource?.Cancel();
+        SearchCancellationTokenSource?.Dispose();
+    }
+}

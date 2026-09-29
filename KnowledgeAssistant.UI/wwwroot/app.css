@@ -386,11 +386,16 @@ h5 {
     padding-bottom: 0;
 }
 
+.glass-card .mud-table-empty-row {
+    background: rgba(30, 55, 95, 0.95);
+    color: rgba(255, 255, 255, 0.75);
+    padding-top: 0;
+    padding-bottom: 0;
+}
 
 /* =========================================================
    8. SEARCH BAR
    ========================================================= */
-
 .knowledge-search .mud-input-outlined {
     background-color: #fff !important;
 }
