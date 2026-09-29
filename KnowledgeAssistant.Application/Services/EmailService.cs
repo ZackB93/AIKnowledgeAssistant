@@ -1,8 +1,8 @@
 ﻿using KnowledgeAssistant.Application.Data.Context;
+using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Emails;
 using KnowledgeAssistant.Application.DTOs.Users;
 using KnowledgeAssistant.Application.Entities.Emails;
-using KnowledgeAssistant.Application.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Resend;
@@ -16,6 +16,7 @@ namespace KnowledgeAssistant.Application.Services
         Task SendEmailAsync(int emailId, CancellationToken cancellationToken = default);
         Task<EmailResponse?> GetEmailByIdAsync(int emailId);
         Task<List<EmailResponse>> GetEmailsByUserIdAsync(int userId);
+        Task<PaginatedResponse<EmailResponse>> GetEmailsAsync(int pageNumber, int pageSize);
     }
 
     public class EmailService : IEmailService
@@ -126,6 +127,39 @@ namespace KnowledgeAssistant.Application.Services
                 }).ToListAsync();
 
             return emails;
+        }
+
+        public async Task<PaginatedResponse<EmailResponse>> GetEmailsAsync(int PageNumber, int PageSize)
+        {
+            var MaxPageSize = 50;
+
+            if (PageNumber < 1) PageNumber = 1;
+            if (PageSize < 1) PageSize = 10;
+            if (PageSize > MaxPageSize) PageSize = MaxPageSize;
+
+            var TotalCount = await _context.Emails.CountAsync();
+            var TotalPages = (int)Math.Ceiling((double)TotalCount / PageSize);
+
+            var emails = await _context.Emails
+                .AsNoTracking()
+                .OrderBy(x => x.Id)
+                .Skip((PageNumber - 1) * PageSize)
+                .Take(PageSize)
+                .Select(x => new EmailResponse
+                {
+                    Id = x.Id,
+                    UserId = x.UserId
+                })
+                .ToListAsync();
+
+            return new PaginatedResponse<EmailResponse>
+            {
+                Items = emails,
+                PageNumber = PageNumber,
+                PageSize = PageSize,
+                TotalCount = TotalCount,
+                TotalPages = TotalPages
+            };
         }
     }
 }

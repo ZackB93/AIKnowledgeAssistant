@@ -59,5 +59,18 @@ namespace KnowledgeAssistant.API.Controllers
                 Data = Emails
             });
         }
+
+        [HttpGet("GetAll")]
+        [Authorize]
+        public async Task<ActionResult<ApiResult>> GetEmails(int PageNumber, int? PageSize = 10)
+        {
+            var Emails = await _emailService.GetEmailsAsync(PageNumber, (int)PageSize!);
+
+            return Ok(new ApiResult()
+            {
+                IsSuccessful = true,
+                Data = Emails
+            });
+        }
     }
 }
