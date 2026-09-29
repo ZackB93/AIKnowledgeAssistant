@@ -14,6 +14,7 @@ using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Sinks.MSSqlServer;
 using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -55,11 +56,27 @@ builder.Host.UseSerilog((context, config) =>
 
 builder.Services.AddRateLimiter(options =>
 {
+    // General API rate limit
     options.AddFixedWindowLimiter("globallimit", limiterOptions =>
     {
         limiterOptions.PermitLimit = 100;
         limiterOptions.Window = TimeSpan.FromMinutes(1);
         limiterOptions.QueueLimit = 0;
+    });
+
+    // Sign-in limit - separate bucket per IP
+    options.AddPolicy("signinlimit", httpContext =>
+    {
+        var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            ipAddress,
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            });
     });
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -72,9 +89,9 @@ builder.Services.AddRateLimiter(options =>
             new
             {
                 error = "Too many requests.",
-                message = "Please try again later."
+                message = "Login attempts exceeded, please try again later."
             },
-        cancellationToken);
+            cancellationToken);
     };
 });
 
@@ -117,6 +134,7 @@ builder.Services.AddHostedService<RabbitMQBackgroundService>();
 var app = builder.Build();
 
 app.UseOutputCache();
+app.UseRateLimiter();
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.MapOpenApi();

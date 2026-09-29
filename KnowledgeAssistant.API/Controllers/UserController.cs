@@ -4,7 +4,6 @@ using KnowledgeAssistant.Application.DTOs.Users;
 using KnowledgeAssistant.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.RateLimiting;
 
 namespace KnowledgeAssistant.API.Controllers
@@ -22,6 +21,7 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpPost("SignIn")]
         [AllowAnonymous]
+        [EnableRateLimiting("signinlimit")]
         public async Task<ActionResult<ApiResult>> SignIn(SignIn SignIn)
         {
             var SignInResponse = await _userService.SignInAsync(SignIn);
