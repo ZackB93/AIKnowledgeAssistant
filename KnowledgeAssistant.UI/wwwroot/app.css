@@ -2,6 +2,11 @@ html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
+html {
+    width: 100%;
+    height: 100%;
+}
+
 a, .btn-link {
     color: #006bb7;
 }
@@ -79,41 +84,6 @@ h1:focus {
     text-align: start;
 }
 
-.mud-tabs .mud-tabs-toolbar {
-    background-color: var(--mud-palette-surface) !important;
-    opacity: 1 !important;
-}
-
-.mud-tabs .mud-tab {
-    background-color: var(--mud-palette-surface) !important;
-    opacity: 1 !important;
-}
-
-
-.mud-tabs .mud-tab.mud-tab-active {
-    background-color: var(--mud-palette-primary) !important;
-    color: var(--mud-palette-primary-text) !important;
-    opacity: 1 !important;
-}
-
-.mud-tabs .mud-tabs-panels {
-    background-color: var(--mud-palette-surface) !important;
-    opacity: 1 !important;
-}
-
-.mud-tabs-toolbar-wrapper,
-.mud-tabs-header {
-    background-color: var(--mud-palette-surface) !important;
-}
-
-.mud-tabs.mud-tabs-rounded .mud-tabs-tabbar {
-    background: #eaeaea;
-}
-
-.mud-tabs .mud-tab {
-    background: #eaeaea !important;
-}
-
 .mud-paper {
     border: solid 1px #c7c7c7;
     box-shadow: none !important;
@@ -129,7 +99,7 @@ h1:focus {
 }
 
 h5 {
-    color: #7b7b7b !important;
+    color: #ffffff !important;
 }
 
 .home-logo {
@@ -199,7 +169,6 @@ h5 {
     background-size: cover;
     background-attachment: fixed;
     background-color: #0b1329;
-
     display: flex;
     flex-direction: column;
 }
@@ -210,6 +179,192 @@ h5 {
     align-items: center;
     justify-content: center;
     padding: 0 !important;
+}
+
+.mud-drawer.knowledge-drawer {
+    background: linear-gradient(180deg, #173263, #214885);
+}
+
+.knowledge-nav {
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    flex: 1;
+}
+
+.mud-appbar.knowledge-appbar {
+    background: #214885;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mud-main-content.knowledge-main-content {
+    background-color: #0f264f;
+    background-image: radial-gradient(circle at 15% 20%, rgba(61,118,196,0.16), transparent 42%), radial-gradient(circle at 85% 75%, rgba(61,118,196,0.14), transparent 45%);
+    min-height: 100vh;
+}
+
+.mud-paper.glass-card {
+    background: rgba(30, 55, 95, 0.55);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.glass-card .mud-typography {
+    color: #ffffff;
+}
+
+.glass-card .mud-tabs-toolbar {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.glass-card .mud-tab {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.glass-card .mud-tab.mud-tab-active {
+    color: #ffffff;
+}
+
+.glass-card .mud-tabs-tabbar {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.glass-card .mud-tabs-panels {
+    background-color: transparent;
+}
+
+.glass-card .mud-tabs-tabbar-content {
+    background-color: transparent;
+}
+
+.glass-card .mud-input-outlined .mud-input-outlined-border {
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.glass-card .mud-input-outlined:hover .mud-input-outlined-border {
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.glass-card .mud-input-outlined.mud-shrink .mud-input-outlined-border {
+    border-color: #4d7fc7 !important;
+}
+
+.glass-card .mud-tab.mud-tab-active {
+    background-color: rgba(255, 255, 255, 0.14) !important;
+    color: #ffffff;
+}
+.glass-card .mud-input-outlined input,
+.glass-card .mud-input-outlined textarea {
+    background: transparent !important;
+    color: #ffffff !important;
+}
+
+.glass-card .mud-input-label {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.glass-card .mud-input-outlined.mud-shrink .mud-input-label {
+    color: #4d7fc7 !important;
+}
+
+.glass-card input:read-only {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.glass-card .mud-switch-label {
+    color: #ffffff !important;
+}
+
+.glass-card .mud-button-filled.mud-button-filled-primary {
+    background: linear-gradient(135deg, #3d76c4, #1a3a6e) !important;
+}
+
+/* ===== MudTable container ===== */
+.glass-card .mud-table {
+    background-color: transparent !important;
+    color: #ffffff;
+    border: solid 1px #4d7fc7;
+}
+
+.glass-card .mud-table-container {
+    background-color: transparent !important;
+}
+
+/* ===== Header row ===== */
+.glass-card .mud-table-head {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+    .glass-card .mud-table-head .mud-table-cell {
+        color: #ffffff !important;
+        font-weight: 600;
+        border-bottom: 1px solid #4d7fc7 !important;
+    }
+
+/* ===== Body rows ===== */
+.glass-card .mud-table-body .mud-table-row {
+    background-color: transparent !important;
+}
+
+/* Striped rows - subtle alternating tint instead of white/grey */
+.glass-card .mud-table-striped .mud-table-row:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Hover state */
+.glass-card .mud-table-hover .mud-table-row:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.glass-card .mud-table-cell {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.mud-paper.glass-card .mud-table.mud-table-bordered .mud-table-cell {
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.mud-paper.glass-card .mud-table.mud-table-bordered .mud-table-cell:last-child {
+    border-right: none !important;
+}
+
+.mud-paper.glass-card .mud-table .mud-table-head .mud-table-cell {
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.mud-paper.glass-card .mud-table-bordered .mud-table-container {
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+/* ===== Bordered table outer border ===== */
+.glass-card .mud-table-bordered .mud-table-container {
+    border: 1px solid #4d7fc7 !important;
+}
+
+/* ===== Pager ===== */
+.glass-card .mud-table-pagination,
+.glass-card .mud-table-pagination-actions,
+.glass-card .mud-tablepager {
+    color: rgba(255, 255, 255, 0.75) !important;
+    background-color: transparent !important;
+}
+
+    .glass-card .mud-tablepager .mud-select-input,
+    .glass-card .mud-tablepager .mud-icon-button {
+        color: rgba(255, 255, 255, 0.75) !important;
+    }
+
+/* ===== Outlined "Edit" buttons - currently invisible white-on-white text ===== */
+.glass-card .mud-button-outlined.mud-button-outlined-primary {
+    color: #ffffff !important;
+    border-color: #4d7fc7 !important;
+}
+
+.glass-card .mud-button-outlined.mud-button-outlined-primary:hover {
+    background-color: rgba(61, 118, 196, 0.15) !important;
 }
 
 @media (max-width: 959.98px) {

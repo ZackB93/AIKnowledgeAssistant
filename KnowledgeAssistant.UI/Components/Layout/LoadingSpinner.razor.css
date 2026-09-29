@@ -1,1 +1,8 @@
-﻿
+﻿::deep .mud-progress-circular.mud-progress-large {
+   height: 76px;
+   width: 76px;
+}
+
+::deep .mud-typography-body2 {
+    font-size: 16px;
+}

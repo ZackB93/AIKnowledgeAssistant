@@ -1,8 +1,8 @@
 ﻿<div class="d-flex flex-column align-center justify-center" style="@ContainerStyle">
-    <MudProgressCircular Color="Color" Size="Size" Indeterminate="true" />
+    <MudProgressCircular Style=@($"color: {Color}") Size="Size" Indeterminate="true" />
     @if (!string.IsNullOrWhiteSpace(Text))
     {
-        <MudText Typo="Typo.body2" Class="mt-3" Color="Color">@Text</MudText>
+        <MudText Typo="Typo.body2" Class="mt-3" Style=@($"color: {Color}")>@Text</MudText>
     }
 </div>
 
@@ -11,7 +11,7 @@
     public string? Text { get; set; }
 
     [Parameter]
-    public Color Color { get; set; } = Color.Primary;
+    public string Color { get; set; } = "#ffffff";
 
     [Parameter]
     public Size Size { get; set; } = Size.Large;
