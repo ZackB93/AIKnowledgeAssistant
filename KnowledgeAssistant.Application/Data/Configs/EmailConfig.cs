@@ -61,7 +61,8 @@ namespace KnowledgeAssistant.Application.Data.Configs
             builder.HasIndex(x => new
             {
                 x.Status,
-                x.CreatedAt
+                x.CreatedAt,
+                x.UserId
             });
         }
     }
