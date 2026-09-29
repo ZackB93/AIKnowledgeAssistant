@@ -13,8 +13,8 @@ public class SendEmailHandler: IMessageHandler<SendEmailMessage>
         _emailService = emailService;
     }
 
-    public async Task HandleAsync(SendEmailMessage message,CancellationToken cancellationToken = default)
+    public async Task HandleAsync(SendEmailMessage message, CancellationToken cancellationToken = default)
     {
-        await _emailService.SendEmailAsync(message.EmailId,cancellationToken);
+        await _emailService.SendEmailAsync(message.EmailId, cancellationToken);
     }
 }

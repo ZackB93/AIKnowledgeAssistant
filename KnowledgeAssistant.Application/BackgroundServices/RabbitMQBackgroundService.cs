@@ -16,16 +16,24 @@ public class RabbitMQBackgroundService : BackgroundService
     private readonly ILogger<RabbitMQBackgroundService> _logger;
     private IConnection? _connection;
     private IChannel? _channel;
+    private readonly bool _enabled;
 
     public RabbitMQBackgroundService(IServiceScopeFactory scopeFactory, IConfiguration configuration, ILogger<RabbitMQBackgroundService> logger)
     {
         _scopeFactory = scopeFactory;
         _configuration = configuration;
         _logger = logger;
+
+        _enabled = _configuration.GetValue<bool>("RabbitMQ:Enabled");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (!_enabled)
+        {
+            return;
+        }
+
         var factory = new ConnectionFactory
         {
             HostName = _configuration["RabbitMQ:HostName"]!,
