@@ -23,7 +23,6 @@ public class RabbitMQBackgroundService : BackgroundService
         _scopeFactory = scopeFactory;
         _configuration = configuration;
         _logger = logger;
-
         _enabled = _configuration.GetValue<bool>("RabbitMQ:Enabled");
     }
 

@@ -15,15 +15,20 @@ namespace KnowledgeAssistant.Application.Services
 
     public class EmailService : IEmailService
     {
+        private readonly IConfiguration _configuration;
         private readonly KnowledgeContext _context;
         private readonly IRabbitMQService _rabbitMQService;
+        private readonly bool _rabbitMQEnabled;
         private IResend _resendService;
+        
 
-        public EmailService(KnowledgeContext context, IRabbitMQService rabbitMQService, IResend resendService)
+        public EmailService(KnowledgeContext context, IRabbitMQService rabbitMQService, IResend resendService, IConfiguration configuration)
         {
+            _configuration = configuration;
             _context = context;
             _rabbitMQService = rabbitMQService;
             _resendService = resendService;
+            _rabbitMQEnabled = _configuration.GetValue<bool>("RabbitMQ:Enabled");
         }
 
         public async Task QueueEmailAsync(int userId, string to, string subject, string body, bool isHtml = true)
@@ -42,8 +47,16 @@ namespace KnowledgeAssistant.Application.Services
 
             _context.Emails.Add(email);
 
-            await _context.SaveChangesAsync();          
-            await _rabbitMQService.PublishAsync(email.Id, "emails");
+            await _context.SaveChangesAsync();
+
+            if (_rabbitMQEnabled)
+            {
+                await _rabbitMQService.PublishAsync(email.Id, "emails");
+            }
+            else
+            {
+                await SendEmailAsync(email.Id);
+            }
         }
 
         public async Task SendEmailAsync(int emailId, CancellationToken cancellationToken = default)
