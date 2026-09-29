@@ -11,7 +11,6 @@ namespace KnowledgeAssistant.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [EnableRateLimiting("globallimit")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;

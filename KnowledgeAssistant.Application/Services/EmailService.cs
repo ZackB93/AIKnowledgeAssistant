@@ -1,5 +1,8 @@
 ﻿using KnowledgeAssistant.Application.Data.Context;
+using KnowledgeAssistant.Application.DTOs.Emails;
+using KnowledgeAssistant.Application.DTOs.Users;
 using KnowledgeAssistant.Application.Entities.Emails;
+using KnowledgeAssistant.Application.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Resend;
@@ -11,6 +14,8 @@ namespace KnowledgeAssistant.Application.Services
     {
         Task QueueEmailAsync(int userId, string to, string subject, string body, bool isHtml = true);
         Task SendEmailAsync(int emailId, CancellationToken cancellationToken = default);
+        Task<EmailResponse?> GetEmailByIdAsync(int emailId);
+        Task<List<EmailResponse>> GetEmailsByUserIdAsync(int userId);
     }
 
     public class EmailService : IEmailService
@@ -21,7 +26,6 @@ namespace KnowledgeAssistant.Application.Services
         private readonly bool _rabbitMQEnabled;
         private IResend _resendService;
         
-
         public EmailService(KnowledgeContext context, IRabbitMQService rabbitMQService, IResend resendService, IConfiguration configuration)
         {
             _configuration = configuration;
@@ -96,6 +100,32 @@ namespace KnowledgeAssistant.Application.Services
 
                 await _context.SaveChangesAsync(cancellationToken);
             }
+        }
+
+        public async Task<EmailResponse?> GetEmailByIdAsync(int emailId)
+        {
+            var email = await _context.Emails
+                .AsNoTracking()
+                .Select(x => new EmailResponse
+                {
+                    Id = x.Id,
+                }).FirstOrDefaultAsync(x => x.Id == emailId);
+
+            return email;
+        }
+
+        public async Task<List<EmailResponse>> GetEmailsByUserIdAsync(int userId)
+        {
+            var emails = await _context.Emails
+                .AsNoTracking()
+                .Where(x => x.UserId == userId)
+                .Select(x => new EmailResponse
+                {
+                    Id = x.Id,
+                    UserId = x.UserId,
+                }).ToListAsync();
+
+            return emails;
         }
     }
 }

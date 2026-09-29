@@ -1,1 +1,4 @@
-﻿
+﻿::deep .mud-icon-button-label
+{
+    color: white;
+}
