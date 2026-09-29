@@ -25,12 +25,14 @@ namespace KnowledgeAssistant.Application.Services
         private readonly KnowledgeContext _context;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly ITokenService _tokenService;
+        private readonly IEmailService _emailService;
 
-        public UserService(KnowledgeContext context, IPasswordHasher<User> passwordHasher, ITokenService tokenService)
+        public UserService(KnowledgeContext context, IPasswordHasher<User> passwordHasher, ITokenService tokenService, IEmailService emailService)
         {
             _context = context;
             _passwordHasher = passwordHasher;
             _tokenService = tokenService;
+            _emailService = emailService;
         }
 
         public async Task<SignInResponse> SignInAsync(SignIn SignIn)
@@ -233,7 +235,15 @@ namespace KnowledgeAssistant.Application.Services
             };
 
             _context.Users.Add(NewUser);
+
             await _context.SaveChangesAsync();
+
+            await _emailService.QueueEmailAsync(
+                NewUser.Id,
+                NewUser.Credentials.EmailAddress,
+                "Welcome",
+                "Thank you for registering with Knowledge Assistant, your account has now been created!"
+            );
 
             return new UserResponse
             {

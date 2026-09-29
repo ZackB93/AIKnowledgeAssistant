@@ -1,17 +1,19 @@
 using CallRatingService.API.Middleware;
+using KnowledgeAssistant.API.BackgroundServices;
 using KnowledgeAssistant.Application.Data.Context;
 using KnowledgeAssistant.Application.Entities.Users;
 using KnowledgeAssistant.Application.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
+using Resend;
 using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Sinks.MSSqlServer;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -106,6 +108,11 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IRabbitMQService, RabbitMQService>();
+builder.Services.AddSingleton<IResend>(ResendClient.Create(builder.Configuration["Resend:Key"]!));
+
+builder.Services.AddHostedService<RabbitMQBackgroundService>();
 
 var app = builder.Build();
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using KnowledgeAssistant.Application.Entities.Users;
+using KnowledgeAssistant.Application.Entities.Emails;
 
 namespace KnowledgeAssistant.Application.Data.Context
 {
@@ -13,6 +14,7 @@ namespace KnowledgeAssistant.Application.Data.Context
         public DbSet<User> Users => Set<User>();
         public DbSet<UserCredential> UserCredentials => Set<UserCredential>();
         public DbSet<UserDocument> UserDocuments => Set<UserDocument>();
+        public DbSet<Email> Emails => Set<Email>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
