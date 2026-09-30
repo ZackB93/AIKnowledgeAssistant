@@ -57,7 +57,7 @@ namespace KnowledgeAssistant.Application.Services
 
             if (_rabbitMQEnabled)
             {
-                await _rabbitMQService.PublishAsync(email.Id, "emails");
+                await _rabbitMQService.PublishAsync(new SendEmailMessage() {  EmailId = email.Id }, "emails");
             }
             else
             {
@@ -83,7 +83,7 @@ namespace KnowledgeAssistant.Application.Services
                 var response = await _resendService.EmailSendAsync(new EmailMessage
                 {
                      From = "onboarding@resend.dev",
-                     To = email.To,
+                     To = "zackzack93@hotmail.com", //Resend only lets you use your own email for testing. Need to use a domain to use publicly.
                      Subject = email.Subject,
                      HtmlBody = email.Body
                 });

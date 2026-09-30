@@ -76,7 +76,7 @@ namespace KnowledgeAssistant.Application.Services
             }
             catch (OperationCanceledException) when (CancellationToken.IsCancellationRequested)
             {
-                throw;
+                return new ApiResult { IsSuccessful = false, Message = "Request cancelled." };
             }
             catch (HttpRequestException ex)
             {
@@ -113,7 +113,7 @@ namespace KnowledgeAssistant.Application.Services
             }
             catch (OperationCanceledException) when (CancellationToken.IsCancellationRequested)
             {
-                throw;
+                return new ApiResult { IsSuccessful = false, Message = "Request cancelled." };
             }
             catch (HttpRequestException ex)
             {

@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using KnowledgeAssistant.Application.Entities.Emails;
+using KnowledgeAssistant.Application.Messaging.Handlers;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -77,7 +79,7 @@ public class RabbitMQBackgroundService : BackgroundService
 
     private async Task StartConsumersAsync(CancellationToken cancellationToken)
     {
-        await StartConsumerAsync<int>("emails",cancellationToken);
+        await StartConsumerAsync<SendEmailMessage>("emails",cancellationToken);
     }
 
     private async Task StartConsumerAsync<T>(string queue, CancellationToken cancellationToken)
@@ -146,7 +148,7 @@ public class RabbitMQBackgroundService : BackgroundService
     {
         return queue switch
         {
-            "emails" =>(IMessageHandler<T>)serviceProvider.GetRequiredService<IMessageHandler<int>>(),
+            "emails" =>(IMessageHandler<T>)serviceProvider.GetRequiredService<IMessageHandler<T>>(),
             _ => throw new InvalidOperationException($"No message handler configured for queue '{queue}'.")
         };
     }
@@ -166,10 +168,5 @@ public class RabbitMQBackgroundService : BackgroundService
         }
 
         await base.StopAsync(cancellationToken);
-    }
-
-    public interface IMessageHandler<T>
-    {
-        Task HandleAsync(T message, CancellationToken cancellationToken = default);
     }
 }

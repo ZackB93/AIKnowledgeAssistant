@@ -1,8 +1,11 @@
 ﻿using KnowledgeAssistant.Application.Entities.Emails;
 using KnowledgeAssistant.Application.Services;
-using static KnowledgeAssistant.API.BackgroundServices.RabbitMQBackgroundService;
 
 namespace KnowledgeAssistant.Application.Messaging.Handlers;
+public interface IMessageHandler<T>
+{
+    Task HandleAsync(T message, CancellationToken cancellationToken = default);
+}
 
 public class SendEmailHandler: IMessageHandler<SendEmailMessage>
 {

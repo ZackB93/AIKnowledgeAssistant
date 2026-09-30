@@ -1,7 +1,9 @@
 using CallRatingService.API.Middleware;
 using KnowledgeAssistant.API.BackgroundServices;
 using KnowledgeAssistant.Application.Data.Context;
+using KnowledgeAssistant.Application.Entities.Emails;
 using KnowledgeAssistant.Application.Entities.Users;
+using KnowledgeAssistant.Application.Messaging.Handlers;
 using KnowledgeAssistant.Application.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -15,6 +17,7 @@ using Serilog;
 using Serilog.Sinks.MSSqlServer;
 using System.Text;
 using System.Threading.RateLimiting;
+using static KnowledgeAssistant.API.BackgroundServices.RabbitMQBackgroundService;
 
 var builder = WebApplication.CreateBuilder(args);
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -127,6 +130,7 @@ builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IRabbitMQService, RabbitMQService>();
+builder.Services.AddScoped<IMessageHandler<SendEmailMessage>, SendEmailHandler>();
 builder.Services.AddSingleton<IResend>(ResendClient.Create(builder.Configuration["Resend:Key"]!));
 
 builder.Services.AddHostedService<RabbitMQBackgroundService>();
