@@ -26,7 +26,7 @@
 
             @if (!string.IsNullOrWhiteSpace(SearchTerm))
             {
-                <MudButton Variant="Variant.Outlined"
+                <MudButton Variant="Variant.Filled"
                            Color="Color.Default"
                            StartIcon="@Icons.Material.Filled.Clear"
                            Size="Size.Small"
@@ -46,20 +46,34 @@
 
             <HeaderContent>
                 <MudTh>ID</MudTh>
+                <MudTh>User</MudTh>
+                <MudTh>To</MudTh>
+                <MudTh>Subject</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Created At</MudTh>
+                <MudTh>Sent At</MudTh>
+                <MudTh>Failed At</MudTh>
                 <MudTh></MudTh>
             </HeaderContent>
 
             <RowTemplate>
-                <MudTd DataLabel="ID">@context.Id</MudTd>             
+                <MudTd DataLabel="ID">@context.Id</MudTd>  
+                <MudTd DataLabel="User">@context.UserName</MudTd>
+                <MudTd DataLabel="To">@context.To</MudTd>
+                <MudTd DataLabel="Subject">@context.Subject</MudTd>
+                <MudTd DataLabel="Status">@context.Status</MudTd>
+                <MudTd DataLabel="Created At">@context.CreatedAt.ToString("dd/MM/yyyy hh:mm tt")</MudTd>
+                <MudTd DataLabel="Sent At">@context.SentAt?.ToString("dd/MM/yyyy hh:mm tt")</MudTd>
+                <MudTd DataLabel="Failed At">@context.FailedAt?.ToString("dd/MM/yyyy hh:mm tt")</MudTd>
                 <MudTd>
                     <MudButton Variant="Variant.Outlined"
                                Color="Color.Primary"
                                FullWidth="false"
-                               StartIcon="@Icons.Material.Filled.Email"
+                               StartIcon="@Icons.Material.Filled.RemoveRedEye"
                                OnClick="() => ToggleEmailModal(context)"
                                Size="Size.Small">
 
-                        <MudText>View</MudText>
+                        <MudText>Details</MudText>
                     </MudButton>
                 </MudTd>
             </RowTemplate>
@@ -86,12 +100,21 @@
 </MudContainer>
 
 <Modal @bind-Visible="@(EmailModalVisible)"
-       Title="View Email"
+       Title="Email Details"
        ShowCloseButton="true">
 
     @if (SelectedEmail is not null)
     {
-        
+        <MudTextField Value="SelectedEmail?.To" Label="To" Variant="Variant.Outlined" ReadOnly="true" Style="margin-bottom: 5px;" />
+        <MudTextField Value="SelectedEmail?.Subject" Label="Subject" Variant="Variant.Outlined" ReadOnly="true" Style="margin-bottom: 5px;" />
+
+        @if (!string.IsNullOrEmpty(SelectedEmail?.ErrorMessage))
+        {
+            <MudTextField Value="SelectedEmail?.ErrorMessage" Label="Error Message" Variant="Variant.Outlined" ReadOnly="true" Style="margin-bottom: 5px;" />
+        }
+
+        <!--Currently just show the body. Probably use (MarkupString)(SelectedEmail?.Body) instead for showing HTML.-->
+        <MudTextField @bind-Value="SelectedEmail?.Body" Label="Body" Variant="Variant.Outlined" ReadOnly="true" Lines="16" />
     }
 </Modal>
 

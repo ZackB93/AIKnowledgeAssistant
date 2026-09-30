@@ -3,6 +3,7 @@ using KnowledgeAssistant.Application.DTOs.Authentication;
 using KnowledgeAssistant.Application.DTOs.Cache;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http;
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -98,7 +99,7 @@ namespace KnowledgeAssistant.Application.Services
                 {
                     if (TokenExpired())
                     {
-                        _navigationManager.NavigateTo($"/signin?error=Session+expired&returnUrl={Uri.EscapeDataString(_navigationManager.Uri)}");
+                        _navigationManager.NavigateTo($"/signin?error=Session+expired&returnUrl={Uri.EscapeDataString(_navigationManager.Uri)}", forceLoad: true);
                     }
 
                     Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
@@ -126,14 +127,15 @@ namespace KnowledgeAssistant.Application.Services
 
         private bool TokenExpired()
         {
-            var TokenExpiry = _httpContextAccessor.HttpContext?.User.FindFirst("access_token_expires")?.Value;
+            var expiry = _httpContextAccessor.HttpContext?
+                .User
+                .FindFirst("access_token_expires")?
+                .Value;
 
-            if (!DateTime.TryParse(TokenExpiry, out var Expiry))
-            {
+            if (!long.TryParse(expiry, out var expiryUnix))
                 return true;
-            }
 
-            return DateTime.UtcNow >= Expiry;
+            return DateTimeOffset.UtcNow.ToUnixTimeSeconds() >= expiryUnix;
         }
 
     }

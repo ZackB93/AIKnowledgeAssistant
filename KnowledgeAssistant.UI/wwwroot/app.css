@@ -466,6 +466,10 @@ h5 {
     .home-logo {
         width: 100% !important;
     }
+
+    .mud-container-maxwidth-md {
+        max-width: 1050px;
+    }
 }
 
 @media (max-width: 600px) {

@@ -29,7 +29,7 @@ public static class AccountEndpoints
                 new(ClaimTypes.Name, $"{session.User.FirstName} {session.User.LastName}"),
                 new(ClaimTypes.Email, session.User.Email),
                 new("access_token", session.Token!),
-                new("access_token_expires", TokenExpires.ToString("O")),
+                new("access_token_expires", new DateTimeOffset(TokenExpires).ToUnixTimeSeconds().ToString()),
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

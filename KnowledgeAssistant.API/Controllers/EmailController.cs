@@ -20,9 +20,9 @@ namespace KnowledgeAssistant.API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResult>> GetEmail(int Id)
         {
-            var Email = await _emailService.GetEmailByIdAsync(Id);
+            var email = await _emailService.GetEmailByIdAsync(Id);
 
-            if (Email is null)
+            if (email is null)
             {
                 return NotFound(new ApiResult()
                 {
@@ -34,7 +34,7 @@ namespace KnowledgeAssistant.API.Controllers
             return Ok(new ApiResult()
             {
                 IsSuccessful = true,
-                Data = Email
+                Data = email
             });
         }
 
@@ -42,9 +42,9 @@ namespace KnowledgeAssistant.API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResult>> GetEmailsByUserId(int userId)
         {
-            var Emails = await _emailService.GetEmailsByUserIdAsync(userId);
+            var emails = await _emailService.GetEmailsByUserIdAsync(userId);
 
-            if (!Emails.Any())
+            if (!emails.Any())
             {
                 return NotFound(new ApiResult()
                 {
@@ -56,7 +56,7 @@ namespace KnowledgeAssistant.API.Controllers
             return Ok(new ApiResult()
             {
                 IsSuccessful = true,
-                Data = Emails
+                Data = emails
             });
         }
 
@@ -64,12 +64,25 @@ namespace KnowledgeAssistant.API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResult>> GetEmails(int PageNumber, int? PageSize = 10)
         {
-            var Emails = await _emailService.GetEmailsAsync(PageNumber, (int)PageSize!);
+            var emails = await _emailService.GetEmailsAsync(PageNumber, (int)PageSize!);
 
             return Ok(new ApiResult()
             {
                 IsSuccessful = true,
-                Data = Emails
+                Data = emails
+            });
+        }
+
+        [HttpGet("Search")]
+        [Authorize]
+        public async Task<ActionResult<ApiResult>> Search(string searchTerm, int pageNumber, int? pageSize = 10)
+        {
+            var searchedEmails = await _emailService.SearchEmailsAsync(searchTerm, pageNumber, (int)pageSize!);
+
+            return Ok(new ApiResult()
+            {
+                IsSuccessful = true,
+                Data = searchedEmails
             });
         }
     }

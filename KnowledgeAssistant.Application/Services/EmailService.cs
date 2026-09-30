@@ -17,6 +17,7 @@ namespace KnowledgeAssistant.Application.Services
         Task<EmailResponse?> GetEmailByIdAsync(int emailId);
         Task<List<EmailResponse>> GetEmailsByUserIdAsync(int userId);
         Task<PaginatedResponse<EmailResponse>> GetEmailsAsync(int pageNumber, int pageSize);
+        Task<PaginatedResponse<EmailResponse>> SearchEmailsAsync(string searchTerm, int pageNumber, int pageSize);
     }
 
     public class EmailService : IEmailService
@@ -84,7 +85,7 @@ namespace KnowledgeAssistant.Application.Services
                      From = "onboarding@resend.dev",
                      To = email.To,
                      Subject = email.Subject,
-                     HtmlBody = email.IsHtml ? email.Body : null
+                     HtmlBody = email.Body
                 });
 
                 email.Status = EmailStatus.Sent;
@@ -110,6 +111,18 @@ namespace KnowledgeAssistant.Application.Services
                 .Select(x => new EmailResponse
                 {
                     Id = x.Id,
+                    UserId = x.UserId,
+                    UserName = $"{x.User.FirstName} {x.User.LastName}",
+                    To = x.To,
+                    Subject = x.Subject,
+                    Body = x.Body,
+                    IsHtml = x.IsHtml,
+                    Status = x.Status,
+                    CreatedAt = x.CreatedAt,
+                    SentAt = x.SentAt,
+                    FailedAt = x.FailedAt,
+                    ErrorMessage = x.ErrorMessage,
+                    RetryCount = x.RetryCount
                 }).FirstOrDefaultAsync(x => x.Id == emailId);
 
             return email;
@@ -124,16 +137,14 @@ namespace KnowledgeAssistant.Application.Services
                 {
                     Id = x.Id,
                     UserId = x.UserId,
+                    UserName = $"{x.User.FirstName} {x.User.LastName}",
                     To = x.To,
                     Subject = x.Subject,
                     Body = x.Body,
-                    IsHtml = x.IsHtml,
                     Status = x.Status,
                     CreatedAt = x.CreatedAt,
                     SentAt = x.SentAt,
                     FailedAt = x.FailedAt,
-                    ErrorMessage = x.ErrorMessage,
-                    RetryCount = x.RetryCount
                 }).ToListAsync();
 
             return emails;
@@ -159,16 +170,14 @@ namespace KnowledgeAssistant.Application.Services
                 {
                     Id = x.Id,
                     UserId = x.UserId,
+                    UserName = $"{x.User.FirstName} {x.User.LastName}",
                     To = x.To,
                     Subject = x.Subject,
                     Body = x.Body,
-                    IsHtml = x.IsHtml,
                     Status = x.Status,
                     CreatedAt = x.CreatedAt,
                     SentAt = x.SentAt,
                     FailedAt = x.FailedAt,
-                    ErrorMessage = x.ErrorMessage,
-                    RetryCount = x.RetryCount
                 })
                 .ToListAsync();
 
@@ -179,6 +188,55 @@ namespace KnowledgeAssistant.Application.Services
                 PageSize = PageSize,
                 TotalCount = TotalCount,
                 TotalPages = TotalPages
+            };
+        }
+
+        public async Task<PaginatedResponse<EmailResponse>> SearchEmailsAsync(string searchTerm, int pageNumber, int pageSize)
+        {
+            var maxPageSize = 50;
+
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+            if (pageSize > maxPageSize) pageSize = maxPageSize;
+
+            var Query = _context.Emails.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                Query = Query.Where(x =>
+                    x.To.Contains(searchTerm) ||
+                    x.User.FirstName.Contains(searchTerm) ||
+                    x.User.LastName.Contains(searchTerm));
+            }
+
+            var totalCount = await Query.CountAsync();
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            var emails = await Query
+                .OrderBy(x => x.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => new EmailResponse
+                {
+                    Id = x.Id,
+                    UserId = x.UserId,
+                    UserName = $"{x.User.FirstName} {x.User.LastName}",
+                    To = x.To,
+                    Subject = x.Subject,
+                    Body = x.Body,
+                    Status = x.Status,
+                    CreatedAt = x.CreatedAt,
+                    SentAt = x.SentAt,
+                    FailedAt = x.FailedAt,
+                }).ToListAsync();
+
+            return new PaginatedResponse<EmailResponse>
+            {
+                Items = emails,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = totalPages
             };
         }
     }

@@ -1,5 +1,6 @@
 using KnowledgeAssistant.Application.Services;
 using KnowledgeAssistant.UI.Components;
+using KnowledgeAssistant.UI.Helpers;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
@@ -34,6 +35,7 @@ builder.Services.AddHttpClient("ExternalClient", client =>
 
 builder.Services.AddScoped<IHttpService, HttpService>();
 builder.Services.AddScoped<ICacheService, CacheService>();
+builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingAuthenticationStateProvider>();
 
 var app = builder.Build();
 
