@@ -19,10 +19,17 @@ namespace KnowledgeAssistant.API.Controllers
             _chatService = ChatService;
         }
 
-        [HttpGet("GetByUserId/{userId}")]
+        [HttpGet("GetChatSessionsByUserId")]
         [Authorize]
-        public async Task<ActionResult<ApiResult>> GetChatSessionsByUserIdAsync(int userId)
+        public async Task<ActionResult<ApiResult>> GetChatSessionsByUserIdAsync()
         {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return Unauthorized();
+            }
+
             var chatSessions = await _chatService.GetChatSessionsByUserIdAsync(userId);
 
             if (!chatSessions.Any())
@@ -38,6 +45,28 @@ namespace KnowledgeAssistant.API.Controllers
             {
                 IsSuccessful = true,
                 Data = chatSessions
+            });
+        }
+
+        [HttpGet("GetChatMessagesBySessionId/{sessionId}")]
+        [Authorize]
+        public async Task<ActionResult<ApiResult>> GetChatMessagesBySessionIdAsync(int sessionId)
+        {
+            var chatSessionMessages = await _chatService.GetChatMessagesBySessionIdAsync(sessionId);
+
+            if (!chatSessionMessages.Any())
+            {
+                return NotFound(new ApiResult()
+                {
+                    IsSuccessful = false,
+                    Message = "No chat messages for session found for user."
+                });
+            }
+
+            return Ok(new ApiResult()
+            {
+                IsSuccessful = true,
+                Data = chatSessionMessages
             });
         }
 
@@ -60,7 +89,7 @@ namespace KnowledgeAssistant.API.Controllers
                 Message = "Chat session added successfully."
             };
 
-            return CreatedAtAction(nameof(GetChatSessionsByUserIdAsync), new { userId = addedChatSession.UserId }, result);
+            return Ok(result);
         }
 
         [HttpPost("AddMessage")]
@@ -73,7 +102,6 @@ namespace KnowledgeAssistant.API.Controllers
             {
                 return Unauthorized();
             }
-
 
             var chatResponse = await _chatService.AddChatMessageAsync(request, userId);
 

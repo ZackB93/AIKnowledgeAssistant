@@ -13,7 +13,8 @@ public interface IChatService
 {
     Task<ChatSessionResponse> AddChatSessionAsync(AddChatSessionRequest chatSessionRequest, int userId);
     Task<ChatMessageResponse> AddChatMessageAsync(AddChatMessageRequest chatMessageRequest, int userId);
-    Task<List<ChatSessionResponse>> GetChatSessionsByUserIdAsync(int userId, bool includeMessages = true);
+    Task<List<ChatSessionResponse>> GetChatSessionsByUserIdAsync(int userId);
+    Task<List<ChatMessageResponse>> GetChatMessagesBySessionIdAsync(int sessionId);
 }
 
 public class ChatService : IChatService
@@ -50,7 +51,7 @@ public class ChatService : IChatService
             Title = chatSession.Title,
             CreatedAt = chatSession.CreatedAt,
             UpdatedAt = chatSession.UpdatedAt,
-            Messages = []
+            Messages = new()
         };
     }
 
@@ -67,7 +68,7 @@ public class ChatService : IChatService
         var now = DateTime.UtcNow;
 
         // Save the user's message.
-        var userMessage = new ChatEntity
+        var userMessage = new Application.Entities.Chat.ChatMessage
         {
             ChatSessionId = chatSession.Id,
             Role = "user",
@@ -134,39 +135,38 @@ public class ChatService : IChatService
         };
     }
 
-    public async Task<List<ChatSessionResponse>> GetChatSessionsByUserIdAsync(int userId, bool includeMessages = true)
+    public async Task<List<ChatSessionResponse>> GetChatSessionsByUserIdAsync(int userId)
     {
-        IQueryable<ChatSession> query = _context.ChatSessions
+        return _context.ChatSessions
             .AsNoTracking()
             .Where(x => x.UserId == userId)
-            .OrderByDescending(x => x.UpdatedAt);
-
-        if (includeMessages)
-        {
-            query = query.Include(x => x.Messages);
-        }
-
-        var sessions = await query.ToListAsync();
-
-        return sessions.Select(x => new ChatSessionResponse
+            .OrderByDescending(x => x.UpdatedAt)
+            .Select(x => new ChatSessionResponse
             {
                 Id = x.Id,
                 UserId = x.UserId,
                 Title = x.Title,
                 CreatedAt = x.CreatedAt,
                 UpdatedAt = x.UpdatedAt,
-                Messages = includeMessages ? x.Messages
-                    .OrderBy(m => m.CreatedAt)
-                    .ThenBy(m => m.Id)
-                    .Select(m => new ChatMessageResponse
-                    {
-                        Id = m.Id,
-                        ChatSessionId = m.ChatSessionId,
-                        Role = m.Role,
-                        Content = m.Content,
-                         CreatedAt = m.CreatedAt
-                    }).ToList()
-                : []
             }).ToList();
+    }
+
+    public async Task<List<ChatMessageResponse>> GetChatMessagesBySessionIdAsync(int sessionId)
+    {
+        var messages = await _context.ChatMessages
+            .AsNoTracking()
+            .Where(x => x.ChatSessionId == sessionId)
+            .OrderBy(x => x.CreatedAt)
+            .ThenBy(x => x.Id)
+            .ToListAsync();
+
+        return messages.Select(x => new ChatMessageResponse
+        {
+            Id = x.Id,
+            ChatSessionId = x.ChatSessionId,
+            Role = x.Role,
+            Content = x.Content,
+            CreatedAt = x.CreatedAt
+        }).ToList();
     }
 }

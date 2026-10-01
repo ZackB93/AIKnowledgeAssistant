@@ -312,7 +312,7 @@ h5 {
     color: #ffffff !important;
     border-color: #4d7fc7 !important;
 }
-.glass-card-modal .mud-button-outlined.mud-button-outlined-primary:hover.
+.glass-card-modal .mud-button-outlined.mud-button-outlined-primary:hover,
 .glass-card .mud-button-outlined.mud-button-outlined-primary:hover {
     background-color: rgba(61, 118, 196, 0.15) !important;
 }

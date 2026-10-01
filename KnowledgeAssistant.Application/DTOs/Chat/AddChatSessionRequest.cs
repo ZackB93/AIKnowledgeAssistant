@@ -7,7 +7,7 @@ namespace KnowledgeAssistant.Application.DTOs.Chat
 {
     public class AddChatSessionRequest
     {
-        public string Title { get; set; }
+        public string Title { get; set; } = "New Chat";
 
         public DateTime CreatedAt { get; set; }
 

@@ -1,8 +1,392 @@
-﻿@page "/chat"
+﻿
+@page "/chat"
 @attribute [Authorize]
+
+@using KnowledgeAssistant.Application.DTOs.API
+@using KnowledgeAssistant.Application.DTOs.Chat
+@using KnowledgeAssistant.Application.Services
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
 
 <PageTitle>Knowledge Assistant - Chat</PageTitle>
 
-@code{
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudPaper Class="chat-container pa-4 glass-card">
+        <MudGrid Spacing="0" Class="chat-grid">
 
+            <!-- Chat Sessions -->
+            <MudItem xs="12" sm="4" md="3" Class="chat-sidebar" Style="border-right: solid 1px rgba(255, 255, 255, 0.3);">
+
+                <div class="chat-sidebar-header">
+                    <MudText Typo="Typo.h6">
+                        Chats
+                    </MudText>
+
+                    <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   OnClick="CreateNewChat"
+                                   Disabled="@_creatingSession" />
+                </div>
+
+                @if (loadingSessions)
+                {
+                    <div class="pa-4 d-flex justify-center">
+                        <MudProgressCircular Indeterminate="true"
+                                             Color="Color.Primary" />
+                    </div>
+                }
+                else if (sessions.Count == 0)
+                {
+                    <div class="pa-4">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            No conversations yet.
+                        </MudText>
+
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   Class="mt-3"
+                                   OnClick="CreateNewChat">
+                            New Chat
+                        </MudButton>
+                    </div>
+                }
+                else
+                {
+                    <MudList T="ChatSessionResponse" Dense="true">
+
+                        @foreach (var session in sessions)
+                        {
+                              <MudListItem T="ChatSessionResponse"
+                                        Value="@session"
+                                        Class="@(session.Id == _selectedSession?.Id ? "chat-session selected" : "chat-session")"
+                                        OnClick="@(() => SelectSession(session))">
+
+                             <div class="chat-session-content">
+                                    <MudIcon Icon="@Icons.Material.Filled.Chat"
+                                             Size="Size.Small"
+                                             Class="chat-session-icon" />
+
+                                    <MudText>
+                                        @session.Title
+                                    </MudText>
+                                </div>
+
+                            </MudListItem>
+                        }
+
+                    </MudList>
+                }
+
+            </MudItem>
+
+            <!-- Chat -->
+            <MudItem xs="12" sm="8" md="9" Class="chat-main">
+
+                @if (_selectedSession == null)
+                {
+                    <div class="chat-empty-state">
+
+                        <MudIcon Icon="@Icons.Material.Filled.SmartToy"
+                                 Size="Size.Large"
+                                 Color="Color.Primary" />
+
+                        <MudText Typo="Typo.h5" Class="mt-3">
+                            Knowledge Assistant
+                        </MudText>
+
+                        <MudText Typo="Typo.body1"
+                                 Color="Color.Secondary"
+                                 Class="mt-2">
+                            Select a conversation or start a new one.
+                        </MudText>
+
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   Class="mt-4"
+                                   OnClick="CreateNewChat">
+                            New Chat
+                        </MudButton>
+
+                    </div>
+                }
+                else
+                {
+                    <!-- Chat header -->
+                    <div class="chat-header">
+
+                        <div>
+                            <MudText Typo="Typo.h6">
+                                @(_selectedSession.Title ?? "New Chat")
+                            </MudText>
+
+                            <MudText Typo="Typo.caption"
+                                     Color="Color.Secondary">
+                                @(_messages.Count) messages
+                            </MudText>
+                        </div>
+
+                    </div>
+
+                    <!-- Messages -->
+                    <div class="chat-messages">
+
+                        @if (_loadingMessages)
+                        {
+                            <div class="d-flex justify-center pa-6">
+                                <MudProgressCircular Indeterminate="true"
+                                                     Color="Color.Primary" />
+                            </div>
+                        }
+                        else if (_messages.Count == 0)
+                        {
+                            <div class="chat-empty-messages">
+
+                                <MudIcon Icon="@Icons.Material.Filled.ChatBubbleOutline"
+                                         Size="Size.Large"
+                                         Color="Color.Primary" />
+
+                                <MudText Typo="Typo.body1" Class="mt-2">
+                                    Start a conversation
+                                </MudText>
+
+                                <MudText Typo="Typo.body2"
+                                         Color="Color.Secondary">
+                                    Ask Knowledge Assistant a question below.
+                                </MudText>
+
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var message in _messages)
+                            {
+                                var isUser = message.Role.Equals(
+                                    "user",
+                                    StringComparison.OrdinalIgnoreCase);
+
+                                <div class="message-row @(isUser
+                                    ? "user-message"
+                                    : "assistant-message")">
+
+                                    <div class="message-bubble">
+
+                                        <MudText Typo="Typo.body1"
+                                                 Class="message-content">
+                                            @message.Content
+                                        </MudText>
+
+                                        <MudText Typo="Typo.caption"
+                                                 Class="message-time">
+                                            @message.CreatedAt.ToLocalTime().ToString("HH:mm")
+                                        </MudText>
+
+                                    </div>
+
+                                </div>
+                            }
+                        }
+
+                    </div>
+
+                    <!-- Message input -->
+                    <div class="chat-input">
+
+                        <MudTextField @bind-Value="_messageText"
+                                      Placeholder="Ask Knowledge Assistant..."
+                                      Variant="Variant.Outlined"
+                                      FullWidth="true"
+                                      Lines="2"
+                                      AutoGrow="true"
+                                      Immediate="true"
+                                      Disabled="@_sendingMessage"
+                                      OnKeyDown="HandleKeyDown"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@Icons.Material.Filled.Send"
+                                      AdornmentColor="Color.Primary"
+                                      OnAdornmentClick="SendMessage" />
+
+                    </div>
+                }
+
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudContainer>
+
+@code {
+
+    [Inject]
+    private IHttpService HttpService { get; set; } = null!;
+
+    private List<ChatSessionResponse> sessions = new();
+    private List<ChatMessageResponse> _messages = new();
+
+    private ChatSessionResponse? _selectedSession;
+
+    private bool loadingSessions;
+    private bool _loadingMessages;
+    private bool _creatingSession;
+    private bool _sendingMessage;
+
+    private string _messageText = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadChatSessionsAsync();
+    }
+
+    private async Task LoadChatSessionsAsync()
+    {
+        loadingSessions = true;
+
+        try
+        {
+            var result = await HttpService.GetDataAsync("/Chat/GetChatSessionsByUserId");
+
+            if (result is not null && result.IsSuccessful)
+            {
+                var sessionsResponse = result.GetData<List<ChatSessionResponse>>();
+
+                if (sessionsResponse is not null)
+                {
+                    sessions = sessionsResponse;
+                }
+            }
+        }
+        finally
+        {
+            loadingSessions = false;
+        }
+
+        // Automatically select the first chat
+        if (sessions.Count > 0)
+        {
+            await SelectSession(sessions[0]);
+        }
+    }
+
+    private async Task SelectSession(ChatSessionResponse session)
+    {
+        _selectedSession = session;
+        _messages = [];
+
+        await LoadMessagesAsync(session.Id);
+    }
+
+    private async Task LoadMessagesAsync(int sessionId)
+    {
+        _loadingMessages = true;
+
+        try
+        {
+            var result = await HttpService.GetDataAsync($"/Chat/GetChatMessagesBySessionId/{sessionId}");
+
+            if (result is not null && result.IsSuccessful)
+            {
+                var messages =
+                    result.GetData<List<ChatMessageResponse>>();
+
+                if (messages is not null)
+                {
+                    _messages = messages;
+                }
+            }
+        }
+        finally
+        {
+            _loadingMessages = false;
+        }
+    }
+
+    private async Task CreateNewChat()
+    {
+        if (_creatingSession)
+            return;
+
+        _creatingSession = true;
+
+        try
+        {
+            var request = new AddChatSessionRequest
+            {
+                Title = "New Chat"
+            };
+
+            var result = await HttpService.PostDataAsync("/Chat/AddSession", request);
+
+            if (result is not null && result.IsSuccessful)
+            {
+                var session = result.GetData<ChatSessionResponse>();
+
+                if (session is not null)
+                {
+                    sessions.Insert(0, session);
+                    await SelectSession(session);
+                }
+            }
+        }
+        finally
+        {
+            _creatingSession = false;
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (_sendingMessage || _selectedSession is null || string.IsNullOrWhiteSpace(_messageText))
+        {
+            return;
+        }
+
+        var message = _messageText.Trim();
+
+        _messageText = string.Empty;
+        _sendingMessage = true;
+
+        try
+        {
+            var request = new AddChatMessageRequest
+            {
+                ChatSessionId = _selectedSession.Id,
+                Content = message
+            };
+
+            // Add user's message to UI immediately
+            _messages.Add(new ChatMessageResponse
+            {
+                ChatSessionId = _selectedSession.Id,
+                Role = "user",
+                Content = message,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            var result = await HttpService.PostDataAsync("/Chat/AddMessage", request);
+
+            if (result is not null && result.IsSuccessful)
+            {
+                var response = result.GetData<ChatMessageResponse>();
+
+                if (response is not null)
+                {
+                    // This is the AI response
+                    _messages.Add(response);
+                }
+            }
+        }
+        finally
+        {
+            _sendingMessage = false;
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && !args.ShiftKey)
+        {
+            await SendMessage();
+        }
+    }
 }
