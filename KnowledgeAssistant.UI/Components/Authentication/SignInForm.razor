@@ -86,7 +86,7 @@
     private InputType passwordInputType = InputType.Password;
     private string passwordInputIcon = Icons.Material.Filled.VisibilityOff;
 
-    private void OnInitialized()
+    protected override void OnInitialized()
     {
         if(!string.IsNullOrEmpty(error))
         {

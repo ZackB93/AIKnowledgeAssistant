@@ -302,15 +302,17 @@ h5 {
 }
 
 /* ---- 7c. Buttons inside a glass card ---- */
+.glass-card-modal .mud-button-filled.mud-button-filled-primary
 .glass-card .mud-button-filled.mud-button-filled-primary {
     background: linear-gradient(135deg, #3d76c4, #1a3a6e) !important;
 }
 
+.glass-card-modal .mud-button-outlined.mud-button-outlined-primary,
 .glass-card .mud-button-outlined.mud-button-outlined-primary {
     color: #ffffff !important;
     border-color: #4d7fc7 !important;
 }
-
+.glass-card-modal .mud-button-outlined.mud-button-outlined-primary:hover.
 .glass-card .mud-button-outlined.mud-button-outlined-primary:hover {
     background-color: rgba(61, 118, 196, 0.15) !important;
 }
@@ -467,9 +469,6 @@ h5 {
         width: 100% !important;
     }
 
-    .mud-container-maxwidth-md {
-        max-width: 1050px;
-    }
 }
 
 @media (max-width: 600px) {

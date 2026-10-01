@@ -115,7 +115,7 @@ namespace KnowledgeAssistant.Application.Services
                     UserName = $"{x.User.FirstName} {x.User.LastName}",
                     To = x.To,
                     Subject = x.Subject,
-                    Body = x.Body,
+                    Body = x.Body,  
                     IsHtml = x.IsHtml,
                     Status = x.Status,
                     CreatedAt = x.CreatedAt,
@@ -145,6 +145,7 @@ namespace KnowledgeAssistant.Application.Services
                     CreatedAt = x.CreatedAt,
                     SentAt = x.SentAt,
                     FailedAt = x.FailedAt,
+                    ErrorMessage = x.ErrorMessage,
                 }).ToListAsync();
 
             return emails;
@@ -178,6 +179,7 @@ namespace KnowledgeAssistant.Application.Services
                     CreatedAt = x.CreatedAt,
                     SentAt = x.SentAt,
                     FailedAt = x.FailedAt,
+                    ErrorMessage = x.ErrorMessage
                 })
                 .ToListAsync();
 
