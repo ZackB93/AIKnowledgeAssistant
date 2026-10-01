@@ -17,6 +17,8 @@ using Serilog;
 using Serilog.Sinks.MSSqlServer;
 using System.Text;
 using System.Threading.RateLimiting;
+using Microsoft.Extensions.AI;
+using OpenAI.Chat;
 using static KnowledgeAssistant.API.BackgroundServices.RabbitMQBackgroundService;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -129,11 +131,14 @@ builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IRabbitMQService, RabbitMQService>();
 builder.Services.AddScoped<IMessageHandler<SendEmailMessage>, SendEmailHandler>();
 builder.Services.AddSingleton<IResend>(ResendClient.Create(builder.Configuration["Resend:Key"]!));
-
 builder.Services.AddHostedService<RabbitMQBackgroundService>();
+
+builder.Services.AddChatClient(services => new ChatClient(builder.Configuration["OpenAI:Model"]!,
+    builder.Configuration["OpenAI:ApiKey"]!).AsIChatClient());
 
 var app = builder.Build();
 

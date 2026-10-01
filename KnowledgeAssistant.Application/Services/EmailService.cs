@@ -1,7 +1,6 @@
 ﻿using KnowledgeAssistant.Application.Data.Context;
 using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Emails;
-using KnowledgeAssistant.Application.DTOs.Users;
 using KnowledgeAssistant.Application.Entities.Emails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
