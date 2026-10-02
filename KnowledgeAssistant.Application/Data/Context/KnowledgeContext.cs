@@ -1,5 +1,6 @@
 ﻿using KnowledgeAssistant.Application.Entities.Chat;
 using KnowledgeAssistant.Application.Entities.Emails;
+using KnowledgeAssistant.Application.Entities.Roles;
 using KnowledgeAssistant.Application.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +19,8 @@ namespace KnowledgeAssistant.Application.Data.Context
         public DbSet<Email> Emails => Set<Email>();
         public DbSet<ChatSession> ChatSessions => Set<ChatSession>();
         public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+        public DbSet<Role> Roles => Set<Role>();
+        public DbSet<UserRole> UserRoles => Set<UserRole>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

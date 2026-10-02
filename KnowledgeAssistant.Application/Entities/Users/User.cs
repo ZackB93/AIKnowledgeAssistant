@@ -1,6 +1,7 @@
 ﻿using KnowledgeAssistant.Application.Entities.Chat;
 using KnowledgeAssistant.Application.Entities.Emails;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
@@ -24,5 +25,6 @@ namespace KnowledgeAssistant.Application.Entities.Users
         public ICollection<UserDocument> Documents { get; set; } = [];
         public ICollection<Email> Emails { get; set; } = [];
         public ICollection<ChatSession> ChatSessions { get; set; } = [];
+        public ICollection<UserRole> UserRoles { get; set; } = [];
     }
 }

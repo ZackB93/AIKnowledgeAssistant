@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KnowledgeAssistant.Application.Entities.Users;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
@@ -41,5 +42,7 @@ namespace KnowledgeAssistant.Application.DTOs.Users
 
         [Required]
         public bool Enabled { get; set; }
+
+        public List<UserRole> Roles { get; set; } = new List<UserRole>();
     }
 }
