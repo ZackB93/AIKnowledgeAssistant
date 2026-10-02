@@ -1,11 +1,12 @@
 ﻿using KnowledgeAssistant.Application.Entities.Emails;
+using KnowledgeAssistant.Application.Data.Configs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace KnowledgeAssistant.Application.Data.Configs
+namespace KnowledgeAssistant.Application.Data.Configs.Emails
 {
     public class EmailConfiguration : IEntityTypeConfiguration<Email>
     {

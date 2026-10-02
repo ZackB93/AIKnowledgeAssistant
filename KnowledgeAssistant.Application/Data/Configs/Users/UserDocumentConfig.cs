@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace KnowledgeAssistant.Application.Data.Configs
+namespace KnowledgeAssistant.Application.Data.Configs.Users
 {
     public class UserDocumentConfig : IEntityTypeConfiguration<UserDocument>
     {

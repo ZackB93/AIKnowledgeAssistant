@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace KnowledgeAssistant.Application.Data.Configs
+namespace KnowledgeAssistant.Application.Data.Configs.Chat
 {
     public class ChatMessageConfig : IEntityTypeConfiguration<ChatMessage>
     {
