@@ -1,12 +1,12 @@
-﻿
-@page "/chat"
+﻿@page "/chat"
 @attribute [Authorize]
+@implements IAsyncDisposable
 
-@using KnowledgeAssistant.Application.DTOs.API
 @using KnowledgeAssistant.Application.DTOs.Chat
 @using KnowledgeAssistant.Application.Services
 @using Microsoft.AspNetCore.Authorization
 @using MudBlazor
+
 
 <PageTitle>Knowledge Assistant - Chat</PageTitle>
 
@@ -16,7 +16,6 @@
 
             <!-- Chat Sessions -->
             <MudItem xs="12" sm="4" md="3" Class="chat-sidebar" Style="border-right: solid 1px rgba(255, 255, 255, 0.3);">
-
                 <div class="chat-sidebar-header">
                     <MudText Typo="Typo.h6">
                         Chats
@@ -26,14 +25,13 @@
                                    Color="Color.Primary"
                                    Size="Size.Small"
                                    OnClick="CreateNewChat"
-                                   Disabled="@_creatingSession" />
+                                   Disabled="@creatingSession" />
                 </div>
 
                 @if (loadingSessions)
                 {
                     <div class="pa-4 d-flex justify-center">
-                        <MudProgressCircular Indeterminate="true"
-                                             Color="Color.Primary" />
+                        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
                     </div>
                 }
                 else if (sessions.Count == 0)
@@ -60,7 +58,7 @@
                         {
                               <MudListItem T="ChatSessionResponse"
                                         Value="@session"
-                                        Class="@(session.Id == _selectedSession?.Id ? "chat-session selected" : "chat-session")"
+                                        Class="@(session.Id == selectedSession?.Id ? "chat-session selected" : "chat-session")"
                                         OnClick="@(() => SelectSession(session))">
 
                              <div class="chat-session-content">
@@ -78,13 +76,12 @@
 
                     </MudList>
                 }
-
             </MudItem>
 
             <!-- Chat -->
             <MudItem xs="12" sm="8" md="9" Class="chat-main">
 
-                @if (_selectedSession == null)
+                @if (selectedSession == null)
                 {
                     <div class="chat-empty-state">
 
@@ -116,24 +113,21 @@
                 {
                     <!-- Chat header -->
                     <div class="chat-header">
-
                         <div>
                             <MudText Typo="Typo.h6">
-                                @(_selectedSession.Title ?? "New Chat")
+                                @(selectedSession.Title ?? "New Chat")  - @selectedSession.CreatedAt.ToString("dd/MM/yyyy HH:mm tt")
                             </MudText>
 
-                            <MudText Typo="Typo.caption"
-                                     Color="Color.Secondary">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
                                 @(_messages.Count) messages
                             </MudText>
                         </div>
-
                     </div>
 
                     <!-- Messages -->
-                    <div class="chat-messages">
+                    <div class="chat-messages" id="chat-messages">
 
-                        @if (_loadingMessages)
+                        @if (loadingMessages)
                         {
                             <div class="d-flex justify-center pa-6">
                                 <MudProgressCircular Indeterminate="true"
@@ -143,7 +137,6 @@
                         else if (_messages.Count == 0)
                         {
                             <div class="chat-empty-messages">
-
                                 <MudIcon Icon="@Icons.Material.Filled.ChatBubbleOutline"
                                          Size="Size.Large"
                                          Color="Color.Primary" />
@@ -156,23 +149,16 @@
                                          Color="Color.Secondary">
                                     Ask Knowledge Assistant a question below.
                                 </MudText>
-
                             </div>
                         }
                         else
                         {
                             @foreach (var message in _messages)
                             {
-                                var isUser = message.Role.Equals(
-                                    "user",
-                                    StringComparison.OrdinalIgnoreCase);
+                                var isUser = message.Role.Equals("user", StringComparison.OrdinalIgnoreCase);
 
-                                <div class="message-row @(isUser
-                                    ? "user-message"
-                                    : "assistant-message")">
-
+                                <div class="message-row @(isUser ? "user-message" : "assistant-message")">
                                     <div class="message-bubble">
-
                                         <MudText Typo="Typo.body1"
                                                  Class="message-content">
                                             @message.Content
@@ -182,9 +168,21 @@
                                                  Class="message-time">
                                             @message.CreatedAt.ToLocalTime().ToString("HH:mm")
                                         </MudText>
-
                                     </div>
+                                </div>
+                            }
 
+                            @if (sendingMessage)
+                            {
+                                <div class="message-row assistant-message">
+                                    <div class="message-bubble typing-bubble">
+                                        <MudProgressCircular Indeterminate="true"
+                                                             Size="Size.Small"
+                                                             Color="Color.Primary" />
+                                        <MudText Typo="Typo.body2" Class="ml-2">
+                                            Thinking...
+                                        </MudText>
+                                    </div>
                                 </div>
                             }
                         }
@@ -201,7 +199,7 @@
                                       Lines="2"
                                       AutoGrow="true"
                                       Immediate="true"
-                                      Disabled="@_sendingMessage"
+                                      Disabled="@sendingMessage"
                                       OnKeyDown="HandleKeyDown"
                                       Adornment="Adornment.End"
                                       AdornmentIcon="@Icons.Material.Filled.Send"
@@ -210,7 +208,6 @@
 
                     </div>
                 }
-
             </MudItem>
         </MudGrid>
     </MudPaper>
@@ -221,15 +218,24 @@
     [Inject]
     private IHttpService HttpService { get; set; } = null!;
 
+    [Inject] 
+    private IScrollManager ScrollManager { get; set; } = null!;
+
+    [Inject]
+    private IJSRuntime JS { get; set; } = null!;
+
+    private IJSObjectReference? chatModule;
+
     private List<ChatSessionResponse> sessions = new();
     private List<ChatMessageResponse> _messages = new();
 
-    private ChatSessionResponse? _selectedSession;
+    private ChatSessionResponse? selectedSession;
 
     private bool loadingSessions;
-    private bool _loadingMessages;
-    private bool _creatingSession;
-    private bool _sendingMessage;
+    private bool loadingMessages;
+    private bool creatingSession;
+    private bool sendingMessage;
+    private bool scrollToBottom;
 
     private string _messageText = string.Empty;
 
@@ -238,28 +244,37 @@
         await LoadChatSessionsAsync();
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            chatModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/chat.js");
+        }
+
+        if (scrollToBottom && chatModule is not null)
+        {
+            scrollToBottom = false;
+            await chatModule.InvokeVoidAsync("scrollToBottom", "chat-messages");
+        }
+    }
+
     private async Task LoadChatSessionsAsync()
     {
         loadingSessions = true;
 
-        try
+        var result = await HttpService.GetDataAsync("/Chat/GetChatSessionsByUserId");
+
+        if (result is not null && result.IsSuccessful)
         {
-            var result = await HttpService.GetDataAsync("/Chat/GetChatSessionsByUserId");
+            var sessionsResponse = result.GetData<List<ChatSessionResponse>>();
 
-            if (result is not null && result.IsSuccessful)
+            if (sessionsResponse is not null)
             {
-                var sessionsResponse = result.GetData<List<ChatSessionResponse>>();
-
-                if (sessionsResponse is not null)
-                {
-                    sessions = sessionsResponse;
-                }
+                sessions = sessionsResponse;
             }
         }
-        finally
-        {
-            loadingSessions = false;
-        }
+
+        loadingSessions = false;   
 
         // Automatically select the first chat
         if (sessions.Count > 0)
@@ -270,7 +285,12 @@
 
     private async Task SelectSession(ChatSessionResponse session)
     {
-        _selectedSession = session;
+        if(selectedSession?.Id == session.Id)
+        {       
+            return;
+        }
+
+        selectedSession = session;
         _messages = [];
 
         await LoadMessagesAsync(session.Id);
@@ -278,65 +298,59 @@
 
     private async Task LoadMessagesAsync(int sessionId)
     {
-        _loadingMessages = true;
+        loadingMessages = true;
 
-        try
+        var result = await HttpService.GetDataAsync($"/Chat/GetChatMessagesBySessionId/{sessionId}");
+
+        if (result is not null && result.IsSuccessful)
         {
-            var result = await HttpService.GetDataAsync($"/Chat/GetChatMessagesBySessionId/{sessionId}");
+            var messages = result.GetData<List<ChatMessageResponse>>();
 
-            if (result is not null && result.IsSuccessful)
+            if (messages is not null)
             {
-                var messages =
-                    result.GetData<List<ChatMessageResponse>>();
-
-                if (messages is not null)
-                {
-                    _messages = messages;
-                }
+                _messages = messages;
             }
         }
-        finally
-        {
-            _loadingMessages = false;
-        }
+
+        scrollToBottom = true;
+        loadingMessages = false;
+
+        StateHasChanged();
     }
 
     private async Task CreateNewChat()
     {
-        if (_creatingSession)
-            return;
-
-        _creatingSession = true;
-
-        try
+        if (creatingSession)
         {
-            var request = new AddChatSessionRequest
+            return;
+        }
+
+        creatingSession = true;
+
+        var request = new AddChatSessionRequest
+        {
+            Title = "New Chat"
+        };
+
+        var result = await HttpService.PostDataAsync("/Chat/AddSession", request);
+
+        if (result is not null && result.IsSuccessful)
+        {
+            var session = result.GetData<ChatSessionResponse>();
+
+            if (session is not null)
             {
-                Title = "New Chat"
-            };
-
-            var result = await HttpService.PostDataAsync("/Chat/AddSession", request);
-
-            if (result is not null && result.IsSuccessful)
-            {
-                var session = result.GetData<ChatSessionResponse>();
-
-                if (session is not null)
-                {
-                    sessions.Insert(0, session);
-                    await SelectSession(session);
-                }
+                sessions.Insert(0, session);
+                await SelectSession(session);
             }
         }
-        finally
-        {
-            _creatingSession = false;
-        }
+
+        creatingSession = false;       
     }
 
     private async Task SendMessage()
     {
-        if (_sendingMessage || _selectedSession is null || string.IsNullOrWhiteSpace(_messageText))
+        if (sendingMessage || selectedSession is null || string.IsNullOrWhiteSpace(_messageText))
         {
             return;
         }
@@ -344,42 +358,51 @@
         var message = _messageText.Trim();
 
         _messageText = string.Empty;
-        _sendingMessage = true;
+        sendingMessage = true;
 
-        try
+        var request = new AddChatMessageRequest
         {
-            var request = new AddChatMessageRequest
+            ChatSessionId = selectedSession.Id,
+            Content = message
+        };
+
+        // Add user's message to UI immediately
+        _messages.Add(new ChatMessageResponse
+        {
+            ChatSessionId = selectedSession.Id,
+            Role = "user",
+            Content = message,
+            CreatedAt = DateTime.UtcNow
+        });
+
+        scrollToBottom = true;
+
+        StateHasChanged();
+
+        var result = await HttpService.PostDataAsync("/Chat/AddMessage", request);
+
+        if (result is not null && result.IsSuccessful)
+        {
+            var response = result.GetData<ChatMessageResponse>();
+
+            if (response is not null)
             {
-                ChatSessionId = _selectedSession.Id,
-                Content = message
-            };
+                // This is the AI response
+                _messages.Add(response);
 
-            // Add user's message to UI immediately
-            _messages.Add(new ChatMessageResponse
-            {
-                ChatSessionId = _selectedSession.Id,
-                Role = "user",
-                Content = message,
-                CreatedAt = DateTime.UtcNow
-            });
-
-            var result = await HttpService.PostDataAsync("/Chat/AddMessage", request);
-
-            if (result is not null && result.IsSuccessful)
-            {
-                var response = result.GetData<ChatMessageResponse>();
-
-                if (response is not null)
+                // If there is an new title set, change it
+                if (response.NewTitle is not null)
                 {
-                    // This is the AI response
-                    _messages.Add(response);
+                    selectedSession.Title = response.NewTitle;
                 }
+
+                scrollToBottom = true;
+                StateHasChanged();
             }
         }
-        finally
-        {
-            _sendingMessage = false;
-        }
+
+        sendingMessage = false;
+        
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs args)
@@ -387,6 +410,21 @@
         if (args.Key == "Enter" && !args.ShiftKey)
         {
             await SendMessage();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (chatModule is not null)
+        {
+            try
+            {
+                await chatModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // Blazor Server circuit already closed, safe to ignore
+            }
         }
     }
 }

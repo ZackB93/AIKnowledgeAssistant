@@ -32,7 +32,8 @@ namespace KnowledgeAssistant.Application.Data.Configs
             builder.HasIndex(x => new
             {
                 x.ChatSessionId,
-                x.CreatedAt
+                x.CreatedAt,
+                x.Id
             });
         }
     }

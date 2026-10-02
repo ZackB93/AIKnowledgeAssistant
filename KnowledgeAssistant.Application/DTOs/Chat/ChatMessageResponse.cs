@@ -15,6 +15,8 @@ namespace KnowledgeAssistant.Application.DTOs.Chat
 
         public string Content { get; set; } = null!;
 
+        public string? NewTitle { get; set; }
+
         public DateTime CreatedAt { get; set; }
     }
 }
