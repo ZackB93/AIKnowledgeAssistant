@@ -16,4 +16,8 @@
     <ProjectReference Include="..\KnowledgeAssistant.Application\KnowledgeAssistant.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Pages\Users\" />
+  </ItemGroup>
+
 </Project>
