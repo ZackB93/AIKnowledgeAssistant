@@ -104,8 +104,10 @@ namespace KnowledgeAssistant.Application.Services
                 })
                 .ToList();
 
-            // Send the conversation to the AI.
-            var response = await _chatClient.GetResponseAsync(messages);
+            // This is where the AI generates a response based on the conversation history.
+            // The response can take a few seconds due to the AI processing time and model we are using.
+            // You can adjust the model in the appsettings.json file.
+            var response = await _chatClient.GetResponseAsync(messages); 
 
             var assistantContent = response.Text;
 
