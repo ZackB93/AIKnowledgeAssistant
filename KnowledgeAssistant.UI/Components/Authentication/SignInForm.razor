@@ -2,64 +2,64 @@
 @using KnowledgeAssistant.Application.Services
 @using Microsoft.Extensions.Caching.Memory
 
-<div class="sign-in-wrapper">
-<MudPaper Class="pa-8 sign-in-form" Elevation="0">
-    <EditForm FormName="SignInForm" Model="@model" OnValidSubmit="HandleSignIn">
-        <DataAnnotationsValidator />
+<div class="sign-in-wrapper @AnimateBook.FadingEntrances.FadeIn">
+    <MudPaper Class="pa-8 sign-in-form" Elevation="0">
+        <EditForm FormName="SignInForm" Model="@model" OnValidSubmit="HandleSignIn">
+            <DataAnnotationsValidator />
 
-        <MudText Typo="Typo.h5" Class="mb-1" Style="color: #fff; font-weight: 600;">
-            Welcome back
-        </MudText>
+            <MudText Typo="Typo.h5" Class="mb-1" Style="color: #fff; font-weight: 600;">
+                Welcome back
+            </MudText>
 
-        <MudText Typo="Typo.body2" Class="mb-6" Style="color: rgba(255,255,255,0.65);">
-            Sign in to continue to your Knowledge Assistant workspace.
-        </MudText>
+            <MudText Typo="Typo.body2" Class="mb-6" Style="color: rgba(255,255,255,0.65);">
+                Sign in to continue to your Knowledge Assistant workspace.
+            </MudText>
 
-        <MudTextField T="string"
-                      @bind-Value="model.EmailAddress"
-                      For="@(() => model.EmailAddress)"
-                      InputType="InputType.Email"
-                      Placeholder="Email address"
-                      Variant="Variant.Outlined"
-                      Class="mb-4" />
+            <MudTextField T="string"
+                          @bind-Value="model.EmailAddress"
+                          For="@(() => model.EmailAddress)"
+                          InputType="InputType.Email"
+                          Placeholder="Email address"
+                          Variant="Variant.Outlined"
+                          Class="mb-4" />
 
-        <MudTextField T="string"
-                      @bind-Value="model.Password"
-                      For="@(() => model.Password)"
-                      Placeholder="Enter password"
-                      InputType="@passwordInputType"
-                      Variant="Variant.Outlined"
-                      Adornment="Adornment.End"
-                      AdornmentIcon="@passwordInputIcon"
-                      OnAdornmentClick="TogglePasswordVisibility"
-                      AdornmentAriaLabel="Show/Hide Password"
-                      Class="mb-2" />
+            <MudTextField T="string"
+                          @bind-Value="model.Password"
+                          For="@(() => model.Password)"
+                          Placeholder="Enter password"
+                          InputType="@passwordInputType"
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@passwordInputIcon"
+                          OnAdornmentClick="TogglePasswordVisibility"
+                          AdornmentAriaLabel="Show/Hide Password"
+                          Class="mb-2" />
 
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <MudAlert Severity="Severity.Error" Class="mb-4" Dense="true">@errorMessage</MudAlert>
-        }
-
-        <MudButton ButtonType="ButtonType.Submit"
-                   Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   FullWidth="true"
-                   Size="Size.Large"
-                   Style="margin-top: 15px;"
-                   Disabled="@isSubmitting">
-
-            @if (isSubmitting)
+            @if (!string.IsNullOrEmpty(errorMessage))
             {
-                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-                <MudText Class="ms-2">Signing in...</MudText>
+                <MudAlert Severity="Severity.Error" Class="mb-4" Dense="true">@errorMessage</MudAlert>
             }
-            else
-            {
-                <MudText>Sign In</MudText>
-            }
-        </MudButton>
-    </EditForm>
-</MudPaper>
+
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       FullWidth="true"
+                       Size="Size.Large"
+                       Style="margin-top: 15px;"
+                       Disabled="@isSubmitting">
+
+                @if (isSubmitting)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Signing in...</MudText>
+                }
+                else
+                {
+                    <MudText>Sign In</MudText>
+                }
+            </MudButton>
+        </EditForm>
+    </MudPaper>
 </div>
 
 @code {
