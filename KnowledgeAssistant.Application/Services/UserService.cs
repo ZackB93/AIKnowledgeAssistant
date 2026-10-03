@@ -27,13 +27,21 @@ namespace KnowledgeAssistant.Application.Services
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly ITokenService _tokenService;
         private readonly IEmailService _emailService;
+        private readonly ICacheService _cacheService;
+        private static string userCacheKey(int userId) => $"user_{userId}";
 
-        public UserService(KnowledgeContext context, IPasswordHasher<User> passwordHasher, ITokenService tokenService, IEmailService emailService)
+        public UserService(
+            KnowledgeContext context,
+            IPasswordHasher<User> passwordHasher,
+            ITokenService tokenService,
+            IEmailService emailService,
+            ICacheService cacheService)
         {
             _context = context;
             _passwordHasher = passwordHasher;
             _tokenService = tokenService;
             _emailService = emailService;
+            _cacheService = cacheService;
         }
 
         public async Task<SignInResponse> SignInAsync(SignIn SignIn)
@@ -205,7 +213,10 @@ namespace KnowledgeAssistant.Application.Services
 
         public async Task<UserResponse?> GetUserDetailsAsync(int UserId)
         {
-            var User = await _context.Users
+            var cachedUser = _cacheService.GetFromCache<UserResponse>(userCacheKey(UserId));
+            if (cachedUser is not null) return cachedUser;
+
+            var user = await _context.Users
                 .AsNoTracking()
                 .Include(x => x.Credentials)
                 .Select(x => new UserResponse
@@ -236,7 +247,12 @@ namespace KnowledgeAssistant.Application.Services
                     .ToList()
                 }).FirstOrDefaultAsync(x => x.Id == UserId);
 
-            return User;
+            if(user is not null)
+            {
+                _cacheService.SaveToCache(userCacheKey(user.Id), user, TimeSpan.FromHours(1));
+            }
+
+            return user;
         }
 
         public async Task<UserResponse> AddUserAsync(CreateUserRequest User)
@@ -335,6 +351,8 @@ namespace KnowledgeAssistant.Application.Services
                 .ToList();
 
             await _context.SaveChangesAsync();
+
+            _cacheService.RemoveFromCache(userCacheKey(User.Id));
 
             return new UserResponse
             {

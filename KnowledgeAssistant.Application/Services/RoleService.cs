@@ -16,10 +16,14 @@ namespace KnowledgeAssistant.Application.Services
     public class RoleService : IRoleService
     {
         private readonly KnowledgeContext _context;
+        private readonly ICacheService _cacheService;
+        private const string rolesCacheKey = "roles";
+        private static string roleCacheKey(int id) => $"role_{id}";
 
-        public RoleService(KnowledgeContext context)
+        public RoleService(KnowledgeContext context, ICacheService cacheService)
         {
             _context = context;
+            _cacheService = cacheService;
         }
  
         public async Task<RoleResponse> CreateRoleAsync(CreateRoleRequest request)
@@ -33,6 +37,8 @@ namespace KnowledgeAssistant.Application.Services
             _context.Roles.Add(role);
 
             await _context.SaveChangesAsync();
+
+            _cacheService.RemoveFromCache(rolesCacheKey);
 
             return new RoleResponse
             {
@@ -58,6 +64,9 @@ namespace KnowledgeAssistant.Application.Services
 
             await _context.SaveChangesAsync();
 
+            _cacheService.RemoveFromCache(rolesCacheKey);
+            _cacheService.RemoveFromCache(roleCacheKey(role.Id));
+
             return new RoleResponse
             {
                 Id = role.Id,
@@ -69,7 +78,10 @@ namespace KnowledgeAssistant.Application.Services
 
         public async Task<List<RoleResponse>> GetRolesAsync()
         {
-            return await _context.Roles
+            var cachedRoles = _cacheService.GetFromCache<List<RoleResponse>>(rolesCacheKey);
+            if (cachedRoles is not null) return cachedRoles;
+
+            var roles = await _context.Roles
                 .AsNoTracking()
                 .OrderBy(x => x.Name)
                 .Select(x => new RoleResponse
@@ -80,11 +92,18 @@ namespace KnowledgeAssistant.Application.Services
                     CreatedDateTime = x.CreatedDateTime
                 })
                 .ToListAsync();
+
+            _cacheService.SaveToCache(rolesCacheKey, roles, TimeSpan.FromHours(1));
+
+            return roles;
         }
 
         public async Task<RoleResponse?> GetRoleByIdAsync(int id)
         {
-            return await _context.Roles
+            var cachedRole = _cacheService.GetFromCache<RoleResponse>(roleCacheKey(id));
+            if (cachedRole is not null) return cachedRole;
+
+            var role = await _context.Roles
                 .AsNoTracking()
                 .Where(x => x.Id == id)
                 .Select(x => new RoleResponse
@@ -95,6 +114,10 @@ namespace KnowledgeAssistant.Application.Services
                     CreatedDateTime = x.CreatedDateTime
                 })
                 .FirstOrDefaultAsync();
+
+            _cacheService.SaveToCache(roleCacheKey(id), role, TimeSpan.FromHours(1));
+
+            return role;
         }
     }
 }
