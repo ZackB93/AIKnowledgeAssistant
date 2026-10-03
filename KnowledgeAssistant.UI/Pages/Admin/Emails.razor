@@ -3,7 +3,7 @@
 @using KnowledgeAssistant.Application.Services
 
 @page "/emails"
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Admin")]
 
 <PageTitle>Knowledge Assistant - Emails</PageTitle>
 

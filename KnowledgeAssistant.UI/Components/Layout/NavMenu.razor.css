@@ -51,3 +51,15 @@
     font-size: 11px;
     color: rgba(255,255,255,0.45);
 }
+
+::deep .knowledge-nav .mud-nav-group {
+    color: rgba(255,255,255,0.75);
+}
+
+::deep .knowledge-nav .mud-nav-group .mud-nav-link {
+    color: rgba(255,255,255,0.75);
+}
+
+::deep .knowledge-nav .mud-nav-group .mud-nav-link .mud-icon-root {
+    color: rgba(255,255,255,0.7);
+}
