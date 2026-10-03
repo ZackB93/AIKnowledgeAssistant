@@ -15,7 +15,11 @@ namespace KnowledgeAssistant.Application.Services
     public class TokenService : ITokenService
     {
         private readonly IConfiguration _config;
-        public TokenService(IConfiguration config) => _config = config;
+
+        public TokenService(IConfiguration config)
+        {
+            _config = config;
+        }
 
         public string GenerateToken(string userId, string username, IEnumerable<string>? roles = null)
         {
@@ -31,7 +35,9 @@ namespace KnowledgeAssistant.Application.Services
             };
 
             if (roles != null)
+            {
                 claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+            }
 
             var token = new JwtSecurityToken(
                 issuer: jwtSettings["Issuer"],

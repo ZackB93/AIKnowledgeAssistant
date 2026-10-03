@@ -35,6 +35,11 @@ namespace KnowledgeAssistant.UI.Helpers
                     new("access_token_expires", new DateTimeOffset(TokenExpires, TimeSpan.Zero).ToUnixTimeSeconds().ToString()),
                 };
 
+                if (session.User.Roles is not null)
+                {
+                    claims.AddRange(session.User.Roles.Select(x => new Claim(ClaimTypes.Role, x.Role.Name)));
+                }
+
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var principal = new ClaimsPrincipal(identity);
 

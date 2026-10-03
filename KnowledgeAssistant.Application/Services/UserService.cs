@@ -42,6 +42,8 @@ namespace KnowledgeAssistant.Application.Services
             var Credentials = await _context.UserCredentials
                 .AsNoTracking()
                 .Include(x => x.User)
+                .ThenInclude(x => x.UserRoles)
+                .ThenInclude(x => x.Role)
                 .FirstOrDefaultAsync(x => x.EmailAddress == SignIn.EmailAddress);
 
             // Don't reveal whether the email exists
@@ -68,7 +70,8 @@ namespace KnowledgeAssistant.Application.Services
             var PasswordResult = _passwordHasher.VerifyHashedPassword(
                 Credentials.User,
                 Credentials.PasswordHash,
-                SignIn.Password);
+                SignIn.Password
+            );
 
             if (PasswordResult == PasswordVerificationResult.Failed)
             {
@@ -86,7 +89,11 @@ namespace KnowledgeAssistant.Application.Services
                 await _context.SaveChangesAsync();
             }
 
-            var Token = _tokenService.GenerateToken(userId: Credentials.User.Id.ToString(), username: Credentials.User.FirstName);
+            var Token = _tokenService.GenerateToken(
+                userId: Credentials.User.Id.ToString(),
+                username: Credentials.User.FirstName,
+                roles: Credentials.User.UserRoles.Select(x => x.Role.Name).ToList()
+            );
                 
             return new SignInResponse
             {
@@ -98,7 +105,19 @@ namespace KnowledgeAssistant.Application.Services
                     Id = Credentials.User.Id,
                     FirstName = Credentials.User.FirstName,
                     LastName = Credentials.User.LastName,
-                    Email = Credentials.EmailAddress
+                    Email = Credentials.EmailAddress,
+                    Roles = Credentials.User.UserRoles
+                        .Select(ur => new UserRoleResponse
+                        {
+                            RoleId = ur.Role.Id,
+                            Role = new RoleResponse
+                            {
+                                Id = ur.Role.Id,
+                                Name = ur.Role.Name,
+                                Description = ur.Role.Description
+                            }
+                        })
+                        .ToList()
                 }
             };
         }
