@@ -27,6 +27,16 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod(); // Required for POST and OPTIONS preflight
+    });
+});
+
 // HTTP client
 builder.Services.AddHttpClient("ExternalClient", client =>
 {
@@ -45,6 +55,7 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);

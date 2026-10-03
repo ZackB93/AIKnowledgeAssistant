@@ -1,7 +1,7 @@
 ﻿@using KnowledgeAssistant.Application.DTOs.API
 @using KnowledgeAssistant.Application.DTOs.Roles
 @using KnowledgeAssistant.Application.Services
-
+@using System.ComponentModel.DataAnnotations
 
 @page "/roles"
 @attribute [Authorize(Roles = "Admin")]
@@ -91,42 +91,63 @@
 <Modal @bind-Visible="@(RoleModalVisible)" Title=@(SelectedRole?.Id == -1 ? "Add New Role" : "Edit Role") ShowCloseButton="true">
     @if (SelectedRole is not null)
     {
+         <MudForm @ref="_form" Model="_viewModel" Validation="@_validator.ValidateValue">
 
+            <MudTextField @bind-Value="_viewModel.Name"
+                          For="@(() => _viewModel.Name)"
+                          Label="Role Name"
+                          Variant="Variant.Outlined" />
+
+            <MudTextField @bind-Value="_viewModel.Description"
+                          For="@(() => _viewModel.Description)"
+                          Label="Description"
+                          Variant="Variant.Outlined" />
+        </MudForm>
+
+           <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4" Spacing="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="@Saving">
+                    <MudText>@(SelectedRole.Id == -1 ? "Create Role" : "Save Changes")</MudText>
+                </MudButton>
+            </MudStack>
     }
 </Modal>
 
 @code
-{
+    {
     [Inject]
     private IHttpService HttpService { get; set; } = null!;
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
 
+    [Inject]
+    private ICacheService CacheService { get; set; } = null!;
+
     private MudTable<RoleResponse>? Table;
     private RoleResponse? SelectedRole;
     private bool RoleModalVisible = false;
+    private bool Saving = false;
 
-    private async Task<TableData<RoleResponse>> LoadRoles(TableState State, CancellationToken CancellationToken)
+    private MudForm _form = null!;
+    private readonly RoleViewModelValidator _validator = new();
+    private RoleViewModel _viewModel = new();
+
+    private async Task<TableData<RoleResponse>> LoadRoles(TableState state, CancellationToken cancellationToken)
     {
-        var PageNumber = State.Page + 1;
-        var PageSize = State.PageSize;
+        var response = await HttpService.GetDataAsync("/Role/GetAll", CancellationToken: cancellationToken);
 
-        var Response = await HttpService.GetDataAsync($"/Role/GetAll?PageNumber={PageNumber}&PageSize={PageSize}",
-            CancellationToken: CancellationToken);
-
-        if (Response.IsSuccessful && Response.Data is not null)
+        if (response.IsSuccessful && response.Data is not null)
         {
-            var PaginatedResponse = Response.GetData<PaginatedResponse<RoleResponse>>();
+            var roles = response.GetData<List<RoleResponse>>() ?? new();
 
             return new TableData<RoleResponse>
             {
-                Items = PaginatedResponse?.Items ?? [],
-                TotalItems = PaginatedResponse?.TotalCount ?? 0
+                Items = roles,
+                TotalItems = roles.Count
             };
         }
 
-        Snackbar.Add("An error has occurred loading roles!", Severity.Error);
+        Snackbar.Add("An error occurred loading roles!", Severity.Error);
 
         return new TableData<RoleResponse>
         {
@@ -135,8 +156,53 @@
         };
     }
 
+    private async Task Save()
+    {
+        await _form.ValidateAsync();
+
+        if (!_form.IsValid)
+        {
+            Snackbar.Add("Please populate any required fields!", Severity.Error);
+            return;
+        }
+
+        Saving = true;
+
+        var Response = SelectedRole?.Id == -1 ? 
+            await HttpService.PostDataAsync("/Role/Create", MapToCreateModel(_viewModel)) :
+            await HttpService.PostDataAsync("/Role/Update", MapToUpdateModel(_viewModel));
+
+        if (Response.IsSuccessful && Response.Data is not null)
+        { 
+            var Role = Response.GetData<RoleResponse>()!;
+
+            if (SelectedRole?.Id == -1)
+            { 
+                //RoleId = Role.Id;
+            }
+
+            _viewModel = MapToViewModel(Role);
+            CacheService.RemoveFromCache($"Role:{Role.Id}");
+
+            await OnRoleSaved();
+
+            Snackbar.Add("Successfully saved!", Severity.Success);
+        }
+        else
+        { 
+            Snackbar.Add("An error occurred whilst saving!", Severity.Error);
+        }
+
+        Saving = false;
+    }
+
     private void ToggleRoleModal(RoleResponse? Role)
     {
+        if(Role is not null)
+        {
+             _viewModel = MapToViewModel(Role);
+        }
+
         SelectedRole = Role;
         RoleModalVisible = !RoleModalVisible;
     }
@@ -147,5 +213,61 @@
 
         RoleModalVisible = false;
         SelectedRole = null;
+    }
+
+    private static RoleViewModel MapToViewModel(RoleResponse dto) => new()
+    {
+        Id = dto.Id,
+        Name = dto.Name,
+        Description = dto.Description,
+        CreatedDateTime = dto.CreatedDateTime
+    };
+
+    private static UpdateRoleRequest MapToUpdateModel(RoleViewModel model) => new()
+    {
+        Id = model.Id,
+        Name = model.Name,
+        Description = model.Description,
+    };
+
+    private static CreateRoleRequest MapToCreateModel(RoleViewModel model) => new()
+    {
+        Name = model.Name,
+        Description = model.Description,
+    };
+
+    private class RoleViewModelValidator
+    {
+        public IEnumerable<string> ValidateValue(object model, string propertyName)
+        {
+            var property = model.GetType().GetProperty(propertyName);
+            if (property is null)
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            var value = property.GetValue(model);
+            var context = new ValidationContext(model)
+            {
+                MemberName = propertyName
+            };
+
+            var results = new List<ValidationResult>();
+            Validator.TryValidateProperty(value, context, results);
+
+            return results.Select(r => r.ErrorMessage ?? "Invalid value");
+        }
+    }
+
+    private class RoleViewModel
+    {
+        public int Id {get; set;} 
+
+        [Required(ErrorMessage = "Role name is required.")]
+        public string Name { get; set; } = string.Empty;
+
+        public string? Description { get; set; }
+
+        public DateTime CreatedDateTime { get; set; }
     }
 }

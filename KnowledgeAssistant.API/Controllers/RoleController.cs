@@ -18,7 +18,7 @@ namespace KnowledgeAssistant.API.Controllers
         }
 
         [HttpPost("Create")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> CreateRole(CreateRoleRequest request)
         {
             var role = await _roleService.CreateRoleAsync(request);
@@ -30,8 +30,8 @@ namespace KnowledgeAssistant.API.Controllers
             });
         }
 
-        [HttpPut("Update")]
-        [Authorize]
+        [HttpPost("Update")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> UpdateRole(UpdateRoleRequest request)
         {
             var role = await _roleService.GetRoleByIdAsync(request.Id);
@@ -55,7 +55,7 @@ namespace KnowledgeAssistant.API.Controllers
         }
 
         [HttpGet("GetAll")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> GetRoles()
         {
             var roles = await _roleService.GetRolesAsync();
@@ -68,7 +68,7 @@ namespace KnowledgeAssistant.API.Controllers
         }
 
         [HttpGet("GetById/{id}")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> GetRoleById(int id)
         {
             var role = await _roleService.GetRoleByIdAsync(id);

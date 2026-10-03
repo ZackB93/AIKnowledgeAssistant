@@ -65,7 +65,7 @@ namespace KnowledgeAssistant.API.Controllers
         }
 
         [HttpGet("GetAll")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> GetUsers(int PageNumber, int? PageSize = 10)
         {
             var Users = await _userService.GetUsersAsync(PageNumber, (int)PageSize!);
@@ -78,7 +78,7 @@ namespace KnowledgeAssistant.API.Controllers
         }
 
         [HttpGet("Search")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> Search(string SearchTerm, int PageNumber, int? PageSize = 10)
         {
             var SearchedUsers = await _userService.SearchUsersAsync(SearchTerm, PageNumber, (int)PageSize!);
@@ -91,7 +91,7 @@ namespace KnowledgeAssistant.API.Controllers
         }
 
         [HttpPost("Create")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> Create(CreateUserRequest Request)
         {
             var addedUser = await _userService.AddUserAsync(Request);
@@ -106,7 +106,7 @@ namespace KnowledgeAssistant.API.Controllers
         }
 
         [HttpPost("Update")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> Update(UpdateUserRequest Request)
         {
             var UpdatedUser = await _userService.UpdateUserAsync(Request);
@@ -119,7 +119,7 @@ namespace KnowledgeAssistant.API.Controllers
         }
 
         [HttpGet("Exists")]
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> Exists(string Email)
         {
             if (string.IsNullOrWhiteSpace(Email))
