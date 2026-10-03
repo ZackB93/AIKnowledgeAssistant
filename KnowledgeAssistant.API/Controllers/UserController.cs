@@ -101,6 +101,7 @@ namespace KnowledgeAssistant.API.Controllers
                 Data = addedUser,
                 Message = "User created successfully."
             };
+
             return CreatedAtAction(nameof(GetUserDetails), new { id = addedUser.Id }, result);
         }
 

@@ -19,7 +19,6 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.Extensions.AI;
 using OpenAI.Chat;
-using static KnowledgeAssistant.API.BackgroundServices.RabbitMQBackgroundService;
 
 var builder = WebApplication.CreateBuilder(args);
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -132,6 +131,7 @@ builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IRabbitMQService, RabbitMQService>();
 builder.Services.AddScoped<IMessageHandler<SendEmailMessage>, SendEmailHandler>();
 builder.Services.AddSingleton<IResend>(ResendClient.Create(builder.Configuration["Resend:Key"]!));

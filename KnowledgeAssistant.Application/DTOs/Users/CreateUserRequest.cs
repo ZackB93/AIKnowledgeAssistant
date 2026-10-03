@@ -50,5 +50,4 @@ namespace KnowledgeAssistant.Application.DTOs.Users
 
         public List<UserRole> Roles { get; set; } = new List<UserRole>();
     }
-    }
 }

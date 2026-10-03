@@ -19,6 +19,6 @@ namespace KnowledgeAssistant.Application.DTOs.Users
         public bool Enabled { get; set; } = true;
         public DateTime CreatedDateTime { get; set; }
         public bool IsDeleted { get; set; } = false;
-        public List<UserRole> Roles { get; set; } = new();
+        public List<UserRoleResponse> Roles { get; set; } = new();
     }
 }

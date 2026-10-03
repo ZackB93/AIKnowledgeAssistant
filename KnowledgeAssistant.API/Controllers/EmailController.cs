@@ -11,16 +11,16 @@ namespace KnowledgeAssistant.API.Controllers
     {
         private readonly IEmailService _emailService;
 
-        public EmailController(IEmailService EmailService)
+        public EmailController(IEmailService emailService)
         {
-            _emailService = EmailService;
+            _emailService = emailService;
         }
   
         [HttpGet("GetById/{Id}")]
         [Authorize]
-        public async Task<ActionResult<ApiResult>> GetEmail(int Id)
+        public async Task<ActionResult<ApiResult>> GetEmail(int id)
         {
-            var email = await _emailService.GetEmailByIdAsync(Id);
+            var email = await _emailService.GetEmailByIdAsync(id);
 
             if (email is null)
             {
@@ -62,9 +62,9 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpGet("GetAll")]
         [Authorize]
-        public async Task<ActionResult<ApiResult>> GetEmails(int PageNumber, int? PageSize = 10)
+        public async Task<ActionResult<ApiResult>> GetEmails(int pageNumber, int? pageSize = 10)
         {
-            var emails = await _emailService.GetEmailsAsync(PageNumber, (int)PageSize!);
+            var emails = await _emailService.GetEmailsAsync(pageNumber, (int)pageSize!);
 
             return Ok(new ApiResult()
             {

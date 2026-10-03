@@ -2,6 +2,7 @@
 using KnowledgeAssistant.Application.Data.Context;
 using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Authentication;
+using KnowledgeAssistant.Application.DTOs.Roles;
 using KnowledgeAssistant.Application.DTOs.Users;
 using KnowledgeAssistant.Application.Entities.Users;
 using Microsoft.AspNetCore.Identity;
@@ -115,6 +116,7 @@ namespace KnowledgeAssistant.Application.Services
 
             var Users = await _context.Users
                 .AsNoTracking()
+                .Include(x => x.UserRoles)
                 .OrderBy(x => x.Id)
                 .Skip((PageNumber - 1) * PageSize)
                 .Take(PageSize)
@@ -200,7 +202,19 @@ namespace KnowledgeAssistant.Application.Services
                     Location = x.Location,
                     Enabled = x.Enabled,
                     IsDeleted = x.IsDeleted,
-                    CreatedDateTime = x.CreatedDateTime
+                    CreatedDateTime = x.CreatedDateTime,
+                    Roles = x.UserRoles
+                    .Select(ur => new UserRoleResponse
+                    {
+                        RoleId = ur.Role.Id,
+                        Role = new RoleResponse
+                        {
+                            Id = ur.Role.Id,
+                            Name = ur.Role.Name,
+                            Description = ur.Role.Description
+                        }
+                    })
+                    .ToList()
                 }).FirstOrDefaultAsync(x => x.Id == UserId);
 
             return User;
@@ -234,6 +248,13 @@ namespace KnowledgeAssistant.Application.Services
                 PasswordHash = _passwordHasher.HashPassword(NewUser, User.Password)
             };
 
+            NewUser.UserRoles = User.Roles.Select(role => new UserRole
+            {
+                RoleId = role.RoleId,
+                User = NewUser
+            })
+            .ToList();
+
             _context.Users.Add(NewUser);
 
             await _context.SaveChangesAsync();
@@ -266,6 +287,7 @@ namespace KnowledgeAssistant.Application.Services
         {
             var User = await _context.Users
                 .Include(x => x.Credentials)
+                .Include(x => x.UserRoles)
                 .FirstOrDefaultAsync(x => x.Id == Request.Id);
 
             if (User is null)
@@ -282,6 +304,17 @@ namespace KnowledgeAssistant.Application.Services
             User.Location = Request.Location;
             User.Enabled = Request.Enabled;
 
+            // Replace existing roles
+            User.UserRoles.Clear();
+
+            User.UserRoles = Request.Roles
+                .Select(role => new UserRole
+                {
+                    UserId = User.Id,
+                    RoleId = role.RoleId
+                })
+                .ToList();
+
             await _context.SaveChangesAsync();
 
             return new UserResponse
@@ -297,7 +330,19 @@ namespace KnowledgeAssistant.Application.Services
                 Location = User.Location,
                 Enabled = User.Enabled,
                 IsDeleted = User.IsDeleted,
-                CreatedDateTime = User.CreatedDateTime
+                CreatedDateTime = User.CreatedDateTime,
+                Roles = User.UserRoles
+                .Select(ur => new UserRoleResponse
+                {
+                    RoleId = ur.RoleId,
+                    Role = new RoleResponse
+                    {
+                        Id = ur.Role.Id,
+                        Name = ur.Role.Name,
+                        Description = ur.Role.Description
+                    }
+                })
+                .ToList()
             };
         }
         
