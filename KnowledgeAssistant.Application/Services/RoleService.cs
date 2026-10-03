@@ -7,10 +7,10 @@ namespace KnowledgeAssistant.Application.Services
 {
     public interface IRoleService
     {
-        Task<RoleResponse> CreateRoleAsync(CreateRoleRequest Request);
-        Task<RoleResponse?> UpdateRoleAsync(UpdateRoleRequest Request);
+        Task<RoleResponse> CreateRoleAsync(CreateRoleRequest request);
+        Task<RoleResponse?> UpdateRoleAsync(UpdateRoleRequest request);
         Task<List<RoleResponse>> GetRolesAsync();
-        Task<RoleResponse?> GetRoleByIdAsync(int Id);
+        Task<RoleResponse?> GetRoleByIdAsync(int id);
     }
 
     public class RoleService : IRoleService
@@ -22,12 +22,12 @@ namespace KnowledgeAssistant.Application.Services
             _context = context;
         }
  
-        public async Task<RoleResponse> CreateRoleAsync(CreateRoleRequest Request)
+        public async Task<RoleResponse> CreateRoleAsync(CreateRoleRequest request)
         {
             var role = new Role
             {
-                Name = Request.Name.Trim(),
-                Description = Request.Description.Trim()
+                Name = request.Name.Trim(),
+                Description = request.Description.Trim()
             };
 
             _context.Roles.Add(role);
@@ -38,22 +38,23 @@ namespace KnowledgeAssistant.Application.Services
             {
                 Id = role.Id,
                 Name = role.Name,
-                Description = role.Description
+                Description = role.Description,
+                CreatedDateTime = role.CreatedDateTime
             };
         }
 
-        public async Task<RoleResponse?> UpdateRoleAsync(UpdateRoleRequest Request)
+        public async Task<RoleResponse?> UpdateRoleAsync(UpdateRoleRequest request)
         {
             var role = await _context.Roles
-                .FirstOrDefaultAsync(x => x.Id == Request.Id);
+                .FirstOrDefaultAsync(x => x.Id == request.Id);
 
             if (role is null)
             {
                 return null;
             }
 
-            role.Name = Request.Name.Trim();
-            role.Description = Request.Description?.Trim();
+            role.Name = request.Name.Trim();
+            role.Description = request.Description?.Trim();
 
             await _context.SaveChangesAsync();
 
@@ -61,7 +62,8 @@ namespace KnowledgeAssistant.Application.Services
             {
                 Id = role.Id,
                 Name = role.Name,
-                Description = role.Description
+                Description = role.Description,
+                CreatedDateTime = role.CreatedDateTime
             };
         }
 
@@ -74,21 +76,23 @@ namespace KnowledgeAssistant.Application.Services
                 {
                     Id = x.Id,
                     Name = x.Name,
-                    Description = x.Description
+                    Description = x.Description,
+                    CreatedDateTime = x.CreatedDateTime
                 })
                 .ToListAsync();
         }
 
-        public async Task<RoleResponse?> GetRoleByIdAsync(int Id)
+        public async Task<RoleResponse?> GetRoleByIdAsync(int id)
         {
             return await _context.Roles
                 .AsNoTracking()
-                .Where(x => x.Id == Id)
+                .Where(x => x.Id == id)
                 .Select(x => new RoleResponse
                 {
                     Id = x.Id,
                     Name = x.Name,
-                    Description = x.Description
+                    Description = x.Description,
+                    CreatedDateTime = x.CreatedDateTime
                 })
                 .FirstOrDefaultAsync();
         }

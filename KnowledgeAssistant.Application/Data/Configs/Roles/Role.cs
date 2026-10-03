@@ -27,19 +27,23 @@ namespace KnowledgeAssistant.Application.Data.Configs.Roles
             builder.Property(r => r.Description)
                 .HasMaxLength(250);
 
-            builder.HasData(new Role
-            {
+            builder.Property(x => x.CreatedDateTime)
+                .IsRequired()
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            builder.HasData(new Role {
                 Id = 1,
                 Name = "Admin",
-                Description = "Administrator with full system access"
+                Description = "Administrator with full system access",
+                CreatedDateTime = new DateTime(2026, 10, 3)
             },
-                new Role
-                {
-                    Id = 2,
-                    Name = "User",
-                    Description = "Standard system user"
-                }
-            );
+            new Role
+            {
+                Id = 2,
+                Name = "User",
+                Description = "Standard system user",
+                CreatedDateTime = new DateTime(2026, 10, 3)
+            });
         }
     }
 }

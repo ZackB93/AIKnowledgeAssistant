@@ -1,0 +1,151 @@
+﻿@using KnowledgeAssistant.Application.DTOs.API
+@using KnowledgeAssistant.Application.DTOs.Roles
+@using KnowledgeAssistant.Application.Services
+
+
+@page "/roles"
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Knowledge Assistant - Roles</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudPaper Class="pa-4 glass-card">
+
+        <MudText Typo="Typo.h5" Class="mb-2">System Roles</MudText>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   FullWidth="false"
+                   StartIcon="@Icons.Material.Filled.AddCircle"
+                   Size="Size.Small"
+                   OnClick="() => ToggleRoleModal(new(){ Id = -1 })"
+                   Class="mb-2">
+
+            <MudText>Add New Role</MudText>
+        </MudButton>
+
+        <MudTable @ref="Table"
+                  ServerData="LoadRoles"
+                  Hover="true"
+                  Dense="true"
+                  Striped="true"
+                  Bordered="true">
+
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh>Created</MudTh>
+                <MudTh>Name</MudTh>
+                <MudTh>Description</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd DataLabel="ID">@context.Id</MudTd>
+
+                <MudTd DataLabel="Created">
+                    @context.CreatedDateTime.ToString("dd/MM/yyyy hh:mm tt")
+                </MudTd>
+
+                <MudTd DataLabel="Name">
+                    @context.Name
+                </MudTd>
+
+                <MudTd DataLabel="Description">
+                    @context.Description
+                </MudTd>
+
+                <MudTd>
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               FullWidth="false"
+                               StartIcon="@Icons.Material.Filled.Edit"
+                               OnClick="() => ToggleRoleModal(context)"
+                               Size="Size.Small">
+
+                        <MudText>Edit</MudText>
+                    </MudButton>
+                </MudTd>
+            </RowTemplate>
+
+            <LoadingContent>
+                <div class="d-flex justify-center table-state-bg">
+                    <LoadingSpinner />
+                </div>
+            </LoadingContent>
+
+            <NoRecordsContent>
+                <MudText Class="table-state-bg">
+                    No roles found
+                </MudText>
+            </NoRecordsContent>
+
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
+            </PagerContent>
+
+        </MudTable>
+
+    </MudPaper>
+</MudContainer>
+
+<Modal @bind-Visible="@(RoleModalVisible)" Title=@(SelectedRole?.Id == -1 ? "Add New Role" : "Edit Role") ShowCloseButton="true">
+    @if (SelectedRole is not null)
+    {
+
+    }
+</Modal>
+
+@code
+{
+    [Inject]
+    private IHttpService HttpService { get; set; } = null!;
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = null!;
+
+    private MudTable<RoleResponse>? Table;
+    private RoleResponse? SelectedRole;
+    private bool RoleModalVisible = false;
+
+    private async Task<TableData<RoleResponse>> LoadRoles(TableState State, CancellationToken CancellationToken)
+    {
+        var PageNumber = State.Page + 1;
+        var PageSize = State.PageSize;
+
+        var Response = await HttpService.GetDataAsync($"/Role/GetAll?PageNumber={PageNumber}&PageSize={PageSize}",
+            CancellationToken: CancellationToken);
+
+        if (Response.IsSuccessful && Response.Data is not null)
+        {
+            var PaginatedResponse = Response.GetData<PaginatedResponse<RoleResponse>>();
+
+            return new TableData<RoleResponse>
+            {
+                Items = PaginatedResponse?.Items ?? [],
+                TotalItems = PaginatedResponse?.TotalCount ?? 0
+            };
+        }
+
+        Snackbar.Add("An error has occurred loading roles!", Severity.Error);
+
+        return new TableData<RoleResponse>
+        {
+            Items = [],
+            TotalItems = 0
+        };
+    }
+
+    private void ToggleRoleModal(RoleResponse? Role)
+    {
+        SelectedRole = Role;
+        RoleModalVisible = !RoleModalVisible;
+    }
+
+    private async Task OnRoleSaved()
+    {
+        await Table!.ReloadServerData();
+
+        RoleModalVisible = false;
+        SelectedRole = null;
+    }
+}
