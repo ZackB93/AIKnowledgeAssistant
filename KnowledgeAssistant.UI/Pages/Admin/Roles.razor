@@ -113,7 +113,7 @@
 </Modal>
 
 @code
-{
+    {
     [Inject]
     private IHttpService HttpService { get; set; } = null!;
 
@@ -134,17 +134,26 @@
 
     private async Task<TableData<RoleResponse>> LoadRoles(TableState state, CancellationToken cancellationToken)
     {
+        var cachedData = CacheService.GetFromCache<TableData<RoleResponse>>("roles");
+        if (cachedData is not null)
+        {
+            return cachedData;
+        }
+
         var response = await HttpService.GetDataAsync("/Role/GetAll", CancellationToken: cancellationToken);
 
         if (response.IsSuccessful && response.Data is not null)
         {
             var roles = response.GetData<List<RoleResponse>>() ?? new();
-
-            return new TableData<RoleResponse>
+            var tableData = new TableData<RoleResponse>
             {
                 Items = roles,
                 TotalItems = roles.Count
             };
+
+            CacheService.SaveToCache("roles", tableData, TimeSpan.FromHours(1));
+
+            return tableData;
         }
 
         Snackbar.Add("An error occurred loading roles!", Severity.Error);
@@ -176,13 +185,8 @@
         { 
             var Role = Response.GetData<RoleResponse>()!;
 
-            if (SelectedRole?.Id == -1)
-            { 
-                //RoleId = Role.Id;
-            }
-
             _viewModel = MapToViewModel(Role);
-            CacheService.RemoveFromCache($"Role:{Role.Id}");
+            CacheService.RemoveFromCache("roles");
 
             await OnRoleSaved();
 
