@@ -44,18 +44,29 @@ namespace KnowledgeAssistant.Application.Services
             _cacheService = cacheService;
         }
 
-        public async Task<SignInResponse> SignInAsync(SignIn SignIn)
+        public async Task<SignInResponse> SignInAsync(SignIn request)
         {
-            // Find credentials and associated userI w
-            var Credentials = await _context.UserCredentials
+            var credentials = await _context.UserCredentials
                 .AsNoTracking()
-                .Include(x => x.User)
-                .ThenInclude(x => x.UserRoles)
-                .ThenInclude(x => x.Role)
-                .FirstOrDefaultAsync(x => x.EmailAddress == SignIn.EmailAddress);
+                .Where(x => x.EmailAddress == request.EmailAddress)
+                .Select(x => new
+                {
+                    x.UserId,
+                    x.EmailAddress,
+                    x.PasswordHash,
+                    x.User,
+                    Roles = x.User.UserRoles
+                        .Select(ur => new RoleResponse
+                        {
+                            Id = ur.Role.Id,
+                            Name = ur.Role.Name,
+                            Description = ur.Role.Description
+                        })
+                        .ToList()
+                })
+                .FirstOrDefaultAsync();
 
-            // Don't reveal whether the email exists
-            if (Credentials is null)
+            if (credentials is null)
             {
                 return new SignInResponse
                 {
@@ -64,8 +75,7 @@ namespace KnowledgeAssistant.Application.Services
                 };
             }
 
-            // Check whether account is available
-            if (!Credentials.User.Enabled || Credentials.User.IsDeleted)
+            if (!credentials.User.Enabled || credentials.User.IsDeleted)
             {
                 return new SignInResponse
                 {
@@ -74,14 +84,13 @@ namespace KnowledgeAssistant.Application.Services
                 };
             }
 
-            // Verify password
-            var PasswordResult = _passwordHasher.VerifyHashedPassword(
-                Credentials.User,
-                Credentials.PasswordHash,
-                SignIn.Password
+            var passwordResult = _passwordHasher.VerifyHashedPassword(
+                credentials.User,
+                credentials.PasswordHash,
+                request.Password
             );
 
-            if (PasswordResult == PasswordVerificationResult.Failed)
+            if (passwordResult == PasswordVerificationResult.Failed)
             {
                 return new SignInResponse
                 {
@@ -90,46 +99,39 @@ namespace KnowledgeAssistant.Application.Services
                 };
             }
 
-            if (PasswordResult == PasswordVerificationResult.SuccessRehashNeeded)
+            if (passwordResult == PasswordVerificationResult.SuccessRehashNeeded)
             {
-                Credentials.PasswordHash = _passwordHasher.HashPassword(Credentials.User, SignIn.Password);
-                _context.UserCredentials.Update(Credentials);
-                await _context.SaveChangesAsync();
+                var newHash = _passwordHasher.HashPassword(credentials.User, request.Password);
+
+                await _context.UserCredentials
+                    .Where(x => x.UserId == credentials.UserId)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.PasswordHash, newHash));
             }
 
-            var Token = _tokenService.GenerateToken(
-                userId: Credentials.User.Id.ToString(),
-                username: Credentials.User.FirstName,
-                roles: Credentials.User.UserRoles.Select(x => x.Role.Name).ToList()
+            var token = _tokenService.GenerateToken(
+                userId: credentials.User.Id.ToString(),
+                username: credentials.User.FirstName,
+                roles: credentials.Roles.Select(r => r.Name).ToList()
             );
-                
+
             return new SignInResponse
             {
                 Success = true,
                 Message = "Sign in successful.",
-                Token = Token,
+                Token = token,
                 User = new UserResponse
                 {
-                    Id = Credentials.User.Id,
-                    FirstName = Credentials.User.FirstName,
-                    LastName = Credentials.User.LastName,
-                    Email = Credentials.EmailAddress,
-                    Roles = Credentials.User.UserRoles
-                        .Select(ur => new UserRoleResponse
-                        {
-                            RoleId = ur.Role.Id,
-                            Role = new RoleResponse
-                            {
-                                Id = ur.Role.Id,
-                                Name = ur.Role.Name,
-                                Description = ur.Role.Description
-                            }
-                        })
+                    Id = credentials.User.Id,
+                    FirstName = credentials.User.FirstName,
+                    LastName = credentials.User.LastName,
+                    Email = credentials.EmailAddress,
+                    Roles = credentials.Roles
+                        .Select(r => new UserRoleResponse { RoleId = r.Id, Role = r })
                         .ToList()
                 }
             };
         }
-
+      
         public async Task<PaginatedResponse<UserResponse>> GetUsersAsync(int PageNumber, int PageSize)
         {
             var MaxPageSize = 50;

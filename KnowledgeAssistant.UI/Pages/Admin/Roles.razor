@@ -91,7 +91,7 @@
 <Modal @bind-Visible="@(RoleModalVisible)" Title=@(SelectedRole?.Id == -1 ? "Add New Role" : "Edit Role") ShowCloseButton="true">
     @if (SelectedRole is not null)
     {
-         <MudForm @ref="_form" Model="_viewModel" Validation="@_validator.ValidateValue">
+        <MudForm @ref="_form" Model="_viewModel" Validation="@_validator.ValidateValue">
 
             <MudTextField @bind-Value="_viewModel.Name"
                           For="@(() => _viewModel.Name)"
@@ -104,16 +104,16 @@
                           Variant="Variant.Outlined" />
         </MudForm>
 
-           <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4" Spacing="2">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="@Saving">
-                    <MudText>@(SelectedRole.Id == -1 ? "Create Role" : "Save Changes")</MudText>
-                </MudButton>
-            </MudStack>
+       <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4" Spacing="2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="@Saving">
+                <MudText>@(SelectedRole.Id == -1 ? "Create Role" : "Save Changes")</MudText>
+            </MudButton>
+       </MudStack>
     }
 </Modal>
 
 @code
-    {
+{
     [Inject]
     private IHttpService HttpService { get; set; } = null!;
 

@@ -22,9 +22,9 @@ namespace KnowledgeAssistant.API.Controllers
         [HttpPost("SignIn")]
         [AllowAnonymous]
         [EnableRateLimiting("signinlimit")]
-        public async Task<ActionResult<ApiResult>> SignIn(SignIn SignIn)
+        public async Task<ActionResult<ApiResult>> SignIn(SignIn request)
         {
-            var SignInResponse = await _userService.SignInAsync(SignIn);
+            var SignInResponse = await _userService.SignInAsync(request);
 
             if (!SignInResponse.Success)
             {
