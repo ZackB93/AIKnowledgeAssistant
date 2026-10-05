@@ -12,6 +12,7 @@ namespace KnowledgeAssistant.Application.Services
     {
         Task<ChatSessionResponse> AddChatSessionAsync(AddChatSessionRequest chatSessionRequest, int userId);
         Task<ChatMessageResponse> AddChatMessageAsync(AddChatMessageRequest chatMessageRequest, int userId);
+        Task<ChatMessageResponse> RegenerateChatMessageAsync(RegenerateMessageRequest request, int userId);
         Task<List<ChatSessionResponse>> GetChatSessionsByUserIdAsync(int userId);
         Task<List<ChatMessageResponse>> GetChatMessagesBySessionIdAsync(int sessionId);
     }
@@ -209,5 +210,73 @@ namespace KnowledgeAssistant.Application.Services
 
             return response.Text.Trim();
         }
+
+        public async Task<ChatMessageResponse> RegenerateChatMessageAsync(RegenerateMessageRequest request, int userId)
+        {
+            var chatSession = await _context.ChatSessions
+                .FirstOrDefaultAsync(x => x.Id == request.ChatSessionId && x.UserId == userId);
+
+            if (chatSession == null)
+            {
+                throw new InvalidOperationException("Chat session was not found.");
+            }
+
+            var chatMessages = await _context.ChatMessages
+                .Where(x => x.ChatSessionId == chatSession.Id)
+                .OrderBy(x => x.CreatedAt)
+                .ThenBy(x => x.Id)
+                .ToListAsync();
+
+            var target = chatMessages.FirstOrDefault(x => x.Id == request.ChatMessageId);
+
+            if (target == null)
+            {
+                throw new InvalidOperationException("Chat message was not found.");
+            }
+
+            if (target.Role != "assistant")
+            {
+                throw new InvalidOperationException("Only assistant messages can be regenerated.");
+            }
+
+            // The client only swaps out a single message, so only allow the latest one.
+            if (chatMessages[^1].Id != target.Id)
+            {
+                throw new InvalidOperationException("Only the latest assistant message can be regenerated.");
+            }
+
+            // Conversation history up to, but not including, the message being regenerated.
+            var history = chatMessages
+                .TakeWhile(x => x.Id != target.Id)
+                .Select(x => new AIChatMessage
+                {
+                    Role = x.Role switch
+                    {
+                        "user" => ChatRole.User,
+                        "assistant" => ChatRole.Assistant,
+                        "system" => ChatRole.System,
+                        _ => ChatRole.User
+                    },
+                    Contents = [new TextContent(x.Content)]
+                })
+                .ToList();
+
+            var response = await _chatClient.GetResponseAsync(history);
+
+            target.Content = response.Text;
+            chatSession.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return new ChatMessageResponse
+            {
+                Id = target.Id,
+                ChatSessionId = target.ChatSessionId,
+                Role = target.Role,
+                Content = target.Content,
+                CreatedAt = target.CreatedAt
+            };
+        }
     }
+    
 }

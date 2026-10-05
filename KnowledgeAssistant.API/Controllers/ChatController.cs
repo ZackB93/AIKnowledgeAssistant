@@ -114,5 +114,27 @@ namespace KnowledgeAssistant.API.Controllers
 
             return Ok(result);
         }
+
+        [HttpPost("RegenerateMessage")]
+        public async Task<IActionResult> RegenerateMessage(RegenerateMessageRequest request)
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var regeneratedChatResponse = await _chatService.RegenerateChatMessageAsync(request, userId);
+
+            var result = new ApiResult
+            {
+                IsSuccessful = true,
+                Data = regeneratedChatResponse,
+                Message = "Chat message regenerated successfully."
+            };
+
+            return Ok(result);
+        }
     }
 }

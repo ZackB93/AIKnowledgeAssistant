@@ -582,7 +582,7 @@ h5 {
 }
 
 .chat-input {
-    padding: 16px 24px 20px 24px;
+    padding: 5px 5px 5px 5px;
     border-top: 1px solid var(--mud-palette-lines-default);
 }
 

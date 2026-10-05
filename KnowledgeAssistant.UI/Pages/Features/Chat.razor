@@ -119,7 +119,7 @@
                             </MudText>
 
                             <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                @(_messages.Count) messages
+                                @(messages.Count) messages
                             </MudText>
                         </div>
                     </div>
@@ -134,7 +134,7 @@
                                                      Color="Color.Primary" />
                             </div>
                         }
-                        else if (_messages.Count == 0)
+                        else if (messages.Count == 0)
                         {
                             <div class="chat-empty-messages">
                                 <MudIcon Icon="@Icons.Material.Filled.ChatBubbleOutline"
@@ -153,7 +153,7 @@
                         }
                         else
                         {
-                            @foreach (var message in _messages)
+                            @foreach (var message in messages)
                             {
                                 var isUser = message.Role.Equals("user", StringComparison.OrdinalIgnoreCase);
 
@@ -164,10 +164,34 @@
                                             @message.Content
                                         </MudText>
 
-                                        <MudText Typo="Typo.caption"
-                                                 Class="message-time">
-                                            @message.CreatedAt.ToLocalTime().ToString("HH:mm")
-                                        </MudText>
+                                        <div class="message-footer">
+                                            <MudText Typo="Typo.caption"
+                                                     Class="message-time">
+                                                @message.CreatedAt.ToLocalTime().ToString("HH:mm")
+                                            </MudText>
+
+                                            @if (!isUser)
+                                            {
+                                                <div class="message-actions">
+                                                    <MudTooltip Text="@(copiedMessageId == message.Id ? "Copied" : "Copy")">
+                                                        <MudIconButton Icon="@(copiedMessageId == message.Id
+                                                                        ? Icons.Material.Filled.Check
+                                                                        : Icons.Material.Outlined.ContentCopy)"
+                                                                       Size="Size.Small"
+                                                                       Class="message-action-button"
+                                                                       OnClick="@(() => CopyMessage(message))" />
+                                                    </MudTooltip>
+
+                                                    <MudTooltip Text="Regenerate">
+                                                        <MudIconButton Icon="@Icons.Material.Outlined.Refresh"
+                                                                       Size="Size.Small"
+                                                                       Class="message-action-button"
+                                                                       Disabled="@sendingMessage"
+                                                                       OnClick="@(() => RegenerateMessage(message))" />
+                                                    </MudTooltip>
+                                                </div>
+                                            }
+                                        </div>
                                     </div>
                                 </div>
                             }
@@ -188,24 +212,55 @@
                         }
 
                     </div>
-
+                    
                     <!-- Message input -->
                     <div class="chat-input">
+                        <div class="emoji-input-wrapper">
+                            @if (emojiPickerOpen)
+                            {
+                                <div class="emoji-picker">
+                                    <div class="emoji-picker-header">
+                                        <MudText Typo="Typo.subtitle2">Choose an emoji</MudText>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                                       Size="Size.Small"
+                                                       OnClick="@(() => emojiPickerOpen = false)" />
+                                    </div>
 
-                        <MudTextField @bind-Value="_messageText"
-                                      Placeholder="Ask Knowledge Assistant..."
-                                      Variant="Variant.Outlined"
-                                      FullWidth="true"
-                                      Lines="2"
-                                      AutoGrow="true"
-                                      Immediate="true"
-                                      Disabled="@sendingMessage"
-                                      OnKeyDown="HandleKeyDown"
-                                      Adornment="Adornment.End"
-                                      AdornmentIcon="@Icons.Material.Filled.Send"
-                                      AdornmentColor="Color.Primary"
-                                      OnAdornmentClick="SendMessage" />
+                                    <div class="emoji-grid">
+                                        @foreach (var emoji in Emojis)
+                                        {
+                                            <button type="button"
+                                                    class="emoji-button"
+                                                    title="@emoji"
+                                                    @onclick="() => InsertEmoji(emoji)">
+                                                @emoji
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            }
 
+                            <MudIconButton Icon="@Icons.Material.Outlined.EmojiEmotions"
+                                           Color="Color.Default"
+                                           Size="Size.Large"
+                                           Disabled="@sendingMessage"
+                                           Title="Insert emoji"
+                                           OnClick="ToggleEmojiPicker" />
+
+                            <MudTextField @bind-Value="messageText"
+                                          Placeholder="Ask Knowledge Assistant..."
+                                          Variant="Variant.Outlined"
+                                          FullWidth="true"
+                                          Lines="2"
+                                          AutoGrow="true"
+                                          Immediate="true"
+                                          Disabled="@sendingMessage"
+                                          OnKeyDown="HandleKeyDown"
+                                          Adornment="Adornment.End"
+                                          AdornmentIcon="@Icons.Material.Filled.Send"
+                                          AdornmentColor="Color.Primary"
+                                          OnAdornmentClick="SendMessage" />
+                        </div>
                     </div>
                 }
             </MudItem>
@@ -227,17 +282,30 @@
     private IJSObjectReference? chatModule;
 
     private List<ChatSessionResponse> sessions = new();
-    private List<ChatMessageResponse> _messages = new();
+    private List<ChatMessageResponse> messages = new();
 
     private ChatSessionResponse? selectedSession;
+
+    private long? copiedMessageId;
 
     private bool loadingSessions;
     private bool loadingMessages;
     private bool creatingSession;
     private bool sendingMessage;
     private bool scrollToBottom;
+    private bool emojiPickerOpen;
 
-    private string _messageText = string.Empty;
+    private string messageText = string.Empty;
+
+    private readonly string[] Emojis =
+    [
+        "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣",
+        "😊", "😇", "🙂", "🙃", "😉", "😍", "🥰", "😘",
+        "😎", "🤔", "🤨", "😐", "🙄", "😴", "😭", "😡",
+        "👍", "👎", "👌", "👏", "🙏", "💪", "🤝", "🙌",
+        "❤️", "💙", "💚", "💯", "🔥", "✨", "🎉", "🚀",
+        "💡", "⭐", "☕", "🎯", "✅", "❌", "🤖", "💻"
+    ];
 
     protected override async Task OnInitializedAsync()
     {
@@ -291,7 +359,7 @@
         }
 
         selectedSession = session;
-        _messages = [];
+        messages = [];
 
         await LoadMessagesAsync(session.Id);
     }
@@ -304,11 +372,11 @@
 
         if (result is not null && result.IsSuccessful)
         {
-            var messages = result.GetData<List<ChatMessageResponse>>();
+            var allMessages = result.GetData<List<ChatMessageResponse>>();
 
-            if (messages is not null)
+            if (allMessages is not null)
             {
-                _messages = messages;
+                messages = allMessages;
             }
         }
 
@@ -350,14 +418,14 @@
 
     private async Task SendMessage()
     {
-        if (sendingMessage || selectedSession is null || string.IsNullOrWhiteSpace(_messageText))
+        if (sendingMessage || selectedSession is null || string.IsNullOrWhiteSpace(messageText))
         {
             return;
         }
 
-        var message = _messageText.Trim();
+        var message = messageText.Trim();
 
-        _messageText = string.Empty;
+        messageText = string.Empty;
         sendingMessage = true;
 
         var request = new AddChatMessageRequest
@@ -367,7 +435,7 @@
         };
 
         // Add user's message to UI immediately
-        _messages.Add(new ChatMessageResponse
+        messages.Add(new ChatMessageResponse
         {
             ChatSessionId = selectedSession.Id,
             Role = "user",
@@ -388,7 +456,7 @@
             if (response is not null)
             {
                 // This is the AI response
-                _messages.Add(response);
+                messages.Add(response);
 
                 // If there is an new title set, change it
                 if (response.NewTitle is not null)
@@ -405,11 +473,84 @@
         
     }
 
+    private async Task RegenerateMessage(ChatMessageResponse message)
+    {
+        if (sendingMessage || selectedSession is null)
+        {
+            return;
+        }
+
+        sendingMessage = true;
+        scrollToBottom = true;
+
+        StateHasChanged();
+
+        var request = new RegenerateMessageRequest()
+        {
+            ChatMessageId = message.Id,
+            ChatSessionId = selectedSession.Id
+        };
+
+        var result = await HttpService.PostDataAsync("/Chat/RegenerateMessage", request);
+
+        if (result is not null && result.IsSuccessful)
+        {
+            var response = result.GetData<ChatMessageResponse>();
+
+            if (response is not null)
+            {
+                var messageIndex = messages.FindIndex(x => x.Id == message.Id);
+
+                if (messageIndex >= 0)
+                {
+                    messages[messageIndex] = response;
+                }
+            }
+        }
+
+        sendingMessage = false;
+
+        StateHasChanged();
+    }
+
     private async Task HandleKeyDown(KeyboardEventArgs args)
     {
         if (args.Key == "Enter" && !args.ShiftKey)
         {
             await SendMessage();
+        }
+    }
+    
+    private void InsertEmoji(string emoji)
+    {
+        messageText += emoji;
+        emojiPickerOpen = false;
+    }
+
+    private void ToggleEmojiPicker()
+    {
+        emojiPickerOpen = !emojiPickerOpen;
+    }
+
+    private async Task CopyMessage(ChatMessageResponse message)
+    {
+        if (string.IsNullOrWhiteSpace(message.Content))
+        {
+            return;
+        }
+
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", message.Content);
+
+        copiedMessageId = message.Id;
+
+        StateHasChanged();
+
+        await Task.Delay(1500);
+
+        if (copiedMessageId == message.Id)
+        {
+            copiedMessageId = null;
+            StateHasChanged();
         }
     }
 
