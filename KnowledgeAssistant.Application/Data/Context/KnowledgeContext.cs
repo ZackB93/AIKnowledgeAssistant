@@ -1,8 +1,10 @@
 ﻿using KnowledgeAssistant.Application.Entities.Chat;
+using KnowledgeAssistant.Application.Entities.Documents;
 using KnowledgeAssistant.Application.Entities.Emails;
 using KnowledgeAssistant.Application.Entities.Roles;
 using KnowledgeAssistant.Application.Entities.Users;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Metadata;
 
 namespace KnowledgeAssistant.Application.Data.Context
 {
@@ -15,13 +17,13 @@ namespace KnowledgeAssistant.Application.Data.Context
 
         public DbSet<User> Users => Set<User>();
         public DbSet<UserCredential> UserCredentials => Set<UserCredential>();
-        public DbSet<UserDocument> UserDocuments => Set<UserDocument>();
         public DbSet<Email> Emails => Set<Email>();
         public DbSet<ChatSession> ChatSessions => Set<ChatSession>();
         public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
         public DbSet<Role> Roles => Set<Role>();
         public DbSet<UserRole> UserRoles => Set<UserRole>();
-
+        public DbSet<Entities.Documents.Document> Documents => Set<Entities.Documents.Document>();
+        public DbSet<DocumentChunk> DocumentChunks => Set<DocumentChunk>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

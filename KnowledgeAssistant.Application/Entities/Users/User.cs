@@ -1,4 +1,5 @@
 ﻿using KnowledgeAssistant.Application.Entities.Chat;
+using KnowledgeAssistant.Application.Entities.Documents;
 using KnowledgeAssistant.Application.Entities.Emails;
 using System;
 using System.Collections;
@@ -22,9 +23,9 @@ namespace KnowledgeAssistant.Application.Entities.Users
         public DateTime CreatedDateTime { get; set; }
         public bool IsDeleted { get; set; } = false;
         public UserCredential Credentials { get; set; } = default!;
-        public ICollection<UserDocument> Documents { get; set; } = [];
         public ICollection<Email> Emails { get; set; } = [];
         public ICollection<ChatSession> ChatSessions { get; set; } = [];
         public ICollection<UserRole> UserRoles { get; set; } = [];
+        public ICollection<Document> Documents { get; set; } = [];
     }
 }

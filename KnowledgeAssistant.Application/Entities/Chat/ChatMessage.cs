@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using KnowledgeAssistant.Application.Entities.Documents;
 
 namespace KnowledgeAssistant.Application.Entities.Chat
 {
@@ -17,5 +18,7 @@ namespace KnowledgeAssistant.Application.Entities.Chat
         public DateTime CreatedAt { get; set; }
 
         public ChatSession ChatSession { get; set; } = null!;
+
+        public ICollection<Document> Attachments { get; set; } = [];
     }
 }
