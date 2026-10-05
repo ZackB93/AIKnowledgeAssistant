@@ -1,7 +1,7 @@
-﻿@using KnowledgeAssistant.Application.DTOs.API
+﻿@using System.ComponentModel.DataAnnotations
+@using KnowledgeAssistant.Application.DTOs.Cache
 @using KnowledgeAssistant.Application.DTOs.Roles
 @using KnowledgeAssistant.Application.Services
-@using System.ComponentModel.DataAnnotations
 
 @page "/roles"
 @attribute [Authorize(Roles = "Admin")]
@@ -134,26 +134,18 @@
 
     private async Task<TableData<RoleResponse>> LoadRoles(TableState state, CancellationToken cancellationToken)
     {
-        var cachedData = CacheService.GetFromCache<TableData<RoleResponse>>("roles");
-        if (cachedData is not null)
-        {
-            return cachedData;
-        }
-
-        var response = await HttpService.GetDataAsync("/Role/GetAll", CancellationToken: cancellationToken);
+        var cache = new Cache { CacheKey = "Roles", CacheTimeMins = 30 };
+        var response = await HttpService.GetDataAsync("/Role/GetAll", CacheData: cache, CancellationToken: cancellationToken);
 
         if (response.IsSuccessful && response.Data is not null)
         {
             var roles = response.GetData<List<RoleResponse>>() ?? new();
-            var tableData = new TableData<RoleResponse>
+
+            return new TableData<RoleResponse>
             {
                 Items = roles,
                 TotalItems = roles.Count
             };
-
-            CacheService.SaveToCache("roles", tableData, TimeSpan.FromHours(1));
-
-            return tableData;
         }
 
         Snackbar.Add("An error occurred loading roles!", Severity.Error);

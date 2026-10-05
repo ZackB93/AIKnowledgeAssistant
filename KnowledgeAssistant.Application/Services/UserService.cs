@@ -285,9 +285,9 @@ namespace KnowledgeAssistant.Application.Services
                 PasswordHash = _passwordHasher.HashPassword(NewUser, User.Password)
             };
 
-            NewUser.UserRoles = User.Roles.Select(role => new UserRole
+            NewUser.UserRoles = User.RoleIds.Select(roleId => new UserRole
             {
-                RoleId = role.RoleId,
+                RoleId = roleId,
                 User = NewUser
             })
             .ToList();
@@ -325,6 +325,7 @@ namespace KnowledgeAssistant.Application.Services
             var User = await _context.Users
                 .Include(x => x.Credentials)
                 .Include(x => x.UserRoles)
+                    .ThenInclude(x => x.Role)
                 .FirstOrDefaultAsync(x => x.Id == Request.Id);
 
             if (User is null)
@@ -344,11 +345,11 @@ namespace KnowledgeAssistant.Application.Services
             // Replace existing roles
             User.UserRoles.Clear();
 
-            User.UserRoles = Request.Roles
-                .Select(role => new UserRole
+            User.UserRoles = Request.RoleIds
+                .Select(roleId => new UserRole
                 {
                     UserId = User.Id,
-                    RoleId = role.RoleId
+                    RoleId = roleId
                 })
                 .ToList();
 

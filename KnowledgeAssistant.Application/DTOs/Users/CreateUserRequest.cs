@@ -48,6 +48,6 @@ namespace KnowledgeAssistant.Application.DTOs.Users
         [Required]
         public bool Enabled { get; set; } = true;
 
-        public List<UserRole> Roles { get; set; } = new List<UserRole>();
+        public List<int> RoleIds { get; set; } = new();
     }
 }
