@@ -14,6 +14,7 @@ namespace KnowledgeAssistant.Application.Services
     {
         Task<ApiResult> GetDataAsync(string Endpoint, Cache? CacheData = null, CancellationToken CancellationToken = default);
         Task<ApiResult> PostDataAsync<TRequest>(string Endpoint, TRequest Payload, CancellationToken CancellationToken = default);
+        Task<ApiResult> PostFileAsync(string url, MultipartFormDataContent content, CancellationToken CancellationToken = default);
     }
 
     public class HttpService : IHttpService
@@ -118,6 +119,44 @@ namespace KnowledgeAssistant.Application.Services
             catch (HttpRequestException ex)
             {
                 return new ApiResult{ IsSuccessful = false, Message = ex.Message };
+            }
+            catch (JsonException ex)
+            {
+                return new ApiResult { IsSuccessful = false, Message = $"Deserialization failed: {ex.Message}" };
+            }
+        }
+
+        public async Task<ApiResult> PostFileAsync(string Endpoint, MultipartFormDataContent Content, CancellationToken CancellationToken = default)
+        {
+            try
+            {
+                var Client = _httpClientFactory.CreateClient("ExternalClient");
+                var Token = _httpContextAccessor.HttpContext?.User.FindFirst("access_token")?.Value;
+
+                if (!string.IsNullOrEmpty(Token))
+                {
+                    if (TokenExpired())
+                    {
+                        _navigationManager.NavigateTo($"/signin?error=Session+expired&returnUrl={Uri.EscapeDataString(_navigationManager.Uri)}", forceLoad: true);
+                    }
+
+                    Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+                }
+
+                var Response = await Client.PostAsync(Endpoint, Content, CancellationToken);
+
+                var Result = await Response.Content.ReadFromJsonAsync<ApiResult>(
+                    new JsonSerializerOptions(JsonSerializerDefaults.Web), cancellationToken: CancellationToken);
+
+                return Result ?? new ApiResult { IsSuccessful = false, Message = "The API returned an empty response." };
+            }
+            catch (OperationCanceledException) when (CancellationToken.IsCancellationRequested)
+            {
+                return new ApiResult { IsSuccessful = false, Message = "Request cancelled." };
+            }
+            catch (HttpRequestException ex)
+            {
+                return new ApiResult { IsSuccessful = false, Message = ex.Message };
             }
             catch (JsonException ex)
             {

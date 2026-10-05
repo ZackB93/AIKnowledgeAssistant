@@ -85,6 +85,33 @@
     background-color: var(--mud-palette-action-default-hover);
 }
 
+.attachment-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 8px 8px;
+}
+
+.attach-wrapper {
+    position: relative;
+    display: inline-flex;
+}
+
+.attach-wrapper ::deep .attach-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    font-size: 0; /* hides the text part of the native input */
+}
+
+.attach-wrapper ::deep .attach-input::file-selector-button {
+    cursor: pointer;
+}
+
 @media (max-width: 768px) {
     .message-actions {
         opacity: 1;

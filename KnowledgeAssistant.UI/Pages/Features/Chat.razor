@@ -2,9 +2,13 @@
 @attribute [Authorize]
 @implements IAsyncDisposable
 
+@using System.Net.Http.Headers
 @using KnowledgeAssistant.Application.DTOs.Chat
+@using KnowledgeAssistant.Application.DTOs.Documents
+@using KnowledgeAssistant.Application.Entities.Documents
 @using KnowledgeAssistant.Application.Services
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
 @using MudBlazor
 
 
@@ -215,6 +219,34 @@
                     
                     <!-- Message input -->
                     <div class="chat-input">
+
+                        @if (attachedDocuments.Count > 0 || uploadingDocument || uploadError is not null)
+                        {
+                            <div class="attachment-bar">
+                                @foreach (var document in attachedDocuments)
+                                {
+                                    <MudChip T="string"
+                                             Size="Size.Small"
+                                             Color="Color.Primary"
+                                             Variant="Variant.Outlined"
+                                             Icon="@Icons.Material.Outlined.Description">
+                                        @document.FileName
+                                    </MudChip>
+                                }
+
+                                @if (uploadingDocument)
+                                {
+                                    <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="Color.Primary" />
+                                    <MudText Typo="Typo.caption" Class="ml-2">Processing document...</MudText>
+                                }
+
+                                @if (uploadError is not null)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Error">@uploadError</MudText>
+                                }
+                            </div>
+                        }
+
                         <div class="emoji-input-wrapper">
                             @if (emojiPickerOpen)
                             {
@@ -240,11 +272,24 @@
                                 </div>
                             }
 
+                            <div class="attach-wrapper">
+                                <MudIconButton Icon="@Icons.Material.Outlined.AttachFile"
+                                               Color="Color.Default"
+                                               Size="Size.Medium"
+                                               Disabled="@(sendingMessage || uploadingDocument)" />
+
+                                @if (!sendingMessage && !uploadingDocument)
+                                {
+                                    <InputFile class="attach-input"
+                                               accept=".pdf,.docx,.txt,.md"
+                                               OnChange="OnFileSelected" />
+                                }
+                            </div>
+
                             <MudIconButton Icon="@Icons.Material.Outlined.EmojiEmotions"
                                            Color="Color.Default"
-                                           Size="Size.Large"
+                                           Size="Size.Medium"
                                            Disabled="@sendingMessage"
-                                           Title="Insert emoji"
                                            OnClick="ToggleEmojiPicker" />
 
                             <MudTextField @bind-Value="messageText"
@@ -252,7 +297,6 @@
                                           Variant="Variant.Outlined"
                                           FullWidth="true"
                                           Lines="2"
-                                          AutoGrow="true"
                                           Immediate="true"
                                           Disabled="@sendingMessage"
                                           OnKeyDown="HandleKeyDown"
@@ -283,6 +327,7 @@
 
     private List<ChatSessionResponse> sessions = new();
     private List<ChatMessageResponse> messages = new();
+    private List<DocumentResponse> attachedDocuments = new();
 
     private ChatSessionResponse? selectedSession;
 
@@ -294,8 +339,12 @@
     private bool sendingMessage;
     private bool scrollToBottom;
     private bool emojiPickerOpen;
+    private bool uploadingDocument;
 
+    private string? uploadError;
     private string messageText = string.Empty;
+
+    private const long MaxUploadBytes = 10 * 1024 * 1024;
 
     private readonly string[] Emojis =
     [
@@ -360,6 +409,8 @@
 
         selectedSession = session;
         messages = [];
+        attachedDocuments = [];
+        uploadError = null;
 
         await LoadMessagesAsync(session.Id);
     }
@@ -511,6 +562,69 @@
         sendingMessage = false;
 
         StateHasChanged();
+    }
+
+    private async Task UploadDocument(IBrowserFile? file)
+    {
+        if (file is null || selectedSession is null || uploadingDocument)
+        {
+            return;
+        }
+
+        uploadError = null;
+
+        if (file.Size > MaxUploadBytes)
+        {
+            uploadError = "File is too large (max 10 MB).";
+            return;
+        }
+
+        uploadingDocument = true;
+        StateHasChanged();
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+
+            var fileContent = new StreamContent(file.OpenReadStream(MaxUploadBytes));
+
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(
+                string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType);
+
+            // The part names must match the controller parameters: "file" and "chatSessionId".
+            content.Add(fileContent, "file", file.Name);
+            content.Add(new StringContent(selectedSession.Id.ToString()), "chatSessionId");
+
+            var result = await HttpService.PostFileAsync("/Document/Upload", content);
+
+            if (result is not null && result.IsSuccessful)
+            {
+                var document = result.GetData<DocumentResponse>();
+
+                if (document is not null)
+                {
+                    attachedDocuments.Add(document);
+                }
+            }
+            else
+            {
+                uploadError = "Upload failed. Check the file type and try again.";
+            }
+        }
+        catch (Exception)
+        {
+            uploadError = "Upload failed. Please try again.";
+        }
+        finally
+        {
+            uploadingDocument = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        await UploadDocument(e.File);
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs args)

@@ -7,7 +7,6 @@ namespace KnowledgeAssistant.API.Controllers
     [Route("[controller]")]
     public class DocumentController : ControllerBase
     {
-
         public DocumentController()
         {
 
