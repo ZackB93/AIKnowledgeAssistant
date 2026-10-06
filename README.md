@@ -214,6 +214,14 @@ Contains automated tests covering important application behaviour across control
 
 </div>
 
+### Dashboard
+
+<div align="center">
+
+N/A
+
+</div>
+
 ### AI Chat
 
 <div align="center">
@@ -239,7 +247,7 @@ N/A
 
 <img src="screenshots/admin_users.png" alt="User Management" width="850">
 <img src="screenshots/admin_users_search.png" alt="User Management" width="850">
-<img src="screenshots/admin_edit.png" alt="User Management" width="850">
+<img src="screenshots/admin_users_edit.png" alt="User Management" width="850">
 
 </div>
 
@@ -256,14 +264,6 @@ N/A
 <div align="center">
 
 <img src="screenshots/admin_emails.png" alt="Emails Management" width="850">
-
-</div>
-
-### Dashboard
-
-<div align="center">
-
-N/A
 
 </div>
 
