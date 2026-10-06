@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/SQL%20Server-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="SQL Server">
   <img src="https://img.shields.io/badge/OpenAI-412991?style=flat-square&logo=openai&logoColor=white" alt="OpenAI">
   <img src="https://img.shields.io/badge/RAG-194A8C?style=flat-square" alt="RAG">
-  <img src="https://img.shields.io/badge/xUnit-512BD4?style=flat-square" alt="xUnit">
+  <img src="https://img.shields.io/badge/xUnit-512BD4?style=flat-square&logo=xunit&logoColor=white" alt="xUnit">
 </p>
 
 <p>
@@ -32,6 +32,7 @@
 | **04** | [Screenshots](#04--screenshots)         |
 | **05** | [Features](#05--features)               |
 | **06** | [Trade Offs](#06--trade-offs)           |
+| **07** | [To Do](#07--to-do)                     |
 
 ---
 
@@ -94,8 +95,6 @@ The main goal is to demonstrate practical **.NET + AI development** rather than 
 * **RabbitMQ**
 * **ASP.NET Core Background Services**
 * **Queued email processing**
-* **Queued notifications processing**
-* **Asynchronous notifications**
 
 ### Testing & Development
 
@@ -193,7 +192,7 @@ Responsible for:
 
 ### Tests
 
-Contains automated tests covering important application behaviour across controllers and services.
+Contains automated tests covering important application behaviour across controllers, services and UI components.
 
 </details>
 
@@ -342,7 +341,7 @@ RabbitMQ is used to move background operations away from the main HTTP request.
 
 For example, emails can be added to a queue and processed by a background consumer rather than being sent during the original API request.
 
-The same pattern can be used for other asynchronous operations such as user notifications.
+The same pattern will be used for future asynchronous operations such as user notifications and document processing.
 
 ### Email Queue
 
@@ -468,6 +467,143 @@ The current RAG implementation performs similarity calculations against stored e
 This keeps the implementation straightforward and makes the underlying RAG process easy to understand.
 
 For a significantly larger document collection, a dedicated vector index or SQL Server's vector capabilities would provide a more scalable approach.
+
+---
+
+## 07 · To Do
+
+The project is intentionally being developed incrementally, with the following features planned to extend the application's AI, messaging and background-processing capabilities.
+
+### Notifications
+
+Introduce an application notification system using RabbitMQ.
+
+Notifications will be queued asynchronously and persisted by a background consumer, allowing users to receive notifications for events such as document processing, system activity and other application events.
+
+Planned functionality:
+
+* User notification inbox
+* Unread notification count
+* Mark notifications as read
+* Queue notifications through RabbitMQ
+* Background notification consumer
+* Support for multiple recipients
+* Notification history
+
+```text
+Application Event
+       ↓
+RabbitMQ
+       ↓
+Notification Consumer
+       ↓
+Save Notification
+       ↓
+User Notification Centre
+```
+
+### Asynchronous Document Processing
+
+Move document processing out of the upload/chat request and into a background processing pipeline.
+
+Documents will be uploaded independently through the document management area and processed asynchronously before becoming available to the RAG system.
+
+```text
+Document Upload
+       ↓
+Save Document
+       ↓
+RabbitMQ
+       ↓
+Document Processing Worker
+       ↓
+Extract Text
+       ↓
+Create Chunks
+       ↓
+Generate Embeddings
+       ↓
+Store Chunks + Embeddings
+       ↓
+Document Ready
+       ↓
+Notification
+```
+
+This will allow users to upload documents without waiting for the entire processing pipeline to complete before continuing to use the application.
+
+### RAG Source Citations & Improved Retrieval
+
+Improve the RAG experience by showing users which documents were used to generate an answer.
+
+Planned functionality:
+
+* Display source documents alongside AI responses
+* Show relevant document chunks
+* Include page/source information where available
+* Improve retrieval using additional search techniques
+* Provide greater transparency into how an answer was generated
+
+Example:
+
+```text
+AI Response
+────────────────────────────────────
+
+Employees are entitled to 25 days of
+annual leave per year, excluding bank
+holidays.
+
+Sources
+────────────────────────────────────
+📄 Holiday Policy.pdf
+   Page 4
+
+📄 Employee Handbook.pdf
+   Page 12
+```
+
+### RabbitMQ Retry & Dead-Letter Handling
+
+Introduce retry and dead-letter handling for failed background operations.
+
+This will allow failed messages to be retried automatically and permanently failed messages to be isolated rather than silently lost.
+
+```text
+RabbitMQ
+    ↓
+Consumer
+    ↓
+  Success ─────────→ Complete
+    │
+   Error
+    ↓
+ Retry Queue
+    ↓
+ Consumer
+    │
+   Error
+    ↓
+Dead-Letter Queue
+```
+
+This will initially support operations such as document processing, email and notifications.
+
+---
+
+### Future Considerations
+
+Additional functionality may be introduced as the application develops, including:
+
+* AI response streaming
+* Conversation memory
+* Background job monitoring
+* Audit logging
+* Docker / containerisation
+* CI/CD pipeline
+* AI and RAG evaluation metrics
+
+The roadmap is intentionally limited to features that provide meaningful engineering or AI value rather than adding functionality purely for the sake of increasing the application's size.
 
 ---
 
