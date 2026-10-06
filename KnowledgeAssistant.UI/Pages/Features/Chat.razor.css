@@ -1,8 +1,7 @@
 ﻿.emoji-input-wrapper {
     display: flex;
     align-items: flex-end;
-    position: relative;
-    width: 100%;
+    gap: 4px;
 }
 
 .emoji-picker {
@@ -110,6 +109,10 @@
 
 .attach-wrapper ::deep .attach-input::file-selector-button {
     cursor: pointer;
+}
+
+::deep .mud-chip-outlined.mud-chip-color-primary {
+    color: white;
 }
 
 @media (max-width: 768px) {

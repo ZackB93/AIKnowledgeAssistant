@@ -82,6 +82,22 @@ namespace KnowledgeAssistant.Application.Services
 
             await _context.SaveChangesAsync();
 
+            if (chatMessageRequest.DocumentIds.Count > 0)
+            {
+                var documents = await _context.Documents
+                    .Where(x => chatMessageRequest.DocumentIds.Contains(x.Id)
+                             && x.UserId == userId
+                             && x.ChatSessionId == chatSession.Id)
+                    .ToListAsync();
+
+                foreach (var document in documents)
+                {
+                    document.ChatMessageId = userMessage.Id;
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
             // Load the conversation history.
             var chatMessages = await _context.ChatMessages
                 .AsNoTracking()

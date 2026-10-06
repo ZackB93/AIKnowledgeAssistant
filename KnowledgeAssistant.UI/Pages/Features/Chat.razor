@@ -219,25 +219,19 @@
                     
                     <!-- Message input -->
                     <div class="chat-input">
-
-                        @if (attachedDocuments.Count > 0 || uploadingDocument || uploadError is not null)
+                        @if (pendingFiles.Count > 0 || uploadError is not null)
                         {
                             <div class="attachment-bar">
-                                @foreach (var document in attachedDocuments)
+                                @foreach (var file in pendingFiles)
                                 {
                                     <MudChip T="string"
                                              Size="Size.Small"
                                              Color="Color.Primary"
                                              Variant="Variant.Outlined"
-                                             Icon="@Icons.Material.Outlined.Description">
-                                        @document.FileName
+                                             Icon="@Icons.Material.Outlined.Description"
+                                             OnClose="@(() => RemovePendingFile(file))">
+                                        @file.Name
                                     </MudChip>
-                                }
-
-                                @if (uploadingDocument)
-                                {
-                                    <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="Color.Primary" />
-                                    <MudText Typo="Typo.caption" Class="ml-2">Processing document...</MudText>
                                 }
 
                                 @if (uploadError is not null)
@@ -276,13 +270,16 @@
                                 <MudIconButton Icon="@Icons.Material.Outlined.AttachFile"
                                                Color="Color.Default"
                                                Size="Size.Medium"
-                                               Disabled="@(sendingMessage || uploadingDocument)" />
+                                               Title="Attach document"
+                                               Disabled="@sendingMessage" />
 
-                                @if (!sendingMessage && !uploadingDocument)
+                                @if (!sendingMessage)
                                 {
-                                    <InputFile class="attach-input"
+                                    <InputFile @key="fileInputKey"
+                                               class="attach-input"
                                                accept=".pdf,.docx,.txt,.md"
-                                               OnChange="OnFileSelected" />
+                                               multiple
+                                               OnChange="OnFilesSelected" />
                                 }
                             </div>
 
@@ -327,11 +324,12 @@
 
     private List<ChatSessionResponse> sessions = new();
     private List<ChatMessageResponse> messages = new();
-    private List<DocumentResponse> attachedDocuments = new();
+    private List<IBrowserFile> pendingFiles = new();
 
     private ChatSessionResponse? selectedSession;
 
     private long? copiedMessageId;
+    private int fileInputKey;
 
     private bool loadingSessions;
     private bool loadingMessages;
@@ -345,6 +343,8 @@
     private string messageText = string.Empty;
 
     private const long MaxUploadBytes = 10 * 1024 * 1024;
+    private const int MaxPendingFiles = 5;
+    private static readonly string[] AllowedExtensions = [".pdf", ".docx", ".txt", ".md"];
 
     private readonly string[] Emojis =
     [
@@ -409,7 +409,7 @@
 
         selectedSession = session;
         messages = [];
-        attachedDocuments = [];
+        pendingFiles = [];
         uploadError = null;
 
         await LoadMessagesAsync(session.Id);
@@ -475,28 +475,48 @@
         }
 
         var message = messageText.Trim();
+        var filesToUpload = pendingFiles.ToList();
 
         messageText = string.Empty;
+        pendingFiles = [];
+        uploadError = null;
         sendingMessage = true;
+
+        // Add user's message to UI immediately
+        var userMessage = new ChatMessageResponse
+        {
+            ChatSessionId = selectedSession.Id,
+            Role = "user",
+            Content = message,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        messages.Add(userMessage);
+        scrollToBottom = true;
+        StateHasChanged();
+
+        // Upload attachments first so their chunks exist before the AI answers.
+        foreach (var file in filesToUpload)
+        {
+            var document = await UploadFileAsync(file, selectedSession.Id);
+
+            if (document is null)
+            {
+                // Roll back: restore the text and files so the user can retry.
+                messages.Remove(userMessage);
+                messageText = message;
+                pendingFiles = filesToUpload;
+                sendingMessage = false;
+                StateHasChanged();
+                return;
+            }
+        }
 
         var request = new AddChatMessageRequest
         {
             ChatSessionId = selectedSession.Id,
             Content = message
         };
-
-        // Add user's message to UI immediately
-        messages.Add(new ChatMessageResponse
-        {
-            ChatSessionId = selectedSession.Id,
-            Role = "user",
-            Content = message,
-            CreatedAt = DateTime.UtcNow
-        });
-
-        scrollToBottom = true;
-
-        StateHasChanged();
 
         var result = await HttpService.PostDataAsync("/Chat/AddMessage", request);
 
@@ -506,22 +526,19 @@
 
             if (response is not null)
             {
-                // This is the AI response
                 messages.Add(response);
 
-                // If there is an new title set, change it
                 if (response.NewTitle is not null)
                 {
                     selectedSession.Title = response.NewTitle;
                 }
 
                 scrollToBottom = true;
-                StateHasChanged();
             }
         }
 
         sendingMessage = false;
-        
+        StateHasChanged();
     }
 
     private async Task RegenerateMessage(ChatMessageResponse message)
@@ -564,24 +581,8 @@
         StateHasChanged();
     }
 
-    private async Task UploadDocument(IBrowserFile? file)
+    private async Task<DocumentResponse?> UploadFileAsync(IBrowserFile file, int sessionId)
     {
-        if (file is null || selectedSession is null || uploadingDocument)
-        {
-            return;
-        }
-
-        uploadError = null;
-
-        if (file.Size > MaxUploadBytes)
-        {
-            uploadError = "File is too large (max 10 MB).";
-            return;
-        }
-
-        uploadingDocument = true;
-        StateHasChanged();
-
         try
         {
             using var content = new MultipartFormDataContent();
@@ -591,40 +592,63 @@
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(
                 string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType);
 
-            // The part names must match the controller parameters: "file" and "chatSessionId".
             content.Add(fileContent, "file", file.Name);
-            content.Add(new StringContent(selectedSession.Id.ToString()), "chatSessionId");
+            content.Add(new StringContent(sessionId.ToString()), "chatSessionId");
 
             var result = await HttpService.PostFileAsync("/Document/Upload", content);
 
-            if (result is not null && result.IsSuccessful)
+            if (result.IsSuccessful)
             {
-                var document = result.GetData<DocumentResponse>();
+                return result.GetData<DocumentResponse>();
+            }
 
-                if (document is not null)
-                {
-                    attachedDocuments.Add(document);
-                }
-            }
-            else
-            {
-                uploadError = "Upload failed. Check the file type and try again.";
-            }
+            uploadError = $"{file.Name}: {result.Message ?? "upload failed."}";
         }
         catch (Exception)
         {
-            uploadError = "Upload failed. Please try again.";
+            uploadError = $"{file.Name}: upload failed.";
         }
-        finally
-        {
-            uploadingDocument = false;
-            StateHasChanged();
-        }
+
+        return null;
     }
 
-    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    private void OnFilesSelected(InputFileChangeEventArgs e)
     {
-        await UploadDocument(e.File);
+        uploadError = null;
+
+        foreach (var file in e.GetMultipleFiles(MaxPendingFiles))
+        {
+            var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+
+            if (!AllowedExtensions.Contains(extension))
+            {
+                uploadError = $"{file.Name}: unsupported file type.";
+                continue;
+            }
+
+            if (file.Size > MaxUploadBytes)
+            {
+                uploadError = $"{file.Name}: file is too large (max 10 MB).";
+                continue;
+            }
+
+            if (pendingFiles.Count >= MaxPendingFiles)
+            {
+                uploadError = $"You can attach up to {MaxPendingFiles} files.";
+                break;
+            }
+
+            pendingFiles.Add(file);
+        }
+
+        // A fresh input lets the user pick the same file again after removing it.
+        fileInputKey++;
+    }
+
+    private void RemovePendingFile(IBrowserFile file)
+    {
+        pendingFiles.Remove(file);
+        uploadError = null;
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs args)

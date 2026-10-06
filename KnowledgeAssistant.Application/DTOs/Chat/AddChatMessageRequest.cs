@@ -8,5 +8,6 @@ namespace KnowledgeAssistant.Application.DTOs.Chat
     {
         public int ChatSessionId { get; set; }
         public string Content { get; set; } = null!;
+        public List<int> DocumentIds { get; set; } = [];
     }
 }

@@ -9,16 +9,17 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using OpenAI.Chat;
+using OpenAI.Embeddings;
 using Resend;
 using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Sinks.MSSqlServer;
 using System.Text;
 using System.Threading.RateLimiting;
-using Microsoft.Extensions.AI;
-using OpenAI.Chat;
 
 var builder = WebApplication.CreateBuilder(args);
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -133,12 +134,20 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IRabbitMQService, RabbitMQService>();
+builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IMessageHandler<SendEmailMessage>, SendEmailHandler>();
 builder.Services.AddSingleton<IResend>(ResendClient.Create(builder.Configuration["Resend:Key"]!));
 builder.Services.AddHostedService<RabbitMQBackgroundService>();
 
-builder.Services.AddChatClient(services => new ChatClient(builder.Configuration["OpenAI:Model"]!,
-    builder.Configuration["OpenAI:ApiKey"]!).AsIChatClient());
+builder.Services.AddChatClient(services => new ChatClient(
+    builder.Configuration["OpenAI:Model"]!,
+    builder.Configuration["OpenAI:ApiKey"]!
+).AsIChatClient());
+
+builder.Services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(services => new EmbeddingClient(
+    builder.Configuration["OpenAI:EmbeddingModel"]!,
+    builder.Configuration["OpenAI:ApiKey"]!
+).AsIEmbeddingGenerator());
 
 var app = builder.Build();
 
