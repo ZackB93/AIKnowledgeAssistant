@@ -21,7 +21,7 @@ namespace KnowledgeAssistant.API.Controllers
         [RequestSizeLimit(11 * 1024 * 1024)]
         [RequestFormLimits(MultipartBodyLengthLimit = 11 * 1024 * 1024)]
         [Authorize]
-        public async Task<IActionResult> Upload(IFormFile file, int? chatSessionId, CancellationToken cancellationToken)
+        public async Task<IActionResult> Upload([FromForm] IFormFile file, [FromForm] int? chatSessionId, CancellationToken cancellationToken)
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
