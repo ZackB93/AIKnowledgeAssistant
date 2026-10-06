@@ -133,9 +133,9 @@ KnowledgeAssistant
 │   └── Services
 │
 ├── KnowledgeAssistant.Tests
-│   ├── Controllers
-│   ├── Services
-│   └── ...
+│   ├── API
+│   ├── Application
+│   └── UI
 │
 ├── KnowledgeAssistant.UI
 │   ├── Components
