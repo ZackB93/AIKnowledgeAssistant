@@ -482,6 +482,8 @@
         uploadError = null;
         sendingMessage = true;
 
+        var uploadedDocumentIds = new List<int>();
+
         // Add user's message to UI immediately
         var userMessage = new ChatMessageResponse
         {
@@ -510,12 +512,15 @@
                 StateHasChanged();
                 return;
             }
+
+            uploadedDocumentIds.Add(document.Id);
         }
 
         var request = new AddChatMessageRequest
         {
             ChatSessionId = selectedSession.Id,
-            Content = message
+            Content = message,
+            DocumentIds = uploadedDocumentIds
         };
 
         var result = await HttpService.PostDataAsync("/Chat/AddMessage", request);

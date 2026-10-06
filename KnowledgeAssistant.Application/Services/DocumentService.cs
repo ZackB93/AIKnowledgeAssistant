@@ -1,4 +1,5 @@
-﻿using KnowledgeAssistant.Application.Data.Context;
+﻿using DocumentFormat.OpenXml.Drawing.Charts;
+using KnowledgeAssistant.Application.Data.Context;
 using KnowledgeAssistant.Application.DTOs.Documents;
 using KnowledgeAssistant.Application.Entities.Documents;
 using Microsoft.AspNetCore.Http;
@@ -13,7 +14,8 @@ namespace KnowledgeAssistant.Application.Services
 {
     public interface IDocumentService
     {
-        Task<DocumentResponse> UploadDocumentAsync(IFormFile file, int? chatSessionId, int userId, CancellationToken cancellationToken = default);
+        Task<DocumentResponse> UploadAsync(IFormFile file, int? chatSessionId, int userId, CancellationToken cancellationToken = default);
+        Task<List<DocumentSearchResult>> SearchAsync(string query, List<int> documentIds, int userId, CancellationToken cancellationToken = default);
     }
 
     public class DocumentService : IDocumentService
@@ -30,38 +32,12 @@ namespace KnowledgeAssistant.Application.Services
             _embeddings = embeddings;
         }
 
-        public async Task<DocumentResponse> UploadDocumentAsync(IFormFile file, int? chatSessionId, int userId, CancellationToken cancellationToken = default)
+        public async Task<DocumentResponse> UploadAsync(IFormFile file, int? chatSessionId, int userId, CancellationToken cancellationToken = default)
         {
-            // Validate the file.
-            if (file is null || file.Length == 0)
-            {
-                throw new InvalidOperationException("No file was provided.");
-            }
-
-            if (file.Length > MaxFileBytes)
-            {
-                throw new InvalidOperationException("File is too large (max 10 MB).");
-            }
+            await ValidateUploadAsync(file, chatSessionId, userId, cancellationToken);
 
             var extension = Path.GetExtension(file.FileName);
-
-            if (!AllowedExtensions.Contains(extension))
-            {
-                throw new InvalidOperationException($"Unsupported file type: {extension}");
-            }
-
-            // If the document is scoped to a chat, make sure the user owns that chat.
-            if (chatSessionId is not null)
-            {
-                var ownsSession = await _context.ChatSessions
-                    .AnyAsync(x => x.Id == chatSessionId && x.UserId == userId, cancellationToken);
-
-                if (!ownsSession)
-                {
-                    throw new InvalidOperationException("Chat session was not found.");
-                }
-            }
-
+       
             // Extract, chunk, embed.
             var text = await ExtractTextAsync(file, extension, cancellationToken);
 
@@ -73,6 +49,7 @@ namespace KnowledgeAssistant.Application.Services
             var chunks = Chunk(text);
             var embeddings = new List<Embedding<float>>(chunks.Count);
 
+            // Generate embeddings in batches to avoid overwhelming the embedding service.
             for (var i = 0; i < chunks.Count; i += EmbeddingBatchSize)
             {
                 var batch = chunks.Skip(i).Take(EmbeddingBatchSize).ToList();
@@ -121,6 +98,127 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
+        public async Task<List<DocumentSearchResult>> SearchAsync(string query, List<int> documentIds, int userId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(query) || !documentIds.Any())
+            {
+                return new();
+            }
+
+            // Generate an embedding for the user's question.
+            var queryEmbedding = await _embeddings.GenerateAsync(query, cancellationToken: cancellationToken);
+            var queryVector = queryEmbedding.Vector.ToArray();
+
+            // Only retrieve chunks belonging to the user's selected documents.
+            var chunks = await _context.DocumentChunks
+                .AsNoTracking()
+                .Where(x =>
+                    documentIds.Contains(x.DocumentId) &&
+                    x.Document.UserId == userId)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.DocumentId,
+                    x.ChunkIndex,
+                    x.Content,
+                    x.Embedding,
+                    FileName = x.Document.FileName
+                })
+                .ToListAsync(cancellationToken);
+
+            var results = new List<DocumentSearchResult>();
+
+            // Compare the query embedding to each chunk's embedding and calculate similarity.
+            foreach (var chunk in chunks)
+            {
+                if (chunk.Embedding is null || chunk.Embedding.Length == 0)
+                {
+                    continue;
+                }
+
+                var storedVector = MemoryMarshal.Cast<byte, float>(chunk.Embedding.AsSpan()).ToArray();
+
+                if (storedVector.Length != queryVector.Length)
+                {
+                    continue;
+                }
+
+                var similarity = CosineSimilarity(queryVector, storedVector);
+
+                results.Add(new DocumentSearchResult
+                {
+                    DocumentId = chunk.DocumentId,
+                    ChunkId = chunk.Id,
+                    FileName = chunk.FileName,
+                    ChunkIndex = chunk.ChunkIndex,
+                    Content = chunk.Content,
+                    Similarity = similarity
+                });
+            }
+
+            // Take the top 5 most similar chunks and return them to the user.
+            return results
+                .OrderByDescending(x => x.Similarity)
+                .Take(5)
+                .ToList();
+
+        }
+
+        // Validates the uploaded file and checks if the user owns the chat session (if provided).
+        private async Task ValidateUploadAsync(IFormFile file, int? chatSessionId, int userId, CancellationToken cancellationToken)
+        {
+            if (file is null || file.Length == 0)
+            {
+                throw new InvalidOperationException("No file was provided.");
+            }
+
+            if (file.Length > MaxFileBytes)
+            {
+                throw new InvalidOperationException("File is too large (max 10 MB).");
+            }
+
+            var extension = Path.GetExtension(file.FileName);
+
+            if (!AllowedExtensions.Contains(extension))
+            {
+                throw new InvalidOperationException($"Unsupported file type: {extension}");
+            }
+
+            if (chatSessionId is not null)
+            {
+                var ownsSession = await _context.ChatSessions
+                    .AnyAsync(x => x.Id == chatSessionId && x.UserId == userId, cancellationToken);
+
+                if (!ownsSession)
+                {
+                    throw new InvalidOperationException("Chat session was not found.");
+                }
+            }
+        }
+
+        // Calculates the cosine similarity between two vectors.
+        private static double CosineSimilarity(ReadOnlySpan<float> a, ReadOnlySpan<float> b)
+        {
+            double dot = 0;
+            double magnitudeA = 0;
+            double magnitudeB = 0;
+
+            for (var i = 0; i < a.Length; i++)
+            {
+                dot += a[i] * b[i];
+                magnitudeA += a[i] * a[i];
+                magnitudeB += b[i] * b[i];
+            }
+
+            if (magnitudeA == 0 || magnitudeB == 0)
+            {
+                return 0;
+            }
+
+            return dot / (Math.Sqrt(magnitudeA) * Math.Sqrt(magnitudeB));
+        }
+
+        // Extracts text from a file based on its extension.
         private static async Task<string> ExtractTextAsync(IFormFile file, string extension, CancellationToken cancellationToken)
         {
             await using var memory = new MemoryStream();
@@ -163,6 +261,7 @@ namespace KnowledgeAssistant.Application.Services
             return text.Replace("\0", "");
         }
 
+        // Splits a large text into smaller chunks, trying to end each chunk on a paragraph or sentence boundary.
         private static List<string> Chunk(string text, int size = 800, int overlap = 150)
         {
             text = text.Trim();
@@ -173,7 +272,6 @@ namespace KnowledgeAssistant.Application.Services
             {
                 var length = Math.Min(size, text.Length - start);
 
-                // Try to end the chunk on a paragraph or sentence boundary rather than mid-word.
                 if (start + length < text.Length)
                 {
                     var window = text.AsSpan(start, length);

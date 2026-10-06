@@ -1,10 +1,11 @@
 ﻿using KnowledgeAssistant.Application.Data.Context;
 using KnowledgeAssistant.Application.DTOs.Chat;
+using KnowledgeAssistant.Application.DTOs.Documents;
 using KnowledgeAssistant.Application.Entities.Chat;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
-using ChatEntity = KnowledgeAssistant.Application.Entities.Chat.ChatMessage;
 using AIChatMessage = Microsoft.Extensions.AI.ChatMessage;
+using ChatEntity = KnowledgeAssistant.Application.Entities.Chat.ChatMessage;
 
 namespace KnowledgeAssistant.Application.Services
 {
@@ -21,11 +22,13 @@ namespace KnowledgeAssistant.Application.Services
     {
         private readonly KnowledgeContext _context;
         private readonly IChatClient _chatClient;
+        private readonly IDocumentService _documentService;
 
-        public ChatService(KnowledgeContext context, IChatClient chatClient)
+        public ChatService(KnowledgeContext context, IChatClient chatClient, IDocumentService documentService)
         {
             _context = context;
             _chatClient = chatClient;
+            _documentService = documentService;
         }
 
         public async Task<ChatSessionResponse> AddChatSessionAsync(AddChatSessionRequest chatSessionRequest, int userId)
@@ -57,100 +60,35 @@ namespace KnowledgeAssistant.Application.Services
 
         public async Task<ChatMessageResponse> AddChatMessageAsync(AddChatMessageRequest chatMessageRequest, int userId)
         {
-            var chatSession = await _context.ChatSessions
-                .FirstOrDefaultAsync(x => x.Id == chatMessageRequest.ChatSessionId && x.UserId == userId);
+            var chatSession = await GetChatSessionAsync(chatMessageRequest.ChatSessionId, userId);
 
-            if (chatSession == null)
-            {
-                throw new InvalidOperationException("Chat session was not found.");
-            }
+            var userMessage = await SaveUserMessageAsync(chatSession, chatMessageRequest.Content);
 
-            var now = DateTime.UtcNow;
+            await AttachDocumentsToMessageAsync(
+                chatSession.Id,
+                userMessage.Id,
+                chatMessageRequest.DocumentIds,
+                userId);
 
-            // Save the user's message.
-            var userMessage = new Application.Entities.Chat.ChatMessage
-            {
-                ChatSessionId = chatSession.Id,
-                Role = "user",
-                Content = chatMessageRequest.Content,
-                CreatedAt = now
-            };
+            var documentSearchResults = await SearchDocumentContextAsync(
+                chatMessageRequest.Content,
+                chatMessageRequest.DocumentIds,
+                userId);
 
-            _context.ChatMessages.Add(userMessage);
+            var chatMessages = await GetChatMessagesAsync(chatSession.Id);
 
-            chatSession.UpdatedAt = now;
+            var messages = BuildChatMessages(chatMessages, documentSearchResults);
 
-            await _context.SaveChangesAsync();
+            var response = await _chatClient.GetResponseAsync(messages);
 
-            if (chatMessageRequest.DocumentIds.Count > 0)
-            {
-                var documents = await _context.Documents
-                    .Where(x => chatMessageRequest.DocumentIds.Contains(x.Id)
-                             && x.UserId == userId
-                             && x.ChatSessionId == chatSession.Id)
-                    .ToListAsync();
+            var assistantMessage = await SaveAssistantMessageAsync(
+                chatSession,
+                response.Text);
 
-                foreach (var document in documents)
-                {
-                    document.ChatMessageId = userMessage.Id;
-                }
-
-                await _context.SaveChangesAsync();
-            }
-
-            // Load the conversation history.
-            var chatMessages = await _context.ChatMessages
-                .AsNoTracking()
-                .Where(x => x.ChatSessionId == chatSession.Id)
-                .OrderBy(x => x.CreatedAt)
-                .ThenBy(x => x.Id)
-                .ToListAsync();
-
-            // Convert database messages into Microsoft.Extensions.AI messages.
-            var messages = chatMessages
-                .Select(x => new AIChatMessage
-                {
-                    Role = x.Role switch
-                    {
-                        "user" => ChatRole.User,
-                        "assistant" => ChatRole.Assistant,
-                        "system" => ChatRole.System,
-                        _ => ChatRole.User
-                    },
-                    Contents = [new TextContent(x.Content)]
-                })
-                .ToList();
-
-            // This is where the AI generates a response based on the conversation history.
-            // The response can take a few seconds due to the AI processing time and model we are using.
-            // You can adjust the model in the appsettings.json file.
-            var response = await _chatClient.GetResponseAsync(messages); 
-
-            var assistantContent = response.Text;
-
-            // Save the AI response.
-            var assistantMessage = new ChatEntity
-            {
-                ChatSessionId = chatSession.Id,
-                Role = "assistant",
-                Content = assistantContent,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.ChatMessages.Add(assistantMessage);
-
-            chatSession.UpdatedAt = assistantMessage.CreatedAt;
-
-            var userMessageCount = chatMessages.Count(x => x.Role == "user");
-            var newTitleGenerated = false;
-
-            // Generate a title if this is still a new chat.
-            if (chatSession.Title == "New Chat" && userMessageCount >= 2)
-            {
-                var title = await GenerateChatTitleAsync(messages);
-                chatSession.Title = title;
-                newTitleGenerated = true;
-            }
+            var newTitle = await GenerateTitleIfRequiredAsync(
+                chatSession,
+                chatMessages,
+                messages);
 
             await _context.SaveChangesAsync();
 
@@ -160,7 +98,7 @@ namespace KnowledgeAssistant.Application.Services
                 ChatSessionId = assistantMessage.ChatSessionId,
                 Role = assistantMessage.Role,
                 Content = assistantMessage.Content,
-                NewTitle = newTitleGenerated ? chatSession.Title : null,
+                NewTitle = newTitle,
                 CreatedAt = assistantMessage.CreatedAt
             };
         }
@@ -292,6 +230,169 @@ namespace KnowledgeAssistant.Application.Services
                 Content = target.Content,
                 CreatedAt = target.CreatedAt
             };
+        }
+
+        private async Task<ChatSession> GetChatSessionAsync(int chatSessionId, int userId)
+        {
+            var chatSession = await _context.ChatSessions
+                .FirstOrDefaultAsync(x => x.Id == chatSessionId && x.UserId == userId);
+
+            if (chatSession == null)
+            {
+                throw new InvalidOperationException("Chat session was not found.");
+            }
+
+            return chatSession;
+        }
+
+        private async Task<Application.Entities.Chat.ChatMessage> SaveUserMessageAsync(ChatSession chatSession, string content)
+        {
+            var now = DateTime.UtcNow;
+
+            var userMessage = new Application.Entities.Chat.ChatMessage
+            {
+                ChatSessionId = chatSession.Id,
+                Role = "user",
+                Content = content,
+                CreatedAt = now
+            };
+
+            _context.ChatMessages.Add(userMessage);
+
+            chatSession.UpdatedAt = now;
+
+            await _context.SaveChangesAsync();
+
+            return userMessage;
+        }
+
+        private async Task AttachDocumentsToMessageAsync(int chatSessionId, long messageId, List<int> documentIds, int userId)
+        {
+            if (!documentIds.Any())
+            {
+                return;
+            }
+
+            var documents = await _context.Documents
+                .Where(x =>
+                    documentIds.Contains(x.Id) &&
+                    x.UserId == userId &&
+                    x.ChatSessionId == chatSessionId)
+                .ToListAsync();
+
+            foreach (var document in documents)
+            {
+                document.ChatMessageId = messageId;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task<List<DocumentSearchResult>> SearchDocumentContextAsync(string query, List<int> documentIds, int userId)
+        {
+            if (!documentIds.Any())
+            {
+                return new();
+            }
+
+            return await _documentService.SearchAsync(query, documentIds, userId);
+        }
+
+        private async Task<List<Application.Entities.Chat.ChatMessage>> GetChatMessagesAsync(int chatSessionId)
+        {
+            return await _context.ChatMessages
+                .AsNoTracking()
+                .Where(x => x.ChatSessionId == chatSessionId)
+                .OrderBy(x => x.CreatedAt)
+                .ThenBy(x => x.Id)
+                .ToListAsync();
+        }
+
+        private static List<AIChatMessage> BuildChatMessages(List<Application.Entities.Chat.ChatMessage> chatMessages, List<DocumentSearchResult> documentSearchResults)
+        {
+            var messages = chatMessages
+                .Select(x => new AIChatMessage
+                {
+                    Role = x.Role switch
+                    {
+                        "user" => ChatRole.User,
+                        "assistant" => ChatRole.Assistant,
+                        "system" => ChatRole.System,
+                        _ => ChatRole.User
+                    },
+                    Contents = [new TextContent(x.Content)]
+                })
+                .ToList();
+
+            if (!documentSearchResults.Any())
+            {
+                return messages;
+            }
+
+            var documentContext = string.Join("\n\n",
+                documentSearchResults.Select(x =>
+                    $"[Document: {x.FileName}, Chunk: {x.ChunkIndex}]\n{x.Content}"));
+
+            messages.Insert(0, new AIChatMessage
+            {
+                Role = ChatRole.System,
+                Contents =
+                [
+                    new TextContent($"""
+                        You are a helpful AI assistant.
+
+                        The user has provided documents that may contain information relevant
+                        to their question.
+
+                        Use the document context below when answering the user's question.
+                        Only use information from the context when answering questions about
+                        the uploaded documents.
+
+                        If the answer cannot be found in the provided document context, say
+                        that you cannot find the answer in the uploaded documents. Do not
+                        invent information.
+
+                        DOCUMENT CONTEXT:
+
+                        {documentContext}
+                        """)
+                ]
+            });
+
+            return messages;
+        }
+
+        private async Task<Application.Entities.Chat.ChatMessage> SaveAssistantMessageAsync(ChatSession chatSession, string content)
+        {
+            var assistantMessage = new Application.Entities.Chat.ChatMessage
+            {
+                ChatSessionId = chatSession.Id,
+                Role = "assistant",
+                Content = content,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.ChatMessages.Add(assistantMessage);
+
+            chatSession.UpdatedAt = assistantMessage.CreatedAt;
+
+            return assistantMessage;
+        }
+
+        private async Task<string?> GenerateTitleIfRequiredAsync(ChatSession chatSession, List<Application.Entities.Chat.ChatMessage> chatMessages, List<AIChatMessage> messages)
+        {
+            var userMessageCount = chatMessages.Count(x => x.Role == "user");
+
+            if (chatSession.Title != "New Chat" || userMessageCount < 2)
+            {
+                return null;
+            }
+
+            var title = await GenerateChatTitleAsync(messages);
+
+            chatSession.Title = title;
+
+            return title;
         }
     }
     

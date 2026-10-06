@@ -41,6 +41,7 @@ namespace CallRatingService.API.Middleware
 
         private static (int StatusCode, string Title) MapException(Exception exception) => exception switch
         {
+            InvalidOperationException => (StatusCodes.Status400BadRequest, "The request was invalid."),
             HttpRequestException => (StatusCodes.Status502BadGateway, "Unable to retrieve data from an upstream service."),
             KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource not found."),
             ConflictException => (StatusCodes.Status409Conflict, "A conflict occurred with the current state of the resource."),
