@@ -335,9 +335,11 @@ This allows the application to answer questions using its own documents rather t
 
 ### Document Management
 
-Users can upload and manage documents through the application.
+Admins users can upload and manage documents through the application.
 
 Documents are processed into smaller chunks which can subsequently be used by the RAG pipeline.
+
+They will be queued asynchronously and be uploaded/added to the database using RabbitMQ
 
 ### Chat Sessions
 
