@@ -145,11 +145,17 @@ KnowledgeAssistant
 │   └── Program.cs
 │
 ├── screenshots
-│   ├── dashboard.png
-│   ├── chat.png
-│   ├── documents.png
-│   ├── users.png
-│   └── login.png
+│   ├── sign_in.png
+│   ├── my_profile.png
+│   ├── chat_general_convo.png
+│   ├── chat_attachment_convo1.png
+│   ├── chat_attachment_convo2.png
+│   ├── chat_attachment_convo3.png
+│   ├── admin_users.png
+│   ├── admin_users_search.png
+│   ├── admin_users_edit.png
+│   ├── admin_roles.png
+│   └── admin_emails.png
 │
 └── README.md
 ```
@@ -200,11 +206,22 @@ Contains automated tests covering important application behaviour across control
 
 ## 04 · Screenshots
 
+### Login
+
+<div align="center">
+
+<img src="screenshots/sign_in.png" alt="Login" width="850">
+
+</div>
+
 ### AI Chat
 
 <div align="center">
 
-<img src="screenshots/chat.png" alt="AI Chat" width="850">
+<img src="screenshots/chat_general_convo.png" alt="AI Chat" width="850">
+<img src="screenshots/chat_attachment_convo1.png" alt="AI Chat" width="850">
+<img src="screenshots/chat_attachment_convo2.png" alt="AI Chat" width="850">
+<img src="screenshots/chat_attachment_convo3.png" alt="AI Chat" width="850">
 
 </div>
 
@@ -212,7 +229,7 @@ Contains automated tests covering important application behaviour across control
 
 <div align="center">
 
-<img src="screenshots/documents.png" alt="Document Management" width="850">
+N/A
 
 </div>
 
@@ -220,7 +237,25 @@ Contains automated tests covering important application behaviour across control
 
 <div align="center">
 
-<img src="screenshots/users.png" alt="User Management" width="850">
+<img src="screenshots/admin_users.png" alt="User Management" width="850">
+<img src="screenshots/admin_users_search.png" alt="User Management" width="850">
+<img src="screenshots/admin_edit.png" alt="User Management" width="850">
+
+</div>
+
+### Role Management
+
+<div align="center">
+
+<img src="screenshots/admin_roles.png" alt="Roles Management" width="850">
+
+</div>
+
+### Email Management
+
+<div align="center">
+
+<img src="screenshots/admin_emails.png" alt="Emails Management" width="850">
 
 </div>
 
@@ -228,15 +263,7 @@ Contains automated tests covering important application behaviour across control
 
 <div align="center">
 
-<img src="screenshots/dashboard.png" alt="Dashboard" width="850">
-
-</div>
-
-### Login
-
-<div align="center">
-
-<img src="screenshots/login.png" alt="Login" width="850">
+N/A
 
 </div>
 
