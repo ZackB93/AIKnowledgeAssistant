@@ -56,7 +56,7 @@ The main goal is to demonstrate practical **.NET + AI development** rather than 
 | Messaging      | RabbitMQ                         |
 | Authentication | JWT + role-based authorisation   |
 | UI             | Blazor + MudBlazor               |
-| Testing        | xUnit                            |
+| Testing        | xUnit + bUnit (UI)               |
 
 ---
 
@@ -66,11 +66,9 @@ The main goal is to demonstrate practical **.NET + AI development** rather than 
 
 * **C#**
 * **.NET 10**
-* **ASP.NET Core Web API**
+* **ASP.NET Core REST Web API**
 * **Entity Framework Core**
-* **Dapper**
 * **SQL Server**
-* **REST APIs**
 * **JWT Authentication**
 * **Role-based Authorisation**
 
@@ -96,16 +94,19 @@ The main goal is to demonstrate practical **.NET + AI development** rather than 
 * **RabbitMQ**
 * **ASP.NET Core Background Services**
 * **Queued email processing**
+* **Queued notifications processing**
 * **Asynchronous notifications**
 
 ### Testing & Development
 
 * **xUnit**
+* **bUnit**
 * **Git**
 * **GitHub**
-* **Swagger / OpenAPI**
+* **Scalar**
 * **Visual Studio**
 * **GitHub Copilot**
+* **Claude**
 
 ---
 
@@ -373,9 +374,9 @@ Selected API responses can use ASP.NET Core output caching where appropriate.
 
 ### Automated Testing
 
-An xUnit test project covers important application behaviour across controllers and services.
+An xUnit and bUnit test project covers important application behaviour across controllers, services and user interface components.
 
-The focus is on meaningful tests rather than attempting to achieve 100% code coverage.
+The focus is on meaningful tests rather than attempting to achieve 100% code coverage and strict TDD.
 
 ---
 
