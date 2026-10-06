@@ -201,6 +201,7 @@ namespace KnowledgeAssistant.Application.Services
                     FirstName = x.FirstName,
                     LastName = x.LastName,
                     Email = x.Credentials.EmailAddress,
+                    CreatedDateTime = x.CreatedDateTime
                 }).ToListAsync();
 
             return new PaginatedResponse<UserResponse>
