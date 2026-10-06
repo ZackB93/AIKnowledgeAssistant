@@ -1,4 +1,18 @@
 <Solution>
+  <Folder Name="/screenshots/">
+    <File Path="../../Screenshots/admin_emails.png" />
+    <File Path="../../Screenshots/admin_roles.png" />
+    <File Path="../../Screenshots/admin_users.png" />
+    <File Path="../../Screenshots/admin_users_edit.png" />
+    <File Path="../../Screenshots/admin_users_search.png" />
+    <File Path="../../Screenshots/chat_attachment_convo1.png" />
+    <File Path="../../Screenshots/chat_attachment_convo2.png" />
+    <File Path="../../Screenshots/chat_attachment_convo3.png" />
+    <File Path="../../Screenshots/chat_general_convo.png" />
+    <File Path="../../Screenshots/chat_start.png" />
+    <File Path="../../Screenshots/my_profile.png" />
+    <File Path="../../Screenshots/sign_in.png" />
+  </Folder>
   <Project Path="KnowledgeAssistant.API/KnowledgeAssistant.API.csproj" />
   <Project Path="KnowledgeAssistant.Application/KnowledgeAssistant.Application.csproj" />
   <Project Path="KnowledgeAssistant.Tests/KnowledgeAssistant.Tests.csproj" Id="e2c3f571-a54f-4f2b-9892-2dd6457206b7" />
