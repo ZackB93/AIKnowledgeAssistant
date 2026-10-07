@@ -7,7 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\KnowledgeAssistant.API\KnowledgeAssistant.API.csproj" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\KnowledgeAssistant.Application\KnowledgeAssistant.Application.csproj" />
   </ItemGroup>
 

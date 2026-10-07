@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\KnowledgeAssistant.Application\KnowledgeAssistant.Application.csproj" />
+    <ProjectReference Include="..\KnowledgeAssistant.Infrastructure\KnowledgeAssistant.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

@@ -9,7 +9,7 @@ using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
 
-namespace KnowledgeAssistant.Application.BackgroundServices
+namespace KnowledgeAssistant.Infrastructure.BackgroundServices
 {
     public class RabbitMQBackgroundService : BackgroundService
     {

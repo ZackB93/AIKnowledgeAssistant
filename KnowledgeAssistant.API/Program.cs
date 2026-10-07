@@ -1,5 +1,5 @@
 using CallRatingService.API.Middleware;
-using KnowledgeAssistant.Application.BackgroundServices;
+using KnowledgeAssistant.Infrastructure.BackgroundServices;
 using KnowledgeAssistant.Application.Data.Context;
 using KnowledgeAssistant.Domain.Entities.Emails;
 using KnowledgeAssistant.Domain.Entities.Users;
