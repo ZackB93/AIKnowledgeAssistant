@@ -512,16 +512,6 @@ This makes changing AI providers easier in the future.
 
 ---
 
-### Similarity Search
-
-The current RAG implementation performs similarity calculations against stored embeddings.
-
-This keeps the implementation straightforward and makes the underlying RAG process easy to understand.
-
-For a significantly larger document collection, a dedicated vector index or SQL Server's vector capabilities would provide a more scalable approach.
-
----
-
 ## 07 · To Do
 
 The project is intentionally being developed incrementally, with the following features planned to extend the application's AI, messaging and background-processing capabilities.
@@ -554,67 +544,6 @@ Save Notification
 User Notification Centre
 ```
 
-### Asynchronous Document Processing
-
-Move document processing out of the upload/chat request and into a background processing pipeline.
-
-Documents will be uploaded independently through the document management area and processed asynchronously before becoming available to the RAG system.
-
-```text
-Document Upload
-       ↓
-Save Document
-       ↓
-RabbitMQ
-       ↓
-Document Processing Worker
-       ↓
-Extract Text
-       ↓
-Create Chunks
-       ↓
-Generate Embeddings
-       ↓
-Store Chunks + Embeddings
-       ↓
-Document Ready
-       ↓
-Notification
-```
-
-This will allow users to upload documents without waiting for the entire processing pipeline to complete before continuing to use the application.
-
-### RAG Source Citations & Improved Retrieval
-
-Improve the RAG experience by showing users which documents were used to generate an answer.
-
-Planned functionality:
-
-* Display source documents alongside AI responses
-* Show relevant document chunks
-* Include page/source information where available
-* Improve retrieval using additional search techniques
-* Provide greater transparency into how an answer was generated
-
-Example:
-
-```text
-AI Response
-────────────────────────────────────
-
-Employees are entitled to 25 days of
-annual leave per year, excluding bank
-holidays.
-
-Sources
-────────────────────────────────────
-📄 Holiday Policy.pdf
-   Page 4
-
-📄 Employee Handbook.pdf
-   Page 12
-```
-
 ### RabbitMQ Retry & Dead-Letter Handling
 
 Introduce retry and dead-letter handling for failed background operations.
@@ -640,22 +569,6 @@ Dead-Letter Queue
 ```
 
 This will initially support operations such as document processing, email and notifications.
-
----
-
-### Future Considerations
-
-Additional functionality may be introduced as the application develops, including:
-
-* AI response streaming
-* Conversation memory
-* Background job monitoring
-* Audit logging
-* Docker / containerisation
-* CI/CD pipeline
-* AI and RAG evaluation metrics
-
-The roadmap is intentionally limited to features that provide meaningful engineering or AI value rather than adding functionality purely for the sake of increasing the application's size.
 
 ---
 
