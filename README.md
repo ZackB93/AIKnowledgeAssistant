@@ -145,17 +145,6 @@ KnowledgeAssistant
 │   └── Program.cs
 │
 ├── screenshots
-│   ├── sign_in.png
-│   ├── my_profile.png
-│   ├── chat_general_convo.png
-│   ├── chat_attachment_convo1.png
-│   ├── chat_attachment_convo2.png
-│   ├── chat_attachment_convo3.png
-│   ├── admin_users.png
-│   ├── admin_users_search.png
-│   ├── admin_users_edit.png
-│   ├── admin_roles.png
-│   └── admin_emails.png
 │
 └── README.md
 ```
@@ -218,7 +207,8 @@ Contains automated tests covering important application behaviour across control
 
 <div align="center">
 
-N/A
+<img src="screenshots/admin_documents.png" alt="Documents Management" width="850">
+<img src="screenshots/admin_documents_upload.png" alt="Document Upload" width="850">
 
 </div>
 
@@ -454,19 +444,6 @@ For this project, the additional complexity is useful because it demonstrates a 
 ### Application Project Instead of Full Clean Architecture
 
 The current solution is structured as:
-
-```text
-API
-Application
-UI
-Tests
-```
-
-rather than introducing separate Domain and Infrastructure projects.
-
-For the current size of the application, adding further projects would introduce additional abstraction without providing much practical benefit.
-
-If the application grew significantly, a more formal structure could be introduced:
 
 ```text
 Domain
