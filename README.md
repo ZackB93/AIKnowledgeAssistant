@@ -207,8 +207,7 @@ Contains automated tests covering important application behaviour across control
 
 <div align="center">
 
-<img src="screenshots/admin_documents.png" alt="Documents Management" width="850">
-<img src="screenshots/admin_documents_upload.png" alt="Document Upload" width="850">
+N/A
 
 </div>
 
@@ -227,7 +226,8 @@ Contains automated tests covering important application behaviour across control
 
 <div align="center">
 
-N/A
+<img src="screenshots/admin_documents.png" alt="Documents Management" width="850">
+<img src="screenshots/admin_documents_upload.png" alt="Document Upload" width="850">
 
 </div>
 
