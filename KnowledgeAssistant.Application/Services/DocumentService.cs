@@ -5,6 +5,7 @@ using KnowledgeAssistant.Application.DTOs.Documents;
 using KnowledgeAssistant.Application.DTOs.Users;
 using KnowledgeAssistant.Domain.Entities.Chat;
 using KnowledgeAssistant.Domain.Entities.Documents;
+using KnowledgeAssistant.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;

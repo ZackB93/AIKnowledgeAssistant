@@ -1,4 +1,5 @@
 ﻿using KnowledgeAssistant.Domain.Entities.Emails;
+using KnowledgeAssistant.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;

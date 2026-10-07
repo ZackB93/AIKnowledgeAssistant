@@ -5,7 +5,7 @@ using KnowledgeAssistant.Domain.Entities.Emails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Resend;
-using EmailStatus = KnowledgeAssistant.Domain.Entities.Emails.EmailStatus;
+using EmailStatus = KnowledgeAssistant.Domain.Enums.EmailStatus;
 
 namespace KnowledgeAssistant.Application.Services
 {

@@ -1,5 +1,6 @@
 ﻿using KnowledgeAssistant.Domain.Entities.Chat;
 using KnowledgeAssistant.Domain.Entities.Users;
+using KnowledgeAssistant.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;

@@ -1,4 +1,5 @@
 ﻿using KnowledgeAssistant.Domain.Entities.Users;
+using KnowledgeAssistant.Domain.Enums;
 
 namespace KnowledgeAssistant.Domain.Entities.Emails
 {
@@ -17,13 +18,5 @@ namespace KnowledgeAssistant.Domain.Entities.Emails
         public string? ErrorMessage { get; set; }
         public int RetryCount { get; set; }
         public User User { get; set; } = null!;
-    }
-
-    public enum EmailStatus
-    {
-        Pending = 0,
-        Processing = 1,
-        Sent = 2,
-        Failed = 3
     }
 }
