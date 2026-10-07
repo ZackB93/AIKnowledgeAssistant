@@ -111,7 +111,7 @@ The main goal is to demonstrate practical **.NET + AI development** rather than 
 
 ## 03 · File Structure
 
-The solution is currently split into four projects:
+The solution is currently split into six projects and follows clean architecture layers.
 
 ```text
 KnowledgeAssistant
@@ -122,15 +122,23 @@ KnowledgeAssistant
 │   └── Program.cs
 │
 ├── KnowledgeAssistant.Application
+│   ├── DTOs
+│   ├── Handlers
+│   ├── Interfaces
+│   │   └── Repositories
+│   └── Services
+│
+├── KnowledgeAssistant.Domain
+│   ├── Entities
+│   └── Enums
+|
+├── KnowledgeAssistant.Infrastructure
 │   ├── BackgroundServices
 │   ├── Data
 │   │   ├── Configs
 │   │   ├── Context
 │   │   └── Migrations
-│   ├── DTOs
-│   ├── Entities
-│   ├── Handlers
-│   └── Services
+│   └── Repositories
 │
 ├── KnowledgeAssistant.Tests
 │   ├── API
