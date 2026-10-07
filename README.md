@@ -27,12 +27,13 @@
 |        | Section                                 |
 | :----: | --------------------------------------- |
 | **01** | [Overview](#01--overview)               |
-| **02** | [Technology Used](#02--technology-used) |
-| **03** | [File Structure](#03--file-structure)   |
-| **04** | [Screenshots](#04--screenshots)         |
-| **05** | [Features](#05--features)               |
-| **06** | [Trade Offs](#06--trade-offs)           |
-| **07** | [To Do](#07--to-do)                     |
+| **02** | [Running Locally](#02--running-locally) |
+| **03** | [Technology Used](#03--technology-used) |
+| **04** | [File Structure](#04--file-structure)   |
+| **05** | [Screenshots](#05--screenshots)         |
+| **06** | [Features](#06--features)               |
+| **07** | [Trade Offs](#07--trade-offs)           |
+| **08** | [To Do](#08--to-do)                     |
 
 ---
 
@@ -61,7 +62,64 @@ The main goal is to demonstrate practical **.NET + AI development** rather than 
 
 ---
 
-## 02 · Technology Used
+## 02 · Running Locally
+
+### Prerequisites
+
+* **.NET 10 SDK**
+* **SQL Server**
+* **Visual Studio** or the **.NET CLI**
+* **RabbitMQ** — optional
+
+### 1. Clone & Build
+
+Clone the repository and open the solution in Visual Studio, then build the solution:
+
+```bash
+dotnet build
+```
+
+### 2. Create the Database
+
+From the solution directory:
+
+```bash
+dotnet ef database update --project KnowledgeAssistant.Infrastructure --startup-project KnowledgeAssistant.API
+```
+
+### 3. Run
+
+Start the application from Visual Studio.
+
+| Application      | URL                             |
+| ---------------- | ------------------------------- |
+| **Blazor UI**    | `https://localhost:7017`        |
+| **API / Scalar** | `https://localhost:7164/scalar` |
+
+Default local login:
+
+```text
+Email:    zack.bucci@example.com
+Password: test
+```
+
+### 4. Optional — RabbitMQ
+
+RabbitMQ is disabled by default.
+
+To enable it, set the following in `KnowledgeAssistant.API/appsettings.json`:
+
+```json
+"RabbitMQ": {
+  "Enabled": true
+}
+```
+
+RabbitMQ must be running locally, either as a Windows service or through Docker.
+
+---
+
+## 03 · Technology Used
 
 ### Backend
 
@@ -109,7 +167,7 @@ The main goal is to demonstrate practical **.NET + AI development** rather than 
 
 ---
 
-## 03 · File Structure
+## 04 · File Structure
 
 The solution is currently split into six projects and follows clean architecture layers.
 
@@ -131,7 +189,7 @@ KnowledgeAssistant
 ├── KnowledgeAssistant.Domain
 │   ├── Entities
 │   └── Enums
-|
+│
 ├── KnowledgeAssistant.Infrastructure
 │   ├── BackgroundServices
 │   ├── Data
@@ -162,7 +220,7 @@ KnowledgeAssistant
 │   │   ├── Home.razor
 │   │   └── Notfound.razor
 │   ├── _Imports.razor
-│   ├── appsettings.sjon
+│   ├── appsettings.json
 │   └── Program.cs
 │
 ├── screenshots
@@ -254,7 +312,7 @@ Contains automated tests covering important application behaviour across control
 
 ---
 
-## 04 · Screenshots
+## 05 · Screenshots
 
 ### Login
 
@@ -320,7 +378,7 @@ N/A
 
 ---
 
-## 05 · Features
+## 06 · Features
 
 ### AI Chat
 
@@ -386,11 +444,11 @@ This allows the application to answer questions using its own documents rather t
 
 ### Document Management
 
-Admins users can upload and manage documents through the application.
+Admins can upload and manage documents through the application.
 
 Documents are processed into smaller chunks which can subsequently be used by the RAG pipeline.
 
-They will be queued asynchronously and be uploaded/added to the database using RabbitMQ
+Document processing can be queued asynchronously using RabbitMQ, allowing the work to be handled by a background service rather than blocking the original HTTP request.
 
 ### Chat Sessions
 
@@ -459,7 +517,7 @@ The focus is on meaningful tests rather than attempting to achieve 100% code cov
 
 ---
 
-## 06 · Trade Offs
+## 07 · Trade Offs
 
 ### SQL Server for Application Data and Embeddings
 
@@ -512,7 +570,7 @@ This makes changing AI providers easier in the future.
 
 ---
 
-## 07 · To Do
+## 08 · To Do
 
 The project is intentionally being developed incrementally, with the following features planned to extend the application's AI, messaging and background-processing capabilities.
 
