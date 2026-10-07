@@ -1,6 +1,8 @@
 <Solution>
   <Project Path="KnowledgeAssistant.API/KnowledgeAssistant.API.csproj" />
   <Project Path="KnowledgeAssistant.Application/KnowledgeAssistant.Application.csproj" />
+  <Project Path="KnowledgeAssistant.Domain/KnowledgeAssistant.Domain.csproj" Id="f5af87a7-ce6d-4453-8387-a2cc7a7c1b0f" />
+  <Project Path="KnowledgeAssistant.Infrastructure/KnowledgeAssistant.Infrastructure.csproj" Id="16639c24-4510-44eb-84af-8d49bbc19436" />
   <Project Path="KnowledgeAssistant.Tests/KnowledgeAssistant.Tests.csproj" Id="e2c3f571-a54f-4f2b-9892-2dd6457206b7" />
   <Project Path="KnowledgeAssistant.UI/KnowledgeAssistant.UI.csproj" />
 </Solution>

@@ -25,6 +25,8 @@
     <ProjectReference Include="..\KnowledgeAssistant.Application\KnowledgeAssistant.Application.csproj" />
 	<ProjectReference Include="..\KnowledgeAssistant.API\KnowledgeAssistant.API.csproj" />
 	<ProjectReference Include="..\KnowledgeAssistant.Application\KnowledgeAssistant.Application.csproj" />
+	<ProjectReference Include="..\KnowledgeAssistant.Domain\KnowledgeAssistant.Domain.csproj" />
+	<ProjectReference Include="..\KnowledgeAssistant.Infrastructure\KnowledgeAssistant.Infrastructure.csproj" />
 	<ProjectReference Include="..\KnowledgeAssistant.UI\KnowledgeAssistant.UI.csproj" />
   </ItemGroup>
 
