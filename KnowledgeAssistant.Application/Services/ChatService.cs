@@ -1,11 +1,10 @@
-﻿using KnowledgeAssistant.Application.Data.Context;
-using KnowledgeAssistant.Application.DTOs.Chat;
+﻿using KnowledgeAssistant.Application.DTOs.Chat;
 using KnowledgeAssistant.Application.DTOs.Documents;
+using KnowledgeAssistant.Application.Interfaces.Repositories;
 using KnowledgeAssistant.Domain.Entities.Chat;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using AIChatMessage = Microsoft.Extensions.AI.ChatMessage;
-using ChatEntity = KnowledgeAssistant.Domain.Entities.Chat.ChatMessage;
+using ChatMessage = KnowledgeAssistant.Domain.Entities.Chat.ChatMessage;
 
 namespace KnowledgeAssistant.Application.Services
 {
@@ -20,13 +19,16 @@ namespace KnowledgeAssistant.Application.Services
 
     public class ChatService : IChatService
     {
-        private readonly KnowledgeContext _context;
+        private readonly IChatRepository _chatRepository;
         private readonly IChatClient _chatClient;
         private readonly IDocumentService _documentService;
 
-        public ChatService(KnowledgeContext context, IChatClient chatClient, IDocumentService documentService)
+        public ChatService(
+            IChatRepository chatRepository,
+            IChatClient chatClient,
+            IDocumentService documentService)
         {
-            _context = context;
+            _chatRepository = chatRepository;
             _chatClient = chatClient;
             _documentService = documentService;
         }
@@ -43,9 +45,8 @@ namespace KnowledgeAssistant.Application.Services
                 UpdatedAt = now
             };
 
-            _context.ChatSessions.Add(chatSession);
-
-            await _context.SaveChangesAsync();
+            await _chatRepository.AddChatSessionAsync(chatSession);
+            await _chatRepository.SaveChangesAsync();
 
             return new ChatSessionResponse
             {
@@ -75,7 +76,7 @@ namespace KnowledgeAssistant.Application.Services
                 chatMessageRequest.DocumentIds,
                 userId);
 
-            var chatMessages = await GetChatMessagesAsync(chatSession.Id);
+            var chatMessages = await _chatRepository.GetChatMessagesBySessionIdAsync(chatSession.Id);
 
             var messages = BuildChatMessages(chatMessages, documentSearchResults);
 
@@ -90,7 +91,7 @@ namespace KnowledgeAssistant.Application.Services
                 chatMessages,
                 messages);
 
-            await _context.SaveChangesAsync();
+            await _chatRepository.SaveChangesAsync();
 
             return new ChatMessageResponse
             {
@@ -105,28 +106,12 @@ namespace KnowledgeAssistant.Application.Services
 
         public async Task<List<ChatSessionResponse>> GetChatSessionsByUserIdAsync(int userId)
         {
-            return _context.ChatSessions
-                .AsNoTracking()
-                .Where(x => x.UserId == userId)
-                .OrderByDescending(x => x.UpdatedAt)
-                .Select(x => new ChatSessionResponse
-                {
-                    Id = x.Id,
-                    UserId = x.UserId,
-                    Title = x.Title,
-                    CreatedAt = x.CreatedAt,
-                    UpdatedAt = x.UpdatedAt,
-                }).ToList();
+            return await _chatRepository.GetChatSessionsByUserIdAsync(userId);
         }
 
         public async Task<List<ChatMessageResponse>> GetChatMessagesBySessionIdAsync(int sessionId)
         {
-            var messages = await _context.ChatMessages
-                .AsNoTracking()
-                .Where(x => x.ChatSessionId == sessionId)
-                .OrderBy(x => x.CreatedAt)
-                .ThenBy(x => x.Id)
-                .ToListAsync();
+            var messages = await _chatRepository.GetChatMessagesBySessionIdAsync(sessionId);
 
             return messages.Select(x => new ChatMessageResponse
             {
@@ -138,48 +123,16 @@ namespace KnowledgeAssistant.Application.Services
             }).ToList();
         }
 
-        private async Task<string> GenerateChatTitleAsync(List<AIChatMessage> messages)
-        {
-            var titlePrompt = new AIChatMessage(ChatRole.System,
-            """
-                Generate a short title for this conversation.
-
-                Rules:
-                - Maximum 6 words
-                - Describe the main topic of the conversation
-                - Do not use quotation marks
-                - Do not include prefixes such as "Title:"
-                - Do not use markdown
-                - Return only the title
-            """);
-
-            var titleMessages = new List<AIChatMessage>
-            {
-                titlePrompt
-            };
-
-            titleMessages.AddRange(messages);
-
-            var response = await _chatClient.GetResponseAsync(titleMessages);
-
-            return response.Text.Trim();
-        }
-
         public async Task<ChatMessageResponse> RegenerateChatMessageAsync(RegenerateMessageRequest request, int userId)
         {
-            var chatSession = await _context.ChatSessions
-                .FirstOrDefaultAsync(x => x.Id == request.ChatSessionId && x.UserId == userId);
+            var chatSession = await _chatRepository.GetChatSessionByIdAndUserIdAsync(request.ChatSessionId, userId);
 
             if (chatSession == null)
             {
                 throw new InvalidOperationException("Chat session was not found.");
             }
 
-            var chatMessages = await _context.ChatMessages
-                .Where(x => x.ChatSessionId == chatSession.Id)
-                .OrderBy(x => x.CreatedAt)
-                .ThenBy(x => x.Id)
-                .ToListAsync();
+            var chatMessages = await _chatRepository.GetChatMessagesBySessionIdAsync(chatSession.Id);
 
             var target = chatMessages.FirstOrDefault(x => x.Id == request.ChatMessageId);
 
@@ -220,7 +173,7 @@ namespace KnowledgeAssistant.Application.Services
             target.Content = response.Text;
             chatSession.UpdatedAt = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync();
+            await _chatRepository.SaveChangesAsync();
 
             return new ChatMessageResponse
             {
@@ -234,8 +187,7 @@ namespace KnowledgeAssistant.Application.Services
 
         private async Task<ChatSession> GetChatSessionAsync(int chatSessionId, int userId)
         {
-            var chatSession = await _context.ChatSessions
-                .FirstOrDefaultAsync(x => x.Id == chatSessionId && x.UserId == userId);
+            var chatSession = await _chatRepository.GetChatSessionByIdAndUserIdAsync(chatSessionId, userId);
 
             if (chatSession == null)
             {
@@ -245,11 +197,11 @@ namespace KnowledgeAssistant.Application.Services
             return chatSession;
         }
 
-        private async Task<Domain.Entities.Chat.ChatMessage> SaveUserMessageAsync(ChatSession chatSession, string content)
+        private async Task<ChatMessage> SaveUserMessageAsync(ChatSession chatSession, string content)
         {
             var now = DateTime.UtcNow;
 
-            var userMessage = new Domain.Entities.Chat.ChatMessage
+            var userMessage = new ChatMessage
             {
                 ChatSessionId = chatSession.Id,
                 Role = "user",
@@ -257,11 +209,9 @@ namespace KnowledgeAssistant.Application.Services
                 CreatedAt = now
             };
 
-            _context.ChatMessages.Add(userMessage);
+            await _chatRepository.AddChatMessageAsync(userMessage);
 
             chatSession.UpdatedAt = now;
-
-            await _context.SaveChangesAsync();
 
             return userMessage;
         }
@@ -273,19 +223,7 @@ namespace KnowledgeAssistant.Application.Services
                 return;
             }
 
-            var documents = await _context.Documents
-                .Where(x =>
-                    documentIds.Contains(x.Id) &&
-                    x.UserId == userId &&
-                    x.ChatSessionId == chatSessionId)
-                .ToListAsync();
-
-            foreach (var document in documents)
-            {
-                document.ChatMessageId = messageId;
-            }
-
-            await _context.SaveChangesAsync();
+            await _chatRepository.AttachDocumentsToMessageAsync(chatSessionId, messageId, documentIds, userId);
         }
 
         private async Task<List<DocumentSearchResult>> SearchDocumentContextAsync(string query, List<int> documentIds, int userId)
@@ -298,17 +236,7 @@ namespace KnowledgeAssistant.Application.Services
             return await _documentService.SearchAsync(query, documentIds, userId);
         }
 
-        private async Task<List<Domain.Entities.Chat.ChatMessage>> GetChatMessagesAsync(int chatSessionId)
-        {
-            return await _context.ChatMessages
-                .AsNoTracking()
-                .Where(x => x.ChatSessionId == chatSessionId)
-                .OrderBy(x => x.CreatedAt)
-                .ThenBy(x => x.Id)
-                .ToListAsync();
-        }
-
-        private static List<AIChatMessage> BuildChatMessages(List<Domain.Entities.Chat.ChatMessage> chatMessages, List<DocumentSearchResult> documentSearchResults)
+        private static List<AIChatMessage> BuildChatMessages(List<ChatMessage> chatMessages, List<DocumentSearchResult> documentSearchResults)
         {
             var messages = chatMessages
                 .Select(x => new AIChatMessage
@@ -362,9 +290,9 @@ namespace KnowledgeAssistant.Application.Services
             return messages;
         }
 
-        private async Task<Domain.Entities.Chat.ChatMessage> SaveAssistantMessageAsync(ChatSession chatSession, string content)
+        private async Task<ChatMessage> SaveAssistantMessageAsync(ChatSession chatSession, string content)
         {
-            var assistantMessage = new Domain.Entities.Chat.ChatMessage
+            var assistantMessage = new ChatMessage
             {
                 ChatSessionId = chatSession.Id,
                 Role = "assistant",
@@ -372,14 +300,14 @@ namespace KnowledgeAssistant.Application.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.ChatMessages.Add(assistantMessage);
+            await _chatRepository.AddChatMessageAsync(assistantMessage);
 
             chatSession.UpdatedAt = assistantMessage.CreatedAt;
 
             return assistantMessage;
         }
 
-        private async Task<string?> GenerateTitleIfRequiredAsync(ChatSession chatSession, List<Domain.Entities.Chat.ChatMessage> chatMessages, List<AIChatMessage> messages)
+        private async Task<string?> GenerateTitleIfRequiredAsync(ChatSession chatSession, List<ChatMessage> chatMessages, List<AIChatMessage> messages)
         {
             var userMessageCount = chatMessages.Count(x => x.Role == "user");
 
@@ -394,6 +322,32 @@ namespace KnowledgeAssistant.Application.Services
 
             return title;
         }
+
+        private async Task<string> GenerateChatTitleAsync(List<AIChatMessage> messages)
+        {
+            var titlePrompt = new AIChatMessage(ChatRole.System,
+            """
+                Generate a short title for this conversation.
+
+                Rules:
+                - Maximum 6 words
+                - Describe the main topic of the conversation
+                - Do not use quotation marks
+                - Do not include prefixes such as "Title:"
+                - Do not use markdown
+                - Return only the title
+            """);
+
+            var titleMessages = new List<AIChatMessage>
+            {
+                titlePrompt
+            };
+
+            titleMessages.AddRange(messages);
+
+            var response = await _chatClient.GetResponseAsync(titleMessages);
+
+            return response.Text.Trim();
+        }
     }
-    
 }

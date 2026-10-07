@@ -1,32 +1,32 @@
-﻿using KnowledgeAssistant.Application.Data.Context;
-using KnowledgeAssistant.Application.DTOs.Roles;
+﻿using KnowledgeAssistant.Application.DTOs.Roles;
+using KnowledgeAssistant.Application.Interfaces.Repositories;
 using KnowledgeAssistant.Domain.Entities.Roles;
-using Microsoft.EntityFrameworkCore;
 
 namespace KnowledgeAssistant.Application.Services
 {
     public interface IRoleService
     {
-        Task<RoleResponse> CreateRoleAsync(CreateRoleRequest request);
-        Task<RoleResponse?> UpdateRoleAsync(UpdateRoleRequest request);
-        Task<List<RoleResponse>> GetRolesAsync();
-        Task<RoleResponse?> GetRoleByIdAsync(int id);
+        Task<RoleResponse> CreateRoleAsync(CreateRoleRequest request, CancellationToken cancellationToken = default);
+        Task<RoleResponse?> UpdateRoleAsync(UpdateRoleRequest request, CancellationToken cancellationToken = default);
+        Task<List<RoleResponse>> GetRolesAsync(CancellationToken cancellationToken = default);
+        Task<RoleResponse?> GetRoleByIdAsync(int id, CancellationToken cancellationToken = default);
     }
 
     public class RoleService : IRoleService
     {
-        private readonly KnowledgeContext _context;
+        private readonly IRoleRepository _roleRepository;
         private readonly ICacheService _cacheService;
-        private const string rolesCacheKey = "roles";
-        private static string roleCacheKey(int id) => $"role_{id}";
 
-        public RoleService(KnowledgeContext context, ICacheService cacheService)
+        private const string RolesCacheKey = "roles";
+        private static string GetRoleCacheKey(int id) => $"role_{id}";
+
+        public RoleService(IRoleRepository roleRepository, ICacheService cacheService)
         {
-            _context = context;
+            _roleRepository = roleRepository;
             _cacheService = cacheService;
         }
- 
-        public async Task<RoleResponse> CreateRoleAsync(CreateRoleRequest request)
+
+        public async Task<RoleResponse> CreateRoleAsync(CreateRoleRequest request, CancellationToken cancellationToken = default)
         {
             var role = new Role
             {
@@ -34,11 +34,10 @@ namespace KnowledgeAssistant.Application.Services
                 Description = request.Description?.Trim()
             };
 
-            _context.Roles.Add(role);
+            await _roleRepository.AddAsync(role, cancellationToken);
+            await _roleRepository.SaveChangesAsync(cancellationToken);
 
-            await _context.SaveChangesAsync();
-
-            _cacheService.RemoveFromCache(rolesCacheKey);
+            _cacheService.RemoveFromCache(RolesCacheKey);
 
             return new RoleResponse
             {
@@ -49,10 +48,9 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        public async Task<RoleResponse?> UpdateRoleAsync(UpdateRoleRequest request)
+        public async Task<RoleResponse?> UpdateRoleAsync(UpdateRoleRequest request, CancellationToken cancellationToken = default)
         {
-            var role = await _context.Roles
-                .FirstOrDefaultAsync(x => x.Id == request.Id);
+            var role = await _roleRepository.GetByIdAsync(request.Id, cancellationToken);
 
             if (role is null)
             {
@@ -62,10 +60,10 @@ namespace KnowledgeAssistant.Application.Services
             role.Name = request.Name.Trim();
             role.Description = request.Description?.Trim();
 
-            await _context.SaveChangesAsync();
+            await _roleRepository.SaveChangesAsync(cancellationToken);
 
-            _cacheService.RemoveFromCache(rolesCacheKey);
-            _cacheService.RemoveFromCache(roleCacheKey(role.Id));
+            _cacheService.RemoveFromCache(RolesCacheKey);
+            _cacheService.RemoveFromCache(GetRoleCacheKey(role.Id));
 
             return new RoleResponse
             {
@@ -76,46 +74,30 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        public async Task<List<RoleResponse>> GetRolesAsync()
+        public async Task<List<RoleResponse>> GetRolesAsync(CancellationToken cancellationToken = default)
         {
-            var cachedRoles = _cacheService.GetFromCache<List<RoleResponse>>(rolesCacheKey);
+            var cachedRoles = _cacheService.GetFromCache<List<RoleResponse>>(RolesCacheKey);
             if (cachedRoles is not null) return cachedRoles;
 
-            var roles = await _context.Roles
-                .AsNoTracking()
-                .OrderBy(x => x.Name)
-                .Select(x => new RoleResponse
-                {
-                    Id = x.Id,
-                    Name = x.Name,
-                    Description = x.Description,
-                    CreatedDateTime = x.CreatedDateTime
-                })
-                .ToListAsync();
+            var roles = await _roleRepository.GetAllResponsesAsync(cancellationToken);
 
-            _cacheService.SaveToCache(rolesCacheKey, roles, TimeSpan.FromHours(1));
+            _cacheService.SaveToCache(RolesCacheKey, roles, TimeSpan.FromHours(1));
 
             return roles;
         }
 
-        public async Task<RoleResponse?> GetRoleByIdAsync(int id)
+        public async Task<RoleResponse?> GetRoleByIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            var cachedRole = _cacheService.GetFromCache<RoleResponse>(roleCacheKey(id));
+            var cacheKey = GetRoleCacheKey(id);
+            var cachedRole = _cacheService.GetFromCache<RoleResponse>(cacheKey);
             if (cachedRole is not null) return cachedRole;
 
-            var role = await _context.Roles
-                .AsNoTracking()
-                .Where(x => x.Id == id)
-                .Select(x => new RoleResponse
-                {
-                    Id = x.Id,
-                    Name = x.Name,
-                    Description = x.Description,
-                    CreatedDateTime = x.CreatedDateTime
-                })
-                .FirstOrDefaultAsync();
+            var role = await _roleRepository.GetResponseByIdAsync(id, cancellationToken);
 
-            _cacheService.SaveToCache(roleCacheKey(id), role, TimeSpan.FromHours(1));
+            if (role is not null)
+            {
+                _cacheService.SaveToCache(cacheKey, role, TimeSpan.FromHours(1));
+            }
 
             return role;
         }

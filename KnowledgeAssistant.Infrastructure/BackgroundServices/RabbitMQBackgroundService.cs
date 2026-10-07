@@ -1,5 +1,4 @@
 ﻿using KnowledgeAssistant.Domain.Entities.Emails;
-using KnowledgeAssistant.Application.Messaging.Handlers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -8,6 +7,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
+using KnowledgeAssistant.Application.Handlers;
 
 namespace KnowledgeAssistant.Infrastructure.BackgroundServices
 {
@@ -148,7 +148,7 @@ namespace KnowledgeAssistant.Infrastructure.BackgroundServices
         {
             return queue switch
             {
-                "emails" => (IMessageHandler<T>)serviceProvider.GetRequiredService<IMessageHandler<T>>(),
+                "emails" => serviceProvider.GetRequiredService<IMessageHandler<T>>(),
                 _ => throw new InvalidOperationException($"No message handler configured for queue '{queue}'.")
             };
         }

@@ -1,9 +1,10 @@
-﻿using KnowledgeAssistant.Application.Data.Context;
-using KnowledgeAssistant.Application.DTOs.API;
+﻿using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Authentication;
 using KnowledgeAssistant.Application.DTOs.Users;
-using KnowledgeAssistant.Domain.Entities.Users;
 using KnowledgeAssistant.Application.Services;
+using KnowledgeAssistant.Domain.Entities.Users;
+using KnowledgeAssistant.Infrastructure.Data.Context;
+using KnowledgeAssistant.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -13,6 +14,7 @@ namespace KnowledgeAssistant.Tests.Application.Services;
 public class UserServiceTests : IDisposable
 {
     private readonly KnowledgeContext _context;
+    private readonly UserRepository _repository;
     private readonly Mock<IPasswordHasher<User>> _hasher = new();
     private readonly Mock<ITokenService> _tokens = new();
     private readonly Mock<IEmailService> _emails = new();
@@ -25,8 +27,9 @@ public class UserServiceTests : IDisposable
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         _context = new KnowledgeContext(options);
+        _repository = new UserRepository(_context);
 
-        _service = new UserService(_context, _hasher.Object, _tokens.Object, _emails.Object, _cache.Object);
+        _service = new UserService(_repository, _hasher.Object, _tokens.Object, _emails.Object, _cache.Object);
     }
 
     public void Dispose() => _context.Dispose();

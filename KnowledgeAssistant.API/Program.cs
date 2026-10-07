@@ -1,10 +1,12 @@
 using CallRatingService.API.Middleware;
-using KnowledgeAssistant.Infrastructure.BackgroundServices;
-using KnowledgeAssistant.Application.Data.Context;
+using KnowledgeAssistant.Application.Handlers;
+using KnowledgeAssistant.Application.Interfaces.Repositories;
+using KnowledgeAssistant.Application.Services;
 using KnowledgeAssistant.Domain.Entities.Emails;
 using KnowledgeAssistant.Domain.Entities.Users;
-using KnowledgeAssistant.Application.Messaging.Handlers;
-using KnowledgeAssistant.Application.Services;
+using KnowledgeAssistant.Infrastructure.BackgroundServices;
+using KnowledgeAssistant.Infrastructure.Data.Context;
+using KnowledgeAssistant.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
@@ -138,6 +140,12 @@ builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IMessageHandler<SendEmailMessage>, SendEmailHandler>();
 builder.Services.AddSingleton<IResend>(ResendClient.Create(builder.Configuration["Resend:Key"]!));
 builder.Services.AddHostedService<RabbitMQBackgroundService>();
+
+builder.Services.AddScoped<IChatRepository, ChatRepository>();
+builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
+builder.Services.AddScoped<IEmailRepository, EmailRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddChatClient(services => new ChatClient(
     builder.Configuration["OpenAI:Model"]!,

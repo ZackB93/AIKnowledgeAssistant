@@ -1,13 +1,8 @@
-﻿using DocumentFormat.OpenXml.Drawing.Charts;
-using KnowledgeAssistant.Application.Data.Context;
-using KnowledgeAssistant.Application.DTOs.API;
+﻿using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Documents;
-using KnowledgeAssistant.Application.DTOs.Users;
-using KnowledgeAssistant.Domain.Entities.Chat;
-using KnowledgeAssistant.Domain.Entities.Documents;
+using KnowledgeAssistant.Application.Interfaces.Repositories;
 using KnowledgeAssistant.Domain.Enums;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using System.Runtime.InteropServices;
 using DocChunkEntity = KnowledgeAssistant.Domain.Entities.Documents.DocumentChunk;
@@ -28,12 +23,15 @@ namespace KnowledgeAssistant.Application.Services
         private const long MaxFileBytes = 10 * 1024 * 1024; // 10 MB
         private const int EmbeddingBatchSize = 64;
         private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase) { ".pdf", ".docx", ".txt", ".md" };
-        private readonly KnowledgeContext _context;
+
+        private readonly IDocumentRepository _documentRepository;
         private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddings;
 
-        public DocumentService(KnowledgeContext context, IEmbeddingGenerator<string, Embedding<float>> embeddings)
+        public DocumentService(
+            IDocumentRepository documentRepository,
+            IEmbeddingGenerator<string, Embedding<float>> embeddings)
         {
-            _context = context;
+            _documentRepository = documentRepository;
             _embeddings = embeddings;
         }
 
@@ -42,7 +40,7 @@ namespace KnowledgeAssistant.Application.Services
             await ValidateUploadAsync(file, chatSessionId, userId, cancellationToken);
 
             var extension = Path.GetExtension(file.FileName);
-       
+
             // Extract, chunk, embed.
             var text = await ExtractTextAsync(file, extension, cancellationToken);
 
@@ -68,7 +66,7 @@ namespace KnowledgeAssistant.Application.Services
                 throw new InvalidOperationException("Embedding generation returned an unexpected number of results.");
             }
 
-            // Save the document and its chunks in one SaveChanges.
+            // Save the document and its chunks via repository.
             var document = new DocEntity
             {
                 UserId = userId,
@@ -87,8 +85,8 @@ namespace KnowledgeAssistant.Application.Services
                 }).ToList()
             };
 
-            _context.Documents.Add(document);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _documentRepository.AddDocumentAsync(document, cancellationToken);
+            await _documentRepository.SaveChangesAsync(cancellationToken);
 
             return new DocumentResponse
             {
@@ -112,26 +110,17 @@ namespace KnowledgeAssistant.Application.Services
 
             // Generate an embedding for the user's question.
             var queryEmbedding = await _embeddings.GenerateAsync(query, cancellationToken: cancellationToken);
-            var queryVector = queryEmbedding.Vector.ToArray();
+
+            // Keep as ReadOnlyMemory<float> (or float[] array) across await boundaries.
+            ReadOnlyMemory<float> queryMemory = queryEmbedding.Vector;
 
             // Only retrieve chunks belonging to the user's selected documents.
-            var chunks = await _context.DocumentChunks
-                .AsNoTracking()
-                .Where(x =>
-                    documentIds.Contains(x.DocumentId) &&
-                    x.Document.UserId == userId)
-                .Select(x => new
-                {
-                    x.Id,
-                    x.DocumentId,
-                    x.ChunkIndex,
-                    x.Content,
-                    x.Embedding,
-                    FileName = x.Document.FileName
-                })
-                .ToListAsync(cancellationToken);
+            var chunks = await _documentRepository.GetDocumentChunksForSearchAsync(documentIds, userId, cancellationToken);
 
             var results = new List<DocumentSearchResult>();
+
+            // Extract the span here, safely after all async/await calls are finished.
+            ReadOnlySpan<float> queryVector = queryMemory.Span;
 
             // Compare the query embedding to each chunk's embedding and calculate similarity.
             foreach (var chunk in chunks)
@@ -141,7 +130,7 @@ namespace KnowledgeAssistant.Application.Services
                     continue;
                 }
 
-                var storedVector = MemoryMarshal.Cast<byte, float>(chunk.Embedding.AsSpan()).ToArray();
+                ReadOnlySpan<float> storedVector = MemoryMarshal.Cast<byte, float>(chunk.Embedding.AsSpan());
 
                 if (storedVector.Length != queryVector.Length)
                 {
@@ -161,12 +150,11 @@ namespace KnowledgeAssistant.Application.Services
                 });
             }
 
-            // Take the top 5 most similar chunks and return them to the user.
+            // Take the top 5 most similar chunks.
             return results
                 .OrderByDescending(x => x.Similarity)
                 .Take(5)
                 .ToList();
-
         }
 
         public async Task<PaginatedResponse<DocumentResponse>> GetDocumentsAsync(int pageNumber, int pageSize)
@@ -177,30 +165,8 @@ namespace KnowledgeAssistant.Application.Services
             if (pageSize < 1) pageSize = 10;
             if (pageSize > maxPageSize) pageSize = maxPageSize;
 
-            var totalCount = await _context.Documents.CountAsync();
+            var (documents, totalCount) = await _documentRepository.GetPaginatedDocumentsAsync(pageNumber, pageSize);
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-
-            var documents = await _context.Documents
-                .AsNoTracking()
-                .OrderBy(x => x.Id)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .Select(x => new DocumentResponse
-                {
-                    Id = x.Id,
-                    UserId = x.UserId,
-                    UserName = x.User.FirstName + " " + x.User.LastName,
-                    ChatSessionId = x.ChatSessionId,
-                    ChatSessionTitle = x.ChatSession != null ? x.ChatSession.Title : null,
-                    FileName = x.FileName,
-                    ContentType = x.ContentType,
-                    SizeBytes = x.SizeBytes,
-                    Status = x.Status,
-                    ErrorMessage = x.ErrorMessage,
-                    ChunkCount = x.Chunks.Count,
-                    CreatedAt = x.CreatedAt
-                })
-                .ToListAsync();
 
             return new PaginatedResponse<DocumentResponse>
             {
@@ -212,7 +178,6 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        // Validates the uploaded file and checks if the user owns the chat session (if provided).
         private async Task ValidateUploadAsync(IFormFile file, int? chatSessionId, int userId, CancellationToken cancellationToken)
         {
             if (file is null || file.Length == 0)
@@ -234,8 +199,7 @@ namespace KnowledgeAssistant.Application.Services
 
             if (chatSessionId is not null)
             {
-                var ownsSession = await _context.ChatSessions
-                    .AnyAsync(x => x.Id == chatSessionId && x.UserId == userId, cancellationToken);
+                var ownsSession = await _documentRepository.DoesUserOwnChatSessionAsync(chatSessionId.Value, userId, cancellationToken);
 
                 if (!ownsSession)
                 {
@@ -244,7 +208,6 @@ namespace KnowledgeAssistant.Application.Services
             }
         }
 
-        // Calculates the cosine similarity between two vectors.
         private static double CosineSimilarity(ReadOnlySpan<float> a, ReadOnlySpan<float> b)
         {
             double dot = 0;
@@ -266,7 +229,6 @@ namespace KnowledgeAssistant.Application.Services
             return dot / (Math.Sqrt(magnitudeA) * Math.Sqrt(magnitudeB));
         }
 
-        // Extracts text from a file based on its extension.
         private static async Task<string> ExtractTextAsync(IFormFile file, string extension, CancellationToken cancellationToken)
         {
             await using var memory = new MemoryStream();
@@ -284,7 +246,7 @@ namespace KnowledgeAssistant.Application.Services
                         text = await reader.ReadToEndAsync(cancellationToken);
                     break;
 
-                case ".pdf": 
+                case ".pdf":
                     using (var pdf = UglyToad.PdfPig.PdfDocument.Open(memory))
                         text = string.Join("\n\n", pdf.GetPages().Select(p => p.Text));
                     break;
@@ -305,11 +267,9 @@ namespace KnowledgeAssistant.Application.Services
                     throw new InvalidOperationException($"Unsupported file type: {extension}");
             }
 
-            // Null characters can break some database providers.
             return text.Replace("\0", "");
         }
 
-        // Splits a large text into smaller chunks, trying to end each chunk on a paragraph or sentence boundary.
         private static List<string> Chunk(string text, int size = 800, int overlap = 150)
         {
             text = text.Trim();

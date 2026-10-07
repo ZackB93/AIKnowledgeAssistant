@@ -1,8 +1,8 @@
-﻿using KnowledgeAssistant.Application.Data.Context;
-using KnowledgeAssistant.Application.DTOs.API;
+﻿using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Emails;
+using KnowledgeAssistant.Application.Interfaces.Repositories;
 using KnowledgeAssistant.Domain.Entities.Emails;
-using Microsoft.EntityFrameworkCore;
+using KnowledgeAssistant.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 using Resend;
 using EmailStatus = KnowledgeAssistant.Domain.Enums.EmailStatus;
@@ -21,19 +21,21 @@ namespace KnowledgeAssistant.Application.Services
 
     public class EmailService : IEmailService
     {
-        private readonly IConfiguration _configuration;
-        private readonly KnowledgeContext _context;
+        private readonly IEmailRepository _emailRepository;
         private readonly IRabbitMQService _rabbitMQService;
+        private readonly IResend _resendService;
         private readonly bool _rabbitMQEnabled;
-        private IResend _resendService;
-        
-        public EmailService(KnowledgeContext context, IRabbitMQService rabbitMQService, IResend resendService, IConfiguration configuration)
+
+        public EmailService(
+            IEmailRepository emailRepository,
+            IRabbitMQService rabbitMQService,
+            IResend resendService,
+            IConfiguration configuration)
         {
-            _configuration = configuration;
-            _context = context;
+            _emailRepository = emailRepository;
             _rabbitMQService = rabbitMQService;
             _resendService = resendService;
-            _rabbitMQEnabled = _configuration.GetValue<bool>("RabbitMQ:Enabled");
+            _rabbitMQEnabled = configuration.GetValue<bool>("RabbitMQ:Enabled");
         }
 
         public async Task QueueEmailAsync(int userId, string to, string subject, string body, bool isHtml = true)
@@ -50,13 +52,12 @@ namespace KnowledgeAssistant.Application.Services
                 RetryCount = 0
             };
 
-            _context.Emails.Add(email);
-
-            await _context.SaveChangesAsync();
+            await _emailRepository.AddAsync(email);
+            await _emailRepository.SaveChangesAsync();
 
             if (_rabbitMQEnabled)
             {
-                await _rabbitMQService.PublishAsync(new SendEmailMessage() {  EmailId = email.Id }, "emails");
+                await _rabbitMQService.PublishAsync(new SendEmailMessage { EmailId = email.Id }, "emails");
             }
             else
             {
@@ -66,7 +67,7 @@ namespace KnowledgeAssistant.Application.Services
 
         public async Task SendEmailAsync(int emailId, CancellationToken cancellationToken = default)
         {
-            var email = await _context.Emails.FirstOrDefaultAsync(x => x.Id == emailId, cancellationToken);
+            var email = await _emailRepository.GetByIdAsync(emailId, cancellationToken);
 
             if (email == null)
             {
@@ -74,23 +75,20 @@ namespace KnowledgeAssistant.Application.Services
             }
 
             email.Status = EmailStatus.Processing;
-
-            await _context.SaveChangesAsync(cancellationToken);
+            await _emailRepository.SaveChangesAsync(cancellationToken);
 
             try
             {
-                var response = await _resendService.EmailSendAsync(new EmailMessage
+                await _resendService.EmailSendAsync(new EmailMessage
                 {
-                     From = "onboarding@resend.dev",
-                     To = "zackzack93@hotmail.com", //Resend only lets you use your own email for testing. Need to use a domain to use publicly.
-                     Subject = email.Subject,
-                     HtmlBody = email.Body
-                });
+                    From = "onboarding@resend.dev",
+                    To = "zackzack93@hotmail.com",
+                    Subject = email.Subject,
+                    HtmlBody = email.Body
+                }, cancellationToken);
 
                 email.Status = EmailStatus.Sent;
                 email.SentAt = DateTime.UtcNow;
-
-                await _context.SaveChangesAsync(cancellationToken);
             }
             catch (Exception ex)
             {
@@ -98,147 +96,63 @@ namespace KnowledgeAssistant.Application.Services
                 email.FailedAt = DateTime.UtcNow;
                 email.ErrorMessage = ex.Message;
                 email.RetryCount++;
-
-                await _context.SaveChangesAsync(cancellationToken);
             }
+
+            await _emailRepository.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<EmailResponse?> GetEmailByIdAsync(int emailId)
+        public Task<EmailResponse?> GetEmailByIdAsync(int emailId)
         {
-            var email = await _context.Emails
-                .AsNoTracking()
-                .Select(x => new EmailResponse
-                {
-                    Id = x.Id,
-                    UserId = x.UserId,
-                    UserName = $"{x.User.FirstName} {x.User.LastName}",
-                    To = x.To,
-                    Subject = x.Subject,
-                    Body = x.Body,  
-                    IsHtml = x.IsHtml,
-                    Status = x.Status,
-                    CreatedAt = x.CreatedAt,
-                    SentAt = x.SentAt,
-                    FailedAt = x.FailedAt,
-                    ErrorMessage = x.ErrorMessage,
-                    RetryCount = x.RetryCount
-                }).FirstOrDefaultAsync(x => x.Id == emailId);
-
-            return email;
+            return _emailRepository.GetResponseByIdAsync(emailId);
         }
 
-        public async Task<List<EmailResponse>> GetEmailsByUserIdAsync(int userId)
+        public Task<List<EmailResponse>> GetEmailsByUserIdAsync(int userId)
         {
-            var emails = await _context.Emails
-                .AsNoTracking()
-                .Where(x => x.UserId == userId)
-                .Select(x => new EmailResponse
-                {
-                    Id = x.Id,
-                    UserId = x.UserId,
-                    UserName = $"{x.User.FirstName} {x.User.LastName}",
-                    To = x.To,
-                    Subject = x.Subject,
-                    Body = x.Body,
-                    Status = x.Status,
-                    CreatedAt = x.CreatedAt,
-                    SentAt = x.SentAt,
-                    FailedAt = x.FailedAt,
-                    ErrorMessage = x.ErrorMessage,
-                }).ToListAsync();
-
-            return emails;
+            return _emailRepository.GetResponsesByUserIdAsync(userId);
         }
 
-        public async Task<PaginatedResponse<EmailResponse>> GetEmailsAsync(int PageNumber, int PageSize)
+        public async Task<PaginatedResponse<EmailResponse>> GetEmailsAsync(int pageNumber, int pageSize)
         {
-            var MaxPageSize = 50;
+            var (pageNumberValid, pageSizeValid) = NormalizePagination(pageNumber, pageSize);
 
-            if (PageNumber < 1) PageNumber = 1;
-            if (PageSize < 1) PageSize = 10;
-            if (PageSize > MaxPageSize) PageSize = MaxPageSize;
-
-            var TotalCount = await _context.Emails.CountAsync();
-            var TotalPages = (int)Math.Ceiling((double)TotalCount / PageSize);
-
-            var emails = await _context.Emails
-                .AsNoTracking()
-                .OrderBy(x => x.Id)
-                .Skip((PageNumber - 1) * PageSize)
-                .Take(PageSize)
-                .Select(x => new EmailResponse
-                {
-                    Id = x.Id,
-                    UserId = x.UserId,
-                    UserName = $"{x.User.FirstName} {x.User.LastName}",
-                    To = x.To,
-                    Subject = x.Subject,
-                    Body = x.Body,
-                    Status = x.Status,
-                    CreatedAt = x.CreatedAt,
-                    SentAt = x.SentAt,
-                    FailedAt = x.FailedAt,
-                    ErrorMessage = x.ErrorMessage
-                })
-                .ToListAsync();
+            var (items, totalCount) = await _emailRepository.GetPaginatedAsync(pageNumberValid, pageSizeValid);
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSizeValid);
 
             return new PaginatedResponse<EmailResponse>
             {
-                Items = emails,
-                PageNumber = PageNumber,
-                PageSize = PageSize,
-                TotalCount = TotalCount,
-                TotalPages = TotalPages
+                Items = items,
+                PageNumber = pageNumberValid,
+                PageSize = pageSizeValid,
+                TotalCount = totalCount,
+                TotalPages = totalPages
             };
         }
 
         public async Task<PaginatedResponse<EmailResponse>> SearchEmailsAsync(string searchTerm, int pageNumber, int pageSize)
         {
-            var maxPageSize = 50;
+            var (pageNumberValid, pageSizeValid) = NormalizePagination(pageNumber, pageSize);
 
+            var (items, totalCount) = await _emailRepository.SearchPaginatedAsync(searchTerm, pageNumberValid, pageSizeValid);
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSizeValid);
+
+            return new PaginatedResponse<EmailResponse>
+            {
+                Items = items,
+                PageNumber = pageNumberValid,
+                PageSize = pageSizeValid,
+                TotalCount = totalCount,
+                TotalPages = totalPages
+            };
+        }
+
+        private static (int PageNumber, int PageSize) NormalizePagination(int pageNumber, int pageSize)
+        {
+            const int maxPageSize = 50;
             if (pageNumber < 1) pageNumber = 1;
             if (pageSize < 1) pageSize = 10;
             if (pageSize > maxPageSize) pageSize = maxPageSize;
 
-            var Query = _context.Emails.AsNoTracking().AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(searchTerm))
-            {
-                Query = Query.Where(x =>
-                    x.To.Contains(searchTerm) ||
-                    x.User.FirstName.Contains(searchTerm) ||
-                    x.User.LastName.Contains(searchTerm));
-            }
-
-            var totalCount = await Query.CountAsync();
-            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-
-            var emails = await Query
-                .OrderBy(x => x.Id)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .Select(x => new EmailResponse
-                {
-                    Id = x.Id,
-                    UserId = x.UserId,
-                    UserName = $"{x.User.FirstName} {x.User.LastName}",
-                    To = x.To,
-                    Subject = x.Subject,
-                    Body = x.Body,
-                    Status = x.Status,
-                    CreatedAt = x.CreatedAt,
-                    SentAt = x.SentAt,
-                    FailedAt = x.FailedAt,
-                }).ToListAsync();
-
-            return new PaginatedResponse<EmailResponse>
-            {
-                Items = emails,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                TotalCount = totalCount,
-                TotalPages = totalPages
-            };
+            return (pageNumber, pageSize);
         }
     }
 }

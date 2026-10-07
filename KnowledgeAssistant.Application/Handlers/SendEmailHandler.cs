@@ -1,7 +1,7 @@
 ﻿using KnowledgeAssistant.Domain.Entities.Emails;
 using KnowledgeAssistant.Application.Services;
 
-namespace KnowledgeAssistant.Application.Messaging.Handlers;
+namespace KnowledgeAssistant.Application.Handlers;
 public interface IMessageHandler<T>
 {
     Task HandleAsync(T message, CancellationToken cancellationToken = default);
