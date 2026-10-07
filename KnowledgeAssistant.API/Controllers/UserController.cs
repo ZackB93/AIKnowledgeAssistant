@@ -44,11 +44,11 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpGet("GetById/{Id}")]
         [Authorize]
-        public async Task<ActionResult<ApiResult>> GetUserDetails(int Id)
+        public async Task<ActionResult<ApiResult>> GetUserDetails(int id)
         {
-            var User = await _userService.GetUserDetailsAsync(Id);
+            var user = await _userService.GetUserDetailsAsync(id);
 
-            if (User is null)
+            if (user is null)
             {
                 return NotFound(new ApiResult()
                 {
@@ -60,41 +60,41 @@ namespace KnowledgeAssistant.API.Controllers
             return Ok(new ApiResult()
             {
                 IsSuccessful = true,
-                Data = User
+                Data = user
             });
         }
 
         [HttpGet("GetAll")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> GetUsers(int PageNumber, int? PageSize = 10)
+        public async Task<ActionResult<ApiResult>> GetUsers(int pageNumber, int? pageSize = 10)
         {
-            var Users = await _userService.GetUsersAsync(PageNumber, (int)PageSize!);
+            var users = await _userService.GetUsersAsync(pageNumber, (int)pageSize!);
 
             return Ok(new ApiResult()
             {
                 IsSuccessful = true,
-                Data = Users
+                Data = users
             });
         }
 
         [HttpGet("Search")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> Search(string SearchTerm, int PageNumber, int? PageSize = 10)
+        public async Task<ActionResult<ApiResult>> Search(string searchTerm, int pageNumber, int? pageSize = 10)
         {
-            var SearchedUsers = await _userService.SearchUsersAsync(SearchTerm, PageNumber, (int)PageSize!);
+            var searchedUsers = await _userService.SearchUsersAsync(searchTerm, pageNumber, (int)pageSize!);
 
             return Ok(new ApiResult()
             {
                 IsSuccessful = true,
-                Data = SearchedUsers
+                Data = searchedUsers
             });
         }
 
         [HttpPost("Create")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> Create(CreateUserRequest Request)
+        public async Task<ActionResult<ApiResult>> Create(CreateUserRequest request)
         {
-            var addedUser = await _userService.AddUserAsync(Request);
+            var addedUser = await _userService.AddUserAsync(request);
             var result = new ApiResult
             {
                 IsSuccessful = true,
@@ -107,32 +107,32 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpPost("Update")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> Update(UpdateUserRequest Request)
+        public async Task<ActionResult<ApiResult>> Update(UpdateUserRequest request)
         {
-            var UpdatedUser = await _userService.UpdateUserAsync(Request);
+            var updatedUser = await _userService.UpdateUserAsync(request);
 
             return Ok(new ApiResult()
             {
                 IsSuccessful = true,
-                Data = UpdatedUser
+                Data = updatedUser
             });
         }
 
         [HttpGet("Exists")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> Exists(string Email)
+        public async Task<ActionResult<ApiResult>> Exists(string email)
         {
-            if (string.IsNullOrWhiteSpace(Email))
+            if (string.IsNullOrWhiteSpace(email))
             {
                 return BadRequest("Email is required.");
             }
                
-            var Exists = await _userService.UserExistsAsync(Email);
+            var exists = await _userService.UserExistsAsync(email);
 
             return Ok(new ApiResult()
             {
                 IsSuccessful = true,
-                Data = Exists
+                Data = exists
             });
         }
     }

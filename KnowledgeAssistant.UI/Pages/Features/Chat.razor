@@ -394,7 +394,7 @@
         loadingSessions = false;   
 
         // Automatically select the first chat
-        if (sessions.Count > 0)
+        if (sessions.Any())
         {
             await SelectSession(sessions[0]);
         }
@@ -408,8 +408,8 @@
         }
 
         selectedSession = session;
-        messages = [];
-        pendingFiles = [];
+        messages = new();
+        pendingFiles = new();
         uploadError = null;
 
         await LoadMessagesAsync(session.Id);
@@ -478,7 +478,7 @@
         var filesToUpload = pendingFiles.ToList();
 
         messageText = string.Empty;
-        pendingFiles = [];
+        pendingFiles = new();
         uploadError = null;
         sendingMessage = true;
 

@@ -1,6 +1,9 @@
 ﻿using DocumentFormat.OpenXml.Drawing.Charts;
 using KnowledgeAssistant.Application.Data.Context;
+using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Documents;
+using KnowledgeAssistant.Application.DTOs.Users;
+using KnowledgeAssistant.Application.Entities.Chat;
 using KnowledgeAssistant.Application.Entities.Documents;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -14,13 +17,14 @@ namespace KnowledgeAssistant.Application.Services
 {
     public interface IDocumentService
     {
-        Task<DocumentResponse> UploadAsync(IFormFile file, int? chatSessionId, int userId, CancellationToken cancellationToken = default);
+        Task<DocumentResponse> UploadAsync(IFormFile file, int userId, CancellationToken cancellationToken = default, int? chatSessionId = null);
         Task<List<DocumentSearchResult>> SearchAsync(string query, List<int> documentIds, int userId, CancellationToken cancellationToken = default);
+        Task<PaginatedResponse<DocumentResponse>> GetDocumentsAsync(int pageNumber, int pageSize);
     }
 
     public class DocumentService : IDocumentService
     {
-        private const long MaxFileBytes = 10 * 1024 * 1024;
+        private const long MaxFileBytes = 10 * 1024 * 1024; // 10 MB
         private const int EmbeddingBatchSize = 64;
         private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase) { ".pdf", ".docx", ".txt", ".md" };
         private readonly KnowledgeContext _context;
@@ -32,7 +36,7 @@ namespace KnowledgeAssistant.Application.Services
             _embeddings = embeddings;
         }
 
-        public async Task<DocumentResponse> UploadAsync(IFormFile file, int? chatSessionId, int userId, CancellationToken cancellationToken = default)
+        public async Task<DocumentResponse> UploadAsync(IFormFile file, int userId, CancellationToken cancellationToken = default, int? chatSessionId = null)
         {
             await ValidateUploadAsync(file, chatSessionId, userId, cancellationToken);
 
@@ -164,6 +168,49 @@ namespace KnowledgeAssistant.Application.Services
 
         }
 
+        public async Task<PaginatedResponse<DocumentResponse>> GetDocumentsAsync(int pageNumber, int pageSize)
+        {
+            var maxPageSize = 50;
+
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+            if (pageSize > maxPageSize) pageSize = maxPageSize;
+
+            var totalCount = await _context.Documents.CountAsync();
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            var documents = await _context.Documents
+                .AsNoTracking()
+                .OrderBy(x => x.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => new DocumentResponse
+                {
+                    Id = x.Id,
+                    UserId = x.UserId,
+                    UserName = x.User.FirstName + " " + x.User.LastName,
+                    ChatSessionId = x.ChatSessionId,
+                    ChatSessionTitle = x.ChatSession != null ? x.ChatSession.Title : null,
+                    FileName = x.FileName,
+                    ContentType = x.ContentType,
+                    SizeBytes = x.SizeBytes,
+                    Status = x.Status,
+                    ErrorMessage = x.ErrorMessage,
+                    ChunkCount = x.Chunks.Count,
+                    CreatedAt = x.CreatedAt
+                })
+                .ToListAsync();
+
+            return new PaginatedResponse<DocumentResponse>
+            {
+                Items = documents,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = totalPages
+            };
+        }
+
         // Validates the uploaded file and checks if the user owns the chat session (if provided).
         private async Task ValidateUploadAsync(IFormFile file, int? chatSessionId, int userId, CancellationToken cancellationToken)
         {
@@ -244,7 +291,7 @@ namespace KnowledgeAssistant.Application.Services
                 case ".docx":
                     using (var doc = OpenXml.Packaging.WordprocessingDocument.Open(memory, false))
                     {
-                        var paragraphs = doc.MainDocumentPart?.Document.Body?
+                        var paragraphs = doc.MainDocumentPart?.Document?.Body?
                             .Descendants<OpenXml.Wordprocessing.Paragraph>()
                             .Select(p => p.InnerText)
                             .Where(p => !string.IsNullOrWhiteSpace(p));

@@ -1,0 +1,240 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using KnowledgeAssistant.Application.DTOs.Documents
+@using KnowledgeAssistant.Application.Services
+@using System.Net.Http.Headers
+
+<MudStack Spacing="3">
+    <MudPaper Outlined="true"
+              Class="@(dropZoneClass)"
+              Style="min-height: 200px; padding: 8px; border-style: dashed; border-width: 2px;">
+
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1" Class="pa-6" Style="height: 455px;">
+
+            <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Color="Color.Primary" />
+            <MudText Typo="Typo.subtitle1">Drag and drop files here</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">or</MudText>
+
+            <MudFileUpload T="IReadOnlyList<IBrowserFile>"
+                           @ref="fileUpload"
+                           OnFilesChanged="OnFilesChanged"
+                           AppendMultipleFiles="true"
+                           MaximumFileCount="@MaxFileCount"
+                           Accept=".pdf,.docx,.txt,.md""
+                           Hidden="false"
+                           InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
+                           InputStyle="opacity:0; cursor:pointer;"
+                           @ondragenter="SetDragActive"
+                           @ondragleave="ClearDragActive"
+                           @ondrop="ClearDragActive">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.FolderOpen">
+                        Browse files
+                    </MudButton>
+                </ActivatorContent>
+            </MudFileUpload>
+        </MudStack>
+    </MudPaper>
+
+    @if (files.Count > 0)
+    {
+        <MudList T="IBrowserFile" Dense="true" Class="pa-0">
+            @foreach (var file in files)
+            {
+                <MudListItem T="IBrowserFile" Icon="@Icons.Material.Filled.InsertDriveFile">
+                    <div class="d-flex align-center justify-space-between" style="width:100%;">
+                        <div>
+                            <MudText Typo="Typo.body2">@file.Name</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@FormatSize(file.Size)</MudText>
+                        </div>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                       Size="Size.Small"
+                                       Disabled="uploading"
+                                       OnClick="@(() => RemoveFile(file))"
+                                       aria-label="@($"Remove {file.Name}")" />
+                    </div>
+                </MudListItem>
+            }
+        </MudList>
+    }
+
+    @if (uploading)
+    {
+        <MudProgressLinear Color="Color.Primary" Value="@progress" Striped="true" />
+    }
+
+    <MudStack Row="true" Spacing="2">
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Disabled="@(files.Count == 0 || uploading)"
+                   OnClick="UploadFiles"
+                   StartIcon="@Icons.Material.Filled.Upload">
+            @(files.Count > 0 ? $"Upload {files.Count} file{(files.Count == 1 ? "" : "s")}" : "Upload")
+        </MudButton>
+
+        <MudButton Variant="Variant.Filled"
+                    Color="@Color.Primary"
+                   Disabled="@(files.Count == 0 || uploading)"
+                   OnClick="Clear">
+            Clear all
+        </MudButton>
+    </MudStack>
+
+</MudStack>
+
+@code {
+    [Parameter]
+    public EventCallback<IReadOnlyList<IBrowserFile>> OnUploadComplete { get; set; }
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = null!;   
+
+    [Inject]
+    private IHttpService HttpService { get; set; } = null!;
+
+    private MudFileUpload<IReadOnlyList<IBrowserFile>>? fileUpload;
+    private readonly List<IBrowserFile> files = new();
+    private bool dragActive;
+    private bool uploading;
+    private double progress;
+
+    private static readonly string[] AllowedExtensions = [".pdf", ".docx", ".txt", ".md"];
+    public int MaxFileCount { get; set; } = 5;
+    public long MaxFileSizeBytes { get; set; } = 10 * 1024 * 1024; // 10 MB
+
+    private string dropZoneClass => dragActive
+            ? "relative mud-border-primary mud-theme-primary-lighten glass-card"
+            : "relative mud-border-lines-default glass-card";
+
+    private void SetDragActive() => dragActive = true;
+    private void ClearDragActive() => dragActive = false;
+
+    private void OnFilesChanged(InputFileChangeEventArgs e)
+    {
+        dragActive = false;
+
+        foreach (var file in e.GetMultipleFiles(MaxFileCount))
+        {
+            if (file.Size > MaxFileSizeBytes)
+            {
+                Snackbar.Add($"{file.Name} is larger than {FormatSize(MaxFileSizeBytes)}.", Severity.Warning);
+                continue;
+            }
+
+            if (files.Any(f => f.Name == file.Name && f.Size == file.Size))
+            {
+                continue; // skip duplicates
+            }
+
+            if (files.Count >= MaxFileCount)
+            {
+                Snackbar.Add($"You can upload up to {MaxFileCount} files at a time.", Severity.Warning);
+                break;
+            }
+
+            files.Add(file);
+        }
+    }
+
+    private void RemoveFile(IBrowserFile file)
+    {
+        files.Remove(file);
+    }
+
+    private async Task Clear()
+    {
+        files.Clear();
+
+        if (fileUpload is not null)
+        {
+            await fileUpload.ClearAsync();
+        }
+    }
+
+    private async Task UploadFiles()
+    {
+        if (files.Count == 0)
+        {
+            return;
+        }
+
+        uploading = true;
+        progress = 0;
+        var toUpload = files.ToList();
+        var succeeded = new List<IBrowserFile>();
+        var failed = new List<string>();
+
+        try
+        {
+            for (var i = 0; i < toUpload.Count; i++)
+            {
+                var file = toUpload[i];
+                var result = await UploadFileAsync(file);
+
+                if (result is not null)
+                {
+                    succeeded.Add(file);
+                }
+                else
+                {
+                    failed.Add(file.Name);
+                }
+
+                progress = (i + 1) * 100.0 / toUpload.Count;
+                StateHasChanged();
+            }
+
+            if (succeeded.Count > 0)
+            {
+                Snackbar.Add($"Uploaded {succeeded.Count} file{(succeeded.Count == 1 ? "" : "s")}.", Severity.Success);
+                await OnUploadComplete.InvokeAsync(succeeded);
+            }
+
+            if (failed.Count > 0)
+            {
+                Snackbar.Add($"Failed to upload: {string.Join(", ", failed)}", Severity.Error);
+            }
+
+            // Only clear when everything worked, so failed files can be retried
+            if (failed.Count == 0)
+            {
+                await Clear();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Upload failed: {ex.Message}", Severity.Error);
+        }
+
+        uploading = false;
+        StateHasChanged();       
+    }
+
+    private async Task<DocumentResponse?> UploadFileAsync(IBrowserFile file)
+    {
+        using var content = new MultipartFormDataContent();
+
+        var fileContent = new StreamContent(file.OpenReadStream(MaxFileSizeBytes));
+
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(
+            string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType);
+
+        content.Add(fileContent, "file", file.Name);
+
+        var result = await HttpService.PostFileAsync("/Document/Upload", content);
+
+        if (result.IsSuccessful)
+        {
+            return result.GetData<DocumentResponse>();
+        }
+        
+        return null;
+    }
+
+    private static string FormatSize(long bytes) => bytes switch
+    {
+        < 1024 => $"{bytes} B",
+        < 1024 * 1024 => $"{bytes / 1024.0:0.#} KB",
+        _ => $"{bytes / (1024.0 * 1024.0):0.#} MB"
+    };
+}

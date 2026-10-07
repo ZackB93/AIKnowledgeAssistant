@@ -31,7 +31,7 @@ namespace KnowledgeAssistant.Application.Services
             var role = new Role
             {
                 Name = request.Name.Trim(),
-                Description = request.Description.Trim()
+                Description = request.Description?.Trim()
             };
 
             _context.Roles.Add(role);
