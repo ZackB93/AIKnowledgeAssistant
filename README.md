@@ -454,21 +454,6 @@ For this project, the additional complexity is useful because it demonstrates a 
 
 ---
 
-### Application Project Instead of Full Clean Architecture
-
-The current solution is structured as:
-
-```text
-Domain
-Application
-Infrastructure
-API
-UI
-Tests
-```
-
----
-
 ### OpenAI Dependency
 
 The application currently uses OpenAI for chat and embedding generation.
