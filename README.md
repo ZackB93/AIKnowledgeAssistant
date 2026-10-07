@@ -177,20 +177,59 @@ KnowledgeAssistant
 
 Provides the HTTP interface for the application.
 
-Controllers handle incoming requests and delegate application operations to the appropriate services.
+Controllers handle incoming requests and delegate operations to the appropriate application services and handlers.
+
+Responsible for:
+
+* HTTP endpoints and request handling
+* Authentication and authorisation configuration
+* Middleware
+* API-specific configuration
 
 ### Application
 
-Contains the majority of the application's application logic, including:
+Contains the application's business use cases and application logic.
 
-* Entities
+Responsible for:
+
 * DTOs
+* Application interfaces
+* Repository interfaces
+* Services
+* Handlers
+* Application-specific business workflows
+* Orchestrating operations between the API, domain and infrastructure layers
+
+The Application layer contains abstractions for external concerns such as repositories, allowing the application logic to remain independent of the underlying implementation.
+
+### Domain
+
+Contains the core business model and domain rules of the application.
+
+Responsible for:
+
+* Domain entities
+* Enums
+* Core business concepts
+* Domain-level rules and behaviour
+
+The Domain layer has no dependency on the API, UI, database or infrastructure implementations.
+
+### Infrastructure
+
+Contains implementations for external and persistence-related concerns.
+
+Responsible for:
+
+* Entity Framework Core
 * Database context
 * EF Core configurations
-* Services
-* Background services
-* Handlers
 * Database migrations
+* Repository implementations
+* Background services
+* Integration with external infrastructure and services
+
+Infrastructure implements the interfaces defined by the Application layer and handles communication with external systems such as the database and messaging infrastructure.
 
 ### UI
 
@@ -205,6 +244,7 @@ Responsible for:
 * User management
 * Administration
 * Navigation
+* User interface components and pages
 
 ### Tests
 
