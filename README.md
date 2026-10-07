@@ -139,9 +139,22 @@ KnowledgeAssistant
 │
 ├── KnowledgeAssistant.UI
 │   ├── Components
+│   │   ├── Authentication
+│   │   ├── Common
 │   │   ├── Layout
-│   │   └── Pages
-│   ├── Services
+│   │   ├── User
+│   │   ├── App.razor
+│   │   └── Routes.razor
+│   ├── Helpers
+│   ├── Pages
+│   │   ├── Account
+│   │   ├── Admin
+│   │   ├── Features
+│   │   ├── Error.razor
+│   │   ├── Home.razor
+│   │   └── Notfound.razor
+│   ├── _Imports.razor
+│   ├── appsettings.sjon
 │   └── Program.cs
 │
 ├── screenshots
