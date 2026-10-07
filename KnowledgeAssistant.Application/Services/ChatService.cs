@@ -1,11 +1,11 @@
 ﻿using KnowledgeAssistant.Application.Data.Context;
 using KnowledgeAssistant.Application.DTOs.Chat;
 using KnowledgeAssistant.Application.DTOs.Documents;
-using KnowledgeAssistant.Application.Entities.Chat;
+using KnowledgeAssistant.Domain.Entities.Chat;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using AIChatMessage = Microsoft.Extensions.AI.ChatMessage;
-using ChatEntity = KnowledgeAssistant.Application.Entities.Chat.ChatMessage;
+using ChatEntity = KnowledgeAssistant.Domain.Entities.Chat.ChatMessage;
 
 namespace KnowledgeAssistant.Application.Services
 {
@@ -245,11 +245,11 @@ namespace KnowledgeAssistant.Application.Services
             return chatSession;
         }
 
-        private async Task<Application.Entities.Chat.ChatMessage> SaveUserMessageAsync(ChatSession chatSession, string content)
+        private async Task<Domain.Entities.Chat.ChatMessage> SaveUserMessageAsync(ChatSession chatSession, string content)
         {
             var now = DateTime.UtcNow;
 
-            var userMessage = new Application.Entities.Chat.ChatMessage
+            var userMessage = new Domain.Entities.Chat.ChatMessage
             {
                 ChatSessionId = chatSession.Id,
                 Role = "user",
@@ -298,7 +298,7 @@ namespace KnowledgeAssistant.Application.Services
             return await _documentService.SearchAsync(query, documentIds, userId);
         }
 
-        private async Task<List<Application.Entities.Chat.ChatMessage>> GetChatMessagesAsync(int chatSessionId)
+        private async Task<List<Domain.Entities.Chat.ChatMessage>> GetChatMessagesAsync(int chatSessionId)
         {
             return await _context.ChatMessages
                 .AsNoTracking()
@@ -308,7 +308,7 @@ namespace KnowledgeAssistant.Application.Services
                 .ToListAsync();
         }
 
-        private static List<AIChatMessage> BuildChatMessages(List<Application.Entities.Chat.ChatMessage> chatMessages, List<DocumentSearchResult> documentSearchResults)
+        private static List<AIChatMessage> BuildChatMessages(List<Domain.Entities.Chat.ChatMessage> chatMessages, List<DocumentSearchResult> documentSearchResults)
         {
             var messages = chatMessages
                 .Select(x => new AIChatMessage
@@ -362,9 +362,9 @@ namespace KnowledgeAssistant.Application.Services
             return messages;
         }
 
-        private async Task<Application.Entities.Chat.ChatMessage> SaveAssistantMessageAsync(ChatSession chatSession, string content)
+        private async Task<Domain.Entities.Chat.ChatMessage> SaveAssistantMessageAsync(ChatSession chatSession, string content)
         {
-            var assistantMessage = new Application.Entities.Chat.ChatMessage
+            var assistantMessage = new Domain.Entities.Chat.ChatMessage
             {
                 ChatSessionId = chatSession.Id,
                 Role = "assistant",
@@ -379,7 +379,7 @@ namespace KnowledgeAssistant.Application.Services
             return assistantMessage;
         }
 
-        private async Task<string?> GenerateTitleIfRequiredAsync(ChatSession chatSession, List<Application.Entities.Chat.ChatMessage> chatMessages, List<AIChatMessage> messages)
+        private async Task<string?> GenerateTitleIfRequiredAsync(ChatSession chatSession, List<Domain.Entities.Chat.ChatMessage> chatMessages, List<AIChatMessage> messages)
         {
             var userMessageCount = chatMessages.Count(x => x.Role == "user");
 

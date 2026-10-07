@@ -1,4 +1,4 @@
-﻿using KnowledgeAssistant.Application.Entities.Chat;
+﻿using KnowledgeAssistant.Domain.Entities.Chat;
 using System;
 using System.Collections.Generic;
 using System.Text;

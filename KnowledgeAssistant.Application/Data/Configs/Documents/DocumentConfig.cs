@@ -1,4 +1,4 @@
-﻿using KnowledgeAssistant.Application.Entities.Documents;
+﻿using KnowledgeAssistant.Domain.Entities.Documents;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

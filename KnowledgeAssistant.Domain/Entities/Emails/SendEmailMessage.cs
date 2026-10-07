@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace KnowledgeAssistant.Application.Entities.Emails
+namespace KnowledgeAssistant.Domain.Entities.Emails
 {
     public class SendEmailMessage
     {

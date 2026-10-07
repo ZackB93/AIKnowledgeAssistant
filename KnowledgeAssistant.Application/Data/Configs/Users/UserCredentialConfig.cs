@@ -1,4 +1,4 @@
-﻿using KnowledgeAssistant.Application.Entities.Users;
+﻿using KnowledgeAssistant.Domain.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

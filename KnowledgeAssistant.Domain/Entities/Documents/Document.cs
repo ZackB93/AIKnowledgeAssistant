@@ -1,10 +1,10 @@
-﻿using KnowledgeAssistant.Application.Entities.Chat;
-using KnowledgeAssistant.Application.Entities.Users;
+﻿using KnowledgeAssistant.Domain.Entities.Chat;
+using KnowledgeAssistant.Domain.Entities.Users;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace KnowledgeAssistant.Application.Entities.Documents
+namespace KnowledgeAssistant.Domain.Entities.Documents
 {
     public class Document
     {

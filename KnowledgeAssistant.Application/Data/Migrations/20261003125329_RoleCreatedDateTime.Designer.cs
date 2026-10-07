@@ -25,7 +25,7 @@ namespace KnowledgeAssistant.Application.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Chat.ChatMessage", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Chat.ChatMessage", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -55,7 +55,7 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                     b.ToTable("ChatMessages");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Chat.ChatSession", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Chat.ChatSession", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -84,7 +84,7 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                     b.ToTable("ChatSessions");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Emails.Email", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Emails.Email", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -140,7 +140,7 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                     b.ToTable("Emails");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Roles.Role", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Roles.Role", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -186,7 +186,7 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Users.User", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -300,7 +300,7 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Users.UserCredential", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.UserCredential", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -356,7 +356,7 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Users.UserDocument", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.UserDocument", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -397,7 +397,7 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                     b.ToTable("UserDocuments");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Users.UserRole", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.UserRole", b =>
                 {
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -412,9 +412,9 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                     b.ToTable("UserRoles");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Chat.ChatMessage", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Chat.ChatMessage", b =>
                 {
-                    b.HasOne("KnowledgeAssistant.Application.Entities.Chat.ChatSession", "ChatSession")
+                    b.HasOne("KnowledgeAssistant.Domain.Entities.Chat.ChatSession", "ChatSession")
                         .WithMany("Messages")
                         .HasForeignKey("ChatSessionId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -423,9 +423,9 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                     b.Navigation("ChatSession");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Chat.ChatSession", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Chat.ChatSession", b =>
                 {
-                    b.HasOne("KnowledgeAssistant.Application.Entities.Users.User", "User")
+                    b.HasOne("KnowledgeAssistant.Domain.Entities.Users.User", "User")
                         .WithMany("ChatSessions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -434,9 +434,9 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Emails.Email", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Emails.Email", b =>
                 {
-                    b.HasOne("KnowledgeAssistant.Application.Entities.Users.User", "User")
+                    b.HasOne("KnowledgeAssistant.Domain.Entities.Users.User", "User")
                         .WithMany("Emails")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -445,20 +445,20 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Users.UserCredential", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.UserCredential", b =>
                 {
-                    b.HasOne("KnowledgeAssistant.Application.Entities.Users.User", "User")
+                    b.HasOne("KnowledgeAssistant.Domain.Entities.Users.User", "User")
                         .WithOne("Credentials")
-                        .HasForeignKey("KnowledgeAssistant.Application.Entities.Users.UserCredential", "UserId")
+                        .HasForeignKey("KnowledgeAssistant.Domain.Entities.Users.UserCredential", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Users.UserDocument", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.UserDocument", b =>
                 {
-                    b.HasOne("KnowledgeAssistant.Application.Entities.Users.User", "User")
+                    b.HasOne("KnowledgeAssistant.Domain.Entities.Users.User", "User")
                         .WithMany("Documents")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -467,15 +467,15 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Users.UserRole", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.UserRole", b =>
                 {
-                    b.HasOne("KnowledgeAssistant.Application.Entities.Roles.Role", "Role")
+                    b.HasOne("KnowledgeAssistant.Domain.Entities.Roles.Role", "Role")
                         .WithMany("UserRoles")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("KnowledgeAssistant.Application.Entities.Users.User", "User")
+                    b.HasOne("KnowledgeAssistant.Domain.Entities.Users.User", "User")
                         .WithMany("UserRoles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -486,17 +486,17 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Chat.ChatSession", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Chat.ChatSession", b =>
                 {
                     b.Navigation("Messages");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Roles.Role", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Roles.Role", b =>
                 {
                     b.Navigation("UserRoles");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Users.User", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.User", b =>
                 {
                     b.Navigation("ChatSessions");
 

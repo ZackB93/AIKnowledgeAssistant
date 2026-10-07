@@ -1,4 +1,4 @@
-﻿using KnowledgeAssistant.Application.Entities.Emails;
+﻿using KnowledgeAssistant.Domain.Entities.Emails;
 using KnowledgeAssistant.Application.Data.Configs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

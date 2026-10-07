@@ -1,5 +1,5 @@
-﻿using KnowledgeAssistant.Application.Entities.Chat;
-using KnowledgeAssistant.Application.Entities.Users;
+﻿using KnowledgeAssistant.Domain.Entities.Chat;
+using KnowledgeAssistant.Domain.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;

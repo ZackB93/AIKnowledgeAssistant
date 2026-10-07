@@ -1,6 +1,6 @@
 ﻿using KnowledgeAssistant.Application.DTOs.Roles;
-using KnowledgeAssistant.Application.Entities.Roles;
-using KnowledgeAssistant.Application.Entities.Users;
+using KnowledgeAssistant.Domain.Entities.Roles;
+using KnowledgeAssistant.Domain.Entities.Users;
 using System;
 using System.Collections.Generic;
 using System.Text;

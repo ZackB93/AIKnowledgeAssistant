@@ -1,8 +1,8 @@
-﻿using KnowledgeAssistant.Application.Entities.Chat;
-using KnowledgeAssistant.Application.Entities.Documents;
-using KnowledgeAssistant.Application.Entities.Emails;
-using KnowledgeAssistant.Application.Entities.Roles;
-using KnowledgeAssistant.Application.Entities.Users;
+﻿using KnowledgeAssistant.Domain.Entities.Chat;
+using KnowledgeAssistant.Domain.Entities.Documents;
+using KnowledgeAssistant.Domain.Entities.Emails;
+using KnowledgeAssistant.Domain.Entities.Roles;
+using KnowledgeAssistant.Domain.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.Metadata;
 
@@ -22,7 +22,7 @@ namespace KnowledgeAssistant.Application.Data.Context
         public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
         public DbSet<Role> Roles => Set<Role>();
         public DbSet<UserRole> UserRoles => Set<UserRole>();
-        public DbSet<Entities.Documents.Document> Documents => Set<Entities.Documents.Document>();
+        public DbSet<Domain.Entities.Documents.Document> Documents => Set<Domain.Entities.Documents.Document>();
         public DbSet<DocumentChunk> DocumentChunks => Set<DocumentChunk>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

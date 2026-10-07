@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace KnowledgeAssistant.Application.Entities.Documents
+namespace KnowledgeAssistant.Domain.Entities.Documents
 {
     public class DocumentChunk
     {

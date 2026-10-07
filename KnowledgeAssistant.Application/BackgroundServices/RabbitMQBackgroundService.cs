@@ -1,4 +1,4 @@
-﻿using KnowledgeAssistant.Application.Entities.Emails;
+﻿using KnowledgeAssistant.Domain.Entities.Emails;
 using KnowledgeAssistant.Application.Messaging.Handlers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

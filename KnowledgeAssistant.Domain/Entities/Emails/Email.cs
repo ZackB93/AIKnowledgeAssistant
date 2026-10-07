@@ -1,6 +1,6 @@
-﻿using KnowledgeAssistant.Application.Entities.Users;
+﻿using KnowledgeAssistant.Domain.Entities.Users;
 
-namespace KnowledgeAssistant.Application.Entities.Emails
+namespace KnowledgeAssistant.Domain.Entities.Emails
 {
     public class Email
     {

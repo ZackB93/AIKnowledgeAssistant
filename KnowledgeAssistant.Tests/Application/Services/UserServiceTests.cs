@@ -2,7 +2,7 @@
 using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Authentication;
 using KnowledgeAssistant.Application.DTOs.Users;
-using KnowledgeAssistant.Application.Entities.Users;
+using KnowledgeAssistant.Domain.Entities.Users;
 using KnowledgeAssistant.Application.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

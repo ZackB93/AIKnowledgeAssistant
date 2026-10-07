@@ -1,6 +1,6 @@
 ﻿using KnowledgeAssistant.Application.Data.Context;
 using KnowledgeAssistant.Application.DTOs.Roles;
-using KnowledgeAssistant.Application.Entities.Roles;
+using KnowledgeAssistant.Domain.Entities.Roles;
 using Microsoft.EntityFrameworkCore;
 
 namespace KnowledgeAssistant.Application.Services

@@ -1,4 +1,4 @@
-﻿using KnowledgeAssistant.Application.Entities.Emails;
+﻿using KnowledgeAssistant.Domain.Entities.Emails;
 using System;
 using System.Collections.Generic;
 using System.Text;

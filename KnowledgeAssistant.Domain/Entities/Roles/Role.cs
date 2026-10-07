@@ -2,9 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using KnowledgeAssistant.Application.Entities.Users;
+using KnowledgeAssistant.Domain.Entities.Users;
 
-namespace KnowledgeAssistant.Application.Entities.Roles
+namespace KnowledgeAssistant.Domain.Entities.Roles
 {
     public class Role
     {

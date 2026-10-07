@@ -1,11 +1,11 @@
 ﻿using KnowledgeAssistant.Application.Data.Context;
 using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Emails;
-using KnowledgeAssistant.Application.Entities.Emails;
+using KnowledgeAssistant.Domain.Entities.Emails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Resend;
-using EmailStatus = KnowledgeAssistant.Application.Entities.Emails.EmailStatus;
+using EmailStatus = KnowledgeAssistant.Domain.Entities.Emails.EmailStatus;
 
 namespace KnowledgeAssistant.Application.Services
 {

@@ -1,12 +1,12 @@
-﻿using KnowledgeAssistant.Application.Entities.Chat;
-using KnowledgeAssistant.Application.Entities.Documents;
-using KnowledgeAssistant.Application.Entities.Emails;
+﻿using KnowledgeAssistant.Domain.Entities.Chat;
+using KnowledgeAssistant.Domain.Entities.Documents;
+using KnowledgeAssistant.Domain.Entities.Emails;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-namespace KnowledgeAssistant.Application.Entities.Users
+namespace KnowledgeAssistant.Domain.Entities.Users
 {
     public class User
     {

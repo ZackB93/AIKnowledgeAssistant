@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using KnowledgeAssistant.Application.Entities.Documents;
+using KnowledgeAssistant.Domain.Entities.Documents;
 
-namespace KnowledgeAssistant.Application.Entities.Chat
+namespace KnowledgeAssistant.Domain.Entities.Chat
 {
     public class ChatMessage
     {

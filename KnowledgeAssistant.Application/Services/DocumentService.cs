@@ -3,14 +3,14 @@ using KnowledgeAssistant.Application.Data.Context;
 using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Documents;
 using KnowledgeAssistant.Application.DTOs.Users;
-using KnowledgeAssistant.Application.Entities.Chat;
-using KnowledgeAssistant.Application.Entities.Documents;
+using KnowledgeAssistant.Domain.Entities.Chat;
+using KnowledgeAssistant.Domain.Entities.Documents;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using System.Runtime.InteropServices;
-using DocChunkEntity = KnowledgeAssistant.Application.Entities.Documents.DocumentChunk;
-using DocEntity = KnowledgeAssistant.Application.Entities.Documents.Document;
+using DocChunkEntity = KnowledgeAssistant.Domain.Entities.Documents.DocumentChunk;
+using DocEntity = KnowledgeAssistant.Domain.Entities.Documents.Document;
 using OpenXml = DocumentFormat.OpenXml;
 
 namespace KnowledgeAssistant.Application.Services

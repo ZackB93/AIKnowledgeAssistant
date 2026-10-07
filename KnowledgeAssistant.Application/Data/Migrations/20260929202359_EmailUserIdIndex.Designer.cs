@@ -25,7 +25,7 @@ namespace KnowledgeAssistant.Application.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Emails.Email", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Emails.Email", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -81,7 +81,7 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                     b.ToTable("Emails");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Users.User", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -195,7 +195,7 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Users.UserCredential", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.UserCredential", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -251,7 +251,7 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Users.UserDocument", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.UserDocument", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -292,9 +292,9 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                     b.ToTable("UserDocuments");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Emails.Email", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Emails.Email", b =>
                 {
-                    b.HasOne("KnowledgeAssistant.Application.Entities.Users.User", "User")
+                    b.HasOne("KnowledgeAssistant.Domain.Entities.Users.User", "User")
                         .WithMany("Emails")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -303,20 +303,20 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Users.UserCredential", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.UserCredential", b =>
                 {
-                    b.HasOne("KnowledgeAssistant.Application.Entities.Users.User", "User")
+                    b.HasOne("KnowledgeAssistant.Domain.Entities.Users.User", "User")
                         .WithOne("Credentials")
-                        .HasForeignKey("KnowledgeAssistant.Application.Entities.Users.UserCredential", "UserId")
+                        .HasForeignKey("KnowledgeAssistant.Domain.Entities.Users.UserCredential", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Users.UserDocument", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.UserDocument", b =>
                 {
-                    b.HasOne("KnowledgeAssistant.Application.Entities.Users.User", "User")
+                    b.HasOne("KnowledgeAssistant.Domain.Entities.Users.User", "User")
                         .WithMany("Documents")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -325,7 +325,7 @@ namespace KnowledgeAssistant.Application.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("KnowledgeAssistant.Application.Entities.Users.User", b =>
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.User", b =>
                 {
                     b.Navigation("Credentials")
                         .IsRequired();

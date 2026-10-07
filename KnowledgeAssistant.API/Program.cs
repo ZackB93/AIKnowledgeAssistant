@@ -1,8 +1,8 @@
 using CallRatingService.API.Middleware;
-using KnowledgeAssistant.API.BackgroundServices;
+using KnowledgeAssistant.Application.BackgroundServices;
 using KnowledgeAssistant.Application.Data.Context;
-using KnowledgeAssistant.Application.Entities.Emails;
-using KnowledgeAssistant.Application.Entities.Users;
+using KnowledgeAssistant.Domain.Entities.Emails;
+using KnowledgeAssistant.Domain.Entities.Users;
 using KnowledgeAssistant.Application.Messaging.Handlers;
 using KnowledgeAssistant.Application.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

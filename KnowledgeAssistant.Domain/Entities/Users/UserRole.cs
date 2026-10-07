@@ -1,9 +1,9 @@
-﻿using KnowledgeAssistant.Application.Entities.Roles;
+﻿using KnowledgeAssistant.Domain.Entities.Roles;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace KnowledgeAssistant.Application.Entities.Users
+namespace KnowledgeAssistant.Domain.Entities.Users
 {
     public class UserRole
     {
