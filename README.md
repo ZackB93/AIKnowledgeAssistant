@@ -27,12 +27,13 @@
 |        | Section                                 |
 | :----: | --------------------------------------- |
 | **01** | [Overview](#01--overview)               |
-| **02** | [Technology Used](#02--technology-used) |
-| **03** | [File Structure](#03--file-structure)   |
-| **04** | [Screenshots](#04--screenshots)         |
-| **05** | [Features](#05--features)               |
-| **06** | [Trade Offs](#06--trade-offs)           |
-| **07** | [To Do](#07--to-do)                     |
+| **02** | [Running Locally](#02--running-locally) |
+| **03** | [Technology Used](#03--technology-used) |
+| **04** | [File Structure](#04--file-structure)   |
+| **05** | [Screenshots](#05--screenshots)         |
+| **06** | [Features](#06--features)               |
+| **07** | [Trade Offs](#07--trade-offs)           |
+| **08** | [To Do](#08--to-do)                     |
 
 ---
 
@@ -61,7 +62,64 @@ The main goal is to demonstrate practical **.NET + AI development** rather than 
 
 ---
 
-## 02 · Technology Used
+## 02 · Running Locally
+
+### Prerequisites
+
+* **.NET 10 SDK**
+* **SQL Server**
+* **Visual Studio** or the **.NET CLI**
+* **RabbitMQ** — optional
+
+### 1. Clone & Build
+
+Clone the repository and open the solution in Visual Studio, then build the solution:
+
+```bash
+dotnet build
+```
+
+### 2. Create the Database
+
+From the solution directory:
+
+```bash
+dotnet ef database update --project KnowledgeAssistant.Infrastructure --startup-project KnowledgeAssistant.API
+```
+
+### 3. Run
+
+Start the application from Visual Studio.
+
+| Application      | URL                             |
+| ---------------- | ------------------------------- |
+| **Blazor UI**    | `https://localhost:7017`        |
+| **API / Scalar** | `https://localhost:7164/scalar` |
+
+Default local login:
+
+```text
+Email:    zack.bucci@example.com
+Password: test
+```
+
+### 4. Optional — RabbitMQ
+
+RabbitMQ is disabled by default.
+
+To enable it, set the following in `KnowledgeAssistant.API/appsettings.json`:
+
+```json
+"RabbitMQ": {
+  "Enabled": true
+}
+```
+
+RabbitMQ must be running locally, either as a Windows service or through Docker.
+
+---
+
+## 03 · Technology Used
 
 ### Backend
 
@@ -72,7 +130,8 @@ The main goal is to demonstrate practical **.NET + AI development** rather than 
 * **SQL Server**
 * **JWT Authentication**
 * **Role-based Authorisation**
-
+* **Serilog Logging**
+  
 ### Frontend
 
 * **Blazor Web App**
@@ -109,9 +168,9 @@ The main goal is to demonstrate practical **.NET + AI development** rather than 
 
 ---
 
-## 03 · File Structure
+## 04 · File Structure
 
-The solution is currently split into four projects:
+The solution is currently split into six projects and follows clean architecture layers.
 
 ```text
 KnowledgeAssistant
@@ -122,15 +181,23 @@ KnowledgeAssistant
 │   └── Program.cs
 │
 ├── KnowledgeAssistant.Application
+│   ├── DTOs
+│   ├── Handlers
+│   ├── Interfaces
+│   │   └── Repositories
+│   └── Services
+│
+├── KnowledgeAssistant.Domain
+│   ├── Entities
+│   └── Enums
+│
+├── KnowledgeAssistant.Infrastructure
 │   ├── BackgroundServices
 │   ├── Data
 │   │   ├── Configs
 │   │   ├── Context
 │   │   └── Migrations
-│   ├── DTOs
-│   ├── Entities
-│   ├── Handlers
-│   └── Services
+│   └── Repositories
 │
 ├── KnowledgeAssistant.Tests
 │   ├── API
@@ -154,7 +221,7 @@ KnowledgeAssistant
 │   │   ├── Home.razor
 │   │   └── Notfound.razor
 │   ├── _Imports.razor
-│   ├── appsettings.sjon
+│   ├── appsettings.json
 │   └── Program.cs
 │
 ├── screenshots
@@ -169,20 +236,59 @@ KnowledgeAssistant
 
 Provides the HTTP interface for the application.
 
-Controllers handle incoming requests and delegate application operations to the appropriate services.
+Controllers handle incoming requests and delegate operations to the appropriate application services and handlers.
+
+Responsible for:
+
+* HTTP endpoints and request handling
+* Authentication and authorisation configuration
+* Middleware
+* API-specific configuration
 
 ### Application
 
-Contains the majority of the application's application logic, including:
+Contains the application's business use cases and application logic.
 
-* Entities
+Responsible for:
+
 * DTOs
+* Application interfaces
+* Repository interfaces
+* Services
+* Handlers
+* Application-specific business workflows
+* Orchestrating operations between the API, domain and infrastructure layers
+
+The Application layer contains abstractions for external concerns such as repositories, allowing the application logic to remain independent of the underlying implementation.
+
+### Domain
+
+Contains the core business model and domain rules of the application.
+
+Responsible for:
+
+* Domain entities
+* Enums
+* Core business concepts
+* Domain-level rules and behaviour
+
+The Domain layer has no dependency on the API, UI, database or infrastructure implementations.
+
+### Infrastructure
+
+Contains implementations for external and persistence-related concerns.
+
+Responsible for:
+
+* Entity Framework Core
 * Database context
 * EF Core configurations
-* Services
-* Background services
-* Handlers
 * Database migrations
+* Repository implementations
+* Background services
+* Integration with external infrastructure and services
+
+Infrastructure implements the interfaces defined by the Application layer and handles communication with external systems such as the database and messaging infrastructure.
 
 ### UI
 
@@ -197,6 +303,7 @@ Responsible for:
 * User management
 * Administration
 * Navigation
+* User interface components and pages
 
 ### Tests
 
@@ -206,7 +313,7 @@ Contains automated tests covering important application behaviour across control
 
 ---
 
-## 04 · Screenshots
+## 05 · Screenshots
 
 ### Login
 
@@ -272,7 +379,7 @@ N/A
 
 ---
 
-## 05 · Features
+## 06 · Features
 
 ### AI Chat
 
@@ -338,11 +445,11 @@ This allows the application to answer questions using its own documents rather t
 
 ### Document Management
 
-Admins users can upload and manage documents through the application.
+Admins can upload and manage documents through the application.
 
 Documents are processed into smaller chunks which can subsequently be used by the RAG pipeline.
 
-They will be queued asynchronously and be uploaded/added to the database using RabbitMQ
+Document processing can be queued asynchronously using RabbitMQ, allowing the work to be handled by a background service rather than blocking the original HTTP request.
 
 ### Chat Sessions
 
@@ -411,7 +518,7 @@ The focus is on meaningful tests rather than attempting to achieve 100% code cov
 
 ---
 
-## 06 · Trade Offs
+## 07 · Trade Offs
 
 ### SQL Server for Application Data and Embeddings
 
@@ -464,17 +571,7 @@ This makes changing AI providers easier in the future.
 
 ---
 
-### Similarity Search
-
-The current RAG implementation performs similarity calculations against stored embeddings.
-
-This keeps the implementation straightforward and makes the underlying RAG process easy to understand.
-
-For a significantly larger document collection, a dedicated vector index or SQL Server's vector capabilities would provide a more scalable approach.
-
----
-
-## 07 · To Do
+## 08 · To Do
 
 The project is intentionally being developed incrementally, with the following features planned to extend the application's AI, messaging and background-processing capabilities.
 
@@ -506,67 +603,6 @@ Save Notification
 User Notification Centre
 ```
 
-### Asynchronous Document Processing
-
-Move document processing out of the upload/chat request and into a background processing pipeline.
-
-Documents will be uploaded independently through the document management area and processed asynchronously before becoming available to the RAG system.
-
-```text
-Document Upload
-       ↓
-Save Document
-       ↓
-RabbitMQ
-       ↓
-Document Processing Worker
-       ↓
-Extract Text
-       ↓
-Create Chunks
-       ↓
-Generate Embeddings
-       ↓
-Store Chunks + Embeddings
-       ↓
-Document Ready
-       ↓
-Notification
-```
-
-This will allow users to upload documents without waiting for the entire processing pipeline to complete before continuing to use the application.
-
-### RAG Source Citations & Improved Retrieval
-
-Improve the RAG experience by showing users which documents were used to generate an answer.
-
-Planned functionality:
-
-* Display source documents alongside AI responses
-* Show relevant document chunks
-* Include page/source information where available
-* Improve retrieval using additional search techniques
-* Provide greater transparency into how an answer was generated
-
-Example:
-
-```text
-AI Response
-────────────────────────────────────
-
-Employees are entitled to 25 days of
-annual leave per year, excluding bank
-holidays.
-
-Sources
-────────────────────────────────────
-📄 Holiday Policy.pdf
-   Page 4
-
-📄 Employee Handbook.pdf
-   Page 12
-```
-
 ### RabbitMQ Retry & Dead-Letter Handling
 
 Introduce retry and dead-letter handling for failed background operations.
@@ -592,22 +628,6 @@ Dead-Letter Queue
 ```
 
 This will initially support operations such as document processing, email and notifications.
-
----
-
-### Future Considerations
-
-Additional functionality may be introduced as the application develops, including:
-
-* AI response streaming
-* Conversation memory
-* Background job monitoring
-* Audit logging
-* Docker / containerisation
-* CI/CD pipeline
-* AI and RAG evaluation metrics
-
-The roadmap is intentionally limited to features that provide meaningful engineering or AI value rather than adding functionality purely for the sake of increasing the application's size.
 
 ---
 
