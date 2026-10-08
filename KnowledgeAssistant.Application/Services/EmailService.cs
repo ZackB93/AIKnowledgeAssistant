@@ -2,7 +2,6 @@
 using KnowledgeAssistant.Application.DTOs.Emails;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
 using KnowledgeAssistant.Domain.Entities.Emails;
-using KnowledgeAssistant.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 using Resend;
 using EmailStatus = KnowledgeAssistant.Domain.Enums.EmailStatus;
