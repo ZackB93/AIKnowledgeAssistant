@@ -56,6 +56,35 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                 .FirstOrDefaultAsync(ct);
         }
 
+        public async Task<(List<NotificationUserSummaryResponse> items, int totalCount)> GetPaginatedByUserIdAsync(int userId, int pageNumber, int pageSize, CancellationToken ct)
+        {
+            var query = _context.NotificationRecipients
+                    .AsNoTracking()
+                    .Where(r => r.UserId == userId);
+
+            var totalCount = await query.CountAsync(ct);
+
+            var items = await query
+                .OrderByDescending(r => r.Notification.CreatedAt)
+                .ThenByDescending(r => r.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(r => new NotificationUserSummaryResponse
+                {
+                    NotificationId = r.Notification.Id,
+                    Title = r.Notification.Title,
+                    Body = r.Notification.Body,
+                    CreatedAt = r.Notification.CreatedAt,
+                    CreatedByUserId = (int)r.Notification.CreatedByUserId,
+                    CreatedByUserName = r.Notification.CreatedByUser.FirstName + " " + r.Notification.CreatedByUser.LastName,
+                    Read = r.IsRead,
+                    ReadDate = r.ReadAt
+                })
+                .ToListAsync(ct);
+
+            return (items, totalCount);
+        }
+
         public async Task<(List<NotificationSummaryResponse> items, int totalCount)> GetPaginatedAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
             var totalCount = await _context.Notifications.CountAsync(ct);

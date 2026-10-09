@@ -10,7 +10,8 @@ namespace KnowledgeAssistant.Application.Services.Communication
     {
         Task SendNotificationAsync(CreateNotificationRequest request, CancellationToken ct);
         Task<NotificationResponse?> GetNotificationByIdAsync(int notificationId, CancellationToken ct);
-        Task<List<NotificationRecipientResponse?>> GetNotificationRecipientsAsync(int notificationId, CancellationToken ct);
+        Task<PaginatedResponse<NotificationUserSummaryResponse>> GetNotificationsByUserIdAsync(int userId, int pageNumber, int pageSize, CancellationToken ct);
+        Task<List<NotificationRecipientResponse>> GetNotificationRecipientsAsync(int notificationId, CancellationToken ct);
         Task<PaginatedResponse<NotificationSummaryResponse>> GetNotificationsAsync(int pageNumber, int pageSize, CancellationToken ct);
         Task<PaginatedResponse<NotificationSummaryResponse>> SearchNotificationsAsync(string searchTerm, int pageNumber, int pageSize, CancellationToken ct);
     }
@@ -44,14 +45,31 @@ namespace KnowledgeAssistant.Application.Services.Communication
             await _notificationRepository.SaveChangesAsync(ct);
         }
 
-        public Task<NotificationResponse?> GetNotificationByIdAsync(int notificationId, CancellationToken ct)
+        public async Task<NotificationResponse?> GetNotificationByIdAsync(int notificationId, CancellationToken ct)
         {
-            return _notificationRepository.GetResponseByIdAsync(notificationId, ct);
+            return await _notificationRepository.GetResponseByIdAsync(notificationId, ct);
         }
 
-        public Task<List<NotificationRecipientResponse>> GetNotificationRecipientsAsync(int notificationId, CancellationToken ct)
+        public async Task<PaginatedResponse<NotificationUserSummaryResponse>> GetNotificationsByUserIdAsync(int userId, int pageNumber, int pageSize, CancellationToken ct)
         {
-            return _notificationRepository.GetRecipientsResponseAsync(notificationId, ct);
+            var (pageNumberValid, pageSizeValid) = NormalizePagination(pageNumber, pageSize);
+
+            var (items, totalCount) = await _notificationRepository.GetPaginatedByUserIdAsync(userId, pageNumberValid, pageSizeValid, ct);
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSizeValid);
+
+            return new PaginatedResponse<NotificationUserSummaryResponse>
+            {
+                Items = items,
+                PageNumber = pageNumberValid,
+                PageSize = pageSizeValid,
+                TotalCount = totalCount,
+                TotalPages = totalPages
+            };
+        }
+
+        public async Task<List<NotificationRecipientResponse>> GetNotificationRecipientsAsync(int notificationId, CancellationToken ct)
+        {
+            return await _notificationRepository.GetRecipientsResponseAsync(notificationId, ct);
         }
 
         public async Task<PaginatedResponse<NotificationSummaryResponse>> GetNotificationsAsync(int pageNumber, int pageSize, CancellationToken ct)

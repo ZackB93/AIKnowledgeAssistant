@@ -9,6 +9,7 @@ namespace KnowledgeAssistant.Application.Interfaces.Repositories
         Task<Notification?> GetByIdAsync(int notificationId, CancellationToken ct);
         Task<List<NotificationRecipientResponse>> GetRecipientsResponseAsync(int notificationId, CancellationToken ct);
         Task<NotificationResponse?> GetResponseByIdAsync(int notificationId, CancellationToken ct);
+        Task<(List<NotificationUserSummaryResponse> items, int totalCount)> GetPaginatedByUserIdAsync(int userId, int pageNumber, int pageSize, CancellationToken ct);
         Task<(List<NotificationSummaryResponse> items, int totalCount)> GetPaginatedAsync(int pageNumber, int pageSize, CancellationToken ct);
         Task<(List<NotificationSummaryResponse> items, int totalCount)> SearchPaginatedAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken ct);
         Task SaveChangesAsync(CancellationToken ct);

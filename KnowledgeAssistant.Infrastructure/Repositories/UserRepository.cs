@@ -58,7 +58,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
         {
             return await _context.Users
                 .AsNoTracking()
-                .Where(x => x.Id == id)
+                .Where(x => x.Id == id && !x.IsDeleted)
                 .Select(x => new UserResponse
                 {
                     Id = x.Id,
