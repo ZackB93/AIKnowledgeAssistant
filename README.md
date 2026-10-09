@@ -377,6 +377,14 @@ N/A
 
 </div>
 
+### Notifications
+
+<div align="center">
+
+N/A
+
+</div>
+
 ---
 
 ## 06 · Features
@@ -574,34 +582,6 @@ This makes changing AI providers easier in the future.
 ## 08 · To Do
 
 The project is intentionally being developed incrementally, with the following features planned to extend the application's AI, messaging and background-processing capabilities.
-
-### Notifications
-
-Introduce an application notification system using RabbitMQ.
-
-Notifications will be queued asynchronously and persisted by a background consumer, allowing users to receive notifications for events such as document processing, system activity and other application events.
-
-Planned functionality:
-
-* User notification inbox
-* Unread notification count
-* Mark notifications as read
-* Queue notifications through RabbitMQ
-* Background notification consumer
-* Support for multiple recipients
-* Notification history
-
-```text
-Application Event
-       ↓
-RabbitMQ
-       ↓
-Notification Consumer
-       ↓
-Save Notification
-       ↓
-User Notification Centre
-```
 
 ### RabbitMQ Retry & Dead-Letter Handling
 
