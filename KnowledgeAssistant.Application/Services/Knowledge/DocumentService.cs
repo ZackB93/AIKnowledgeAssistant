@@ -18,6 +18,8 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
         Task<PaginatedResponse<DocumentResponse>> GetDocumentsAsync(int pageNumber, int pageSize, CancellationToken ct);
     }
 
+    // TODO: Create seperate dedicated vector database using PostgreSQL and PGVector extension for better performance and scalability.
+    // This service is currently using the sql database to store embeddings, which may not be optimal for large-scale applications or as it grows.
     public class DocumentService : IDocumentService
     {
         private const long MaxFileBytes = 10 * 1024 * 1024; // 10 MB
