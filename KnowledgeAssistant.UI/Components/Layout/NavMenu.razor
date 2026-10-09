@@ -28,20 +28,24 @@
             <AuthorizeView Roles="Admin">
                  <MudNavGroup Title="Admin" Icon="@Icons.Material.Filled.AdminPanelSettings" IconColor="Color.Inherit">
 
-                    <MudNavLink Href="/documents" Icon="@Icons.Material.Filled.Description" IconColor="Color.Inherit">
+                    <MudNavLink Href="/admin/documents" Icon="@Icons.Material.Filled.Description" IconColor="Color.Inherit">
                         Documents
                     </MudNavLink>
 
-                    <MudNavLink Href="/users" Icon="@Icons.Material.Filled.Person" IconColor="Color.Inherit">
+                    <MudNavLink Href="/admin/users" Icon="@Icons.Material.Filled.Person" IconColor="Color.Inherit">
                         Users
                     </MudNavLink>
 
-                    <MudNavLink Href="/emails" Icon="@Icons.Material.Filled.Email" IconColor="Color.Inherit">
+                    <MudNavLink Href="/admin/emails" Icon="@Icons.Material.Filled.Email" IconColor="Color.Inherit">
                         Emails
                     </MudNavLink>
 
-                    <MudNavLink Href="/roles" Icon="@Icons.Material.Filled.Badge" IconColor="Color.Inherit">
+                    <MudNavLink Href="/admin/roles" Icon="@Icons.Material.Filled.Badge" IconColor="Color.Inherit">
                         Roles
+                    </MudNavLink>
+
+                    <MudNavLink Href="/admin/notifications" Icon="@Icons.Material.Filled.Badge" IconColor="Color.Inherit">
+                        Notifications
                     </MudNavLink>
 
                 </MudNavGroup>
