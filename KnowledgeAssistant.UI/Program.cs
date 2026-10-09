@@ -1,4 +1,4 @@
-using KnowledgeAssistant.Application.Services;
+using KnowledgeAssistant.Application.Services.Infrastructure;
 using KnowledgeAssistant.UI.Components;
 using KnowledgeAssistant.UI.Helpers;
 using Microsoft.AspNetCore.Authentication.Cookies;

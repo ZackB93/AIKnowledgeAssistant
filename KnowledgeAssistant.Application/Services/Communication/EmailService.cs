@@ -1,12 +1,13 @@
 ﻿using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Emails;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
+using KnowledgeAssistant.Application.Services.Infrastructure;
 using KnowledgeAssistant.Domain.Entities.Emails;
 using Microsoft.Extensions.Configuration;
 using Resend;
 using EmailStatus = KnowledgeAssistant.Domain.Enums.EmailStatus;
 
-namespace KnowledgeAssistant.Application.Services
+namespace KnowledgeAssistant.Application.Services.Communication
 {
     public interface IEmailService
     {

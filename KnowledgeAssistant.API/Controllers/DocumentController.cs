@@ -1,8 +1,8 @@
 ﻿using KnowledgeAssistant.Application.DTOs.API;
-using KnowledgeAssistant.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using KnowledgeAssistant.Application.Services.Knowledge;
 
 namespace KnowledgeAssistant.API.Controllers
 {

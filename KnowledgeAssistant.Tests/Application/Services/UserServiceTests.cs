@@ -1,7 +1,9 @@
 ﻿using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Authentication;
 using KnowledgeAssistant.Application.DTOs.Users;
-using KnowledgeAssistant.Application.Services;
+using KnowledgeAssistant.Application.Services.Communication;
+using KnowledgeAssistant.Application.Services.Identity;
+using KnowledgeAssistant.Application.Services.Infrastructure;
 using KnowledgeAssistant.Domain.Entities.Users;
 using KnowledgeAssistant.Infrastructure.Data.Context;
 using KnowledgeAssistant.Infrastructure.Repositories;

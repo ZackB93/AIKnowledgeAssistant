@@ -1,5 +1,5 @@
 ﻿using KnowledgeAssistant.Domain.Entities.Emails;
-using KnowledgeAssistant.Application.Services;
+using KnowledgeAssistant.Application.Services.Communication;
 
 namespace KnowledgeAssistant.Application.Handlers;
 public interface IMessageHandler<T>

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 
-namespace KnowledgeAssistant.Application.Services
+namespace KnowledgeAssistant.Application.Services.Infrastructure
 {
     public interface ICacheService
     {

@@ -1,6 +1,6 @@
 ﻿using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Roles;
-using KnowledgeAssistant.Application.Services;
+using KnowledgeAssistant.Application.Services.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

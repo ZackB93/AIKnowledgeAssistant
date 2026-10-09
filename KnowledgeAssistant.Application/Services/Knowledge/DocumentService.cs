@@ -9,7 +9,7 @@ using DocChunkEntity = KnowledgeAssistant.Domain.Entities.Documents.DocumentChun
 using DocEntity = KnowledgeAssistant.Domain.Entities.Documents.Document;
 using OpenXml = DocumentFormat.OpenXml;
 
-namespace KnowledgeAssistant.Application.Services
+namespace KnowledgeAssistant.Application.Services.Knowledge
 {
     public interface IDocumentService
     {

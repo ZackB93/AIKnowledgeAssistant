@@ -26,6 +26,24 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                 .FirstOrDefaultAsync(x => x.Id == notificationId, ct);
         }
 
+        public async Task<List<NotificationRecipientResponse>> GetRecipientsResponseAsync(int notificationId, CancellationToken ct)
+        {
+            return await _context.NotificationRecipients
+                .AsNoTracking()
+                .Where(x => x.NotificationId == notificationId)
+                .Select(x => new NotificationRecipientResponse
+                {
+                    Id = x.Id,
+                    NotificationId = x.NotificationId,
+                    UserId = x.UserId,
+                    IsRead = x.IsRead,
+                    ReadAt = x.ReadAt,
+                    UserName = x.User.FirstName + " " + x.User.LastName,
+                    DeliveredAt = x.DeliveredAt
+                })
+                .ToListAsync(ct);
+        }
+
         public async Task<NotificationResponse?> GetResponseByIdAsync(int notificationId, CancellationToken ct)
         {
             return await _context.Notifications

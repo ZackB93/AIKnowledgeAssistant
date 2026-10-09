@@ -3,7 +3,7 @@ using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
 
-namespace KnowledgeAssistant.Application.Services
+namespace KnowledgeAssistant.Application.Services.Infrastructure
 {
     public interface IRabbitMQService
     {

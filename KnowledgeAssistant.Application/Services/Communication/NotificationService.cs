@@ -4,12 +4,13 @@ using KnowledgeAssistant.Application.Interfaces.Repositories;
 using KnowledgeAssistant.Domain.Entities.Notifications;
 using Microsoft.Extensions.Configuration;
 
-namespace KnowledgeAssistant.Application.Services
+namespace KnowledgeAssistant.Application.Services.Communication
 {
     public interface INotificationService
     {
         Task SendNotificationAsync(CreateNotificationRequest request, CancellationToken ct);
         Task<NotificationResponse?> GetNotificationByIdAsync(int notificationId, CancellationToken ct);
+        Task<List<NotificationRecipientResponse?>> GetNotificationRecipientsAsync(int notificationId, CancellationToken ct);
         Task<PaginatedResponse<NotificationSummaryResponse>> GetNotificationsAsync(int pageNumber, int pageSize, CancellationToken ct);
         Task<PaginatedResponse<NotificationSummaryResponse>> SearchNotificationsAsync(string searchTerm, int pageNumber, int pageSize, CancellationToken ct);
     }
@@ -43,9 +44,14 @@ namespace KnowledgeAssistant.Application.Services
             await _notificationRepository.SaveChangesAsync(ct);
         }
 
-        public Task<NotificationResponse?> GetNotificationByIdAsync(int emailId, CancellationToken ct)
+        public Task<NotificationResponse?> GetNotificationByIdAsync(int notificationId, CancellationToken ct)
         {
-            return _notificationRepository.GetResponseByIdAsync(emailId, ct);
+            return _notificationRepository.GetResponseByIdAsync(notificationId, ct);
+        }
+
+        public Task<List<NotificationRecipientResponse>> GetNotificationRecipientsAsync(int notificationId, CancellationToken ct)
+        {
+            return _notificationRepository.GetRecipientsResponseAsync(notificationId, ct);
         }
 
         public async Task<PaginatedResponse<NotificationSummaryResponse>> GetNotificationsAsync(int pageNumber, int pageSize, CancellationToken ct)

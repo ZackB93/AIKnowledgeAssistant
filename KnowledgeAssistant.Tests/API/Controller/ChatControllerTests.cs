@@ -1,6 +1,6 @@
 ﻿using KnowledgeAssistant.API.Controllers;
 using KnowledgeAssistant.Application.DTOs.Chat;
-using KnowledgeAssistant.Application.Services;
+using KnowledgeAssistant.Application.Services.Knowledge;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 

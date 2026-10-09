@@ -1,7 +1,7 @@
 ﻿using Bunit;
 using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Authentication;
-using KnowledgeAssistant.Application.Services;
+using KnowledgeAssistant.Application.Services.Infrastructure;
 using KnowledgeAssistant.UI.Components.Authentication;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Caching.Memory;

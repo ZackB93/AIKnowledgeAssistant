@@ -1,7 +1,10 @@
 using CallRatingService.API.Middleware;
 using KnowledgeAssistant.Application.Handlers;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
-using KnowledgeAssistant.Application.Services;
+using KnowledgeAssistant.Application.Services.Communication;
+using KnowledgeAssistant.Application.Services.Identity;
+using KnowledgeAssistant.Application.Services.Infrastructure;
+using KnowledgeAssistant.Application.Services.Knowledge;
 using KnowledgeAssistant.Domain.Entities.Emails;
 using KnowledgeAssistant.Domain.Entities.Users;
 using KnowledgeAssistant.Infrastructure.BackgroundServices;

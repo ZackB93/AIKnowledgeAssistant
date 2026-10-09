@@ -1,6 +1,6 @@
 ﻿using KnowledgeAssistant.API.Controllers;
 using KnowledgeAssistant.Application.DTOs.Roles;
-using KnowledgeAssistant.Application.Services;
+using KnowledgeAssistant.Application.Services.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 

@@ -3,10 +3,12 @@ using KnowledgeAssistant.Application.DTOs.Authentication;
 using KnowledgeAssistant.Application.DTOs.Roles;
 using KnowledgeAssistant.Application.DTOs.Users;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
+using KnowledgeAssistant.Application.Services.Communication;
+using KnowledgeAssistant.Application.Services.Infrastructure;
 using KnowledgeAssistant.Domain.Entities.Users;
 using Microsoft.AspNetCore.Identity;
 
-namespace KnowledgeAssistant.Application.Services
+namespace KnowledgeAssistant.Application.Services.Identity
 {
     public interface IUserService
     {

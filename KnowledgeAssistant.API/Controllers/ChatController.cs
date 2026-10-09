@@ -1,6 +1,6 @@
 ﻿using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Chat;
-using KnowledgeAssistant.Application.Services;
+using KnowledgeAssistant.Application.Services.Knowledge;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

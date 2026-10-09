@@ -1,7 +1,7 @@
 ﻿using KnowledgeAssistant.API.Controllers;
 using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Emails;
-using KnowledgeAssistant.Application.Services;
+using KnowledgeAssistant.Application.Services.Communication;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 

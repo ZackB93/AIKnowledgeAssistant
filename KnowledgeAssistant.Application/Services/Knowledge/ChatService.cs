@@ -6,7 +6,7 @@ using Microsoft.Extensions.AI;
 using AIChatMessage = Microsoft.Extensions.AI.ChatMessage;
 using ChatMessage = KnowledgeAssistant.Domain.Entities.Chat.ChatMessage;
 
-namespace KnowledgeAssistant.Application.Services
+namespace KnowledgeAssistant.Application.Services.Knowledge
 {
     public interface IChatService
     {
