@@ -21,6 +21,10 @@ namespace KnowledgeAssistant.Infrastructure.Data.Configs.Notifications
             builder.Property(n => n.CreatedAt)
                 .IsRequired();
 
+            builder.Property(x => x.Status)
+            .IsRequired()
+            .HasConversion<int>();
+
             builder.HasIndex(n => n.CreatedAt);
 
             // Keep the notification if the creating user is deleted

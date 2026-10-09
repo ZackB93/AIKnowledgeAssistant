@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace KnowledgeAssistant.Domain.Entities.Notifications
+namespace KnowledgeAssistant.Application.DTOs.Notifications
 {
     public class NotificationSummaryResponse
     {

@@ -1,4 +1,211 @@
-﻿@page "/admin/notifications"
+﻿@using KnowledgeAssistant.Application.DTOs.API
+@using KnowledgeAssistant.Application.DTOs.Notifications
+
+@page "/admin/notifications"
 @attribute [Authorize(Roles = "Admin")]
+@implements IDisposable
 
 <PageTitle>Knowledge Assistant - Notifications</PageTitle>
+
+<MudContainer>
+    <MudPaper Class="pa-4 glass-card">
+
+        <MudText Typo="Typo.h5" Class="mb-2">System Notifications</MudText>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   FullWidth="false"
+                   StartIcon="@Icons.Material.Filled.Send"
+                   Size="Size.Small"
+                   Class="mb-2">
+
+            <MudText>Send Notification</MudText>
+        </MudButton>
+
+        <MudStack Row="true" Spacing="1" Class="mb-2">
+            <MudTextField T="string"
+                          Value="@SearchTerm"
+                          ValueChanged="@(value => SearchTermChanged(value))"
+                          Placeholder="Search notifications"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Immediate="true"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Class="flex-grow-1" />
+
+            @if (!string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Default"
+                           StartIcon="@Icons.Material.Filled.Clear"
+                           Size="Size.Small"
+                           OnClick="ClearSearch">
+
+                    Clear
+                </MudButton>
+            }
+        </MudStack>
+
+        <MudTable @ref="Table"
+                  ServerData="LoadNotifications"
+                  Hover="true"
+                  Dense="true"
+                  Striped="true"
+                  Bordered="true">
+
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh>Created Date</MudTh>
+                <MudTh>Created By</MudTh>
+                <MudTh>Title</MudTh>
+                <MudTh>Recipient Count</MudTh>
+                <MudTh>Read Count</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd DataLabel="ID">@context.Id</MudTd>  
+                <MudTd DataLabel="Created Date">@context.CreatedAt.ToString("dd/MM/yyyy hh:mm tt")</MudTd>
+                <MudTd DataLabel="Created By">@context.CreatedByUserName</MudTd>
+                <MudTd DataLabel="Title">@context.Title</MudTd>
+                <MudTd DataLabel="Recipient Count">@context.RecipientCount</MudTd>
+                <MudTd DataLabel="Read Count">@context.ReadCount</MudTd>
+                <MudTd>
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               FullWidth="false"
+                               StartIcon="@Icons.Material.Filled.RemoveRedEye"
+                               OnClick="() => ToggleNotificationModal(context)"
+                               Size="Size.Small">
+
+                        <MudText>Details</MudText>
+                    </MudButton>
+                </MudTd>
+            </RowTemplate>
+
+            <LoadingContent>
+                <div class="d-flex justify-center table-state-bg">
+                    <LoadingSpinner />
+                </div>
+            </LoadingContent>
+
+            <NoRecordsContent>
+                <MudText Class="table-state-bg">
+                    No notifications found
+                </MudText>
+            </NoRecordsContent>
+
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
+            </PagerContent>
+
+        </MudTable>
+
+    </MudPaper>
+</MudContainer>
+
+<Modal @bind-Visible="@(NotificationModalVisible)"
+       Title="Notification Details"
+       ShowCloseButton="true">
+
+
+
+</Modal>
+
+@code
+{
+    [Inject]
+    private IHttpService HttpService { get; set; } = null!;
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = null!;
+
+    private MudTable<NotificationSummaryResponse>? Table;
+    private NotificationSummaryResponse? SelectedNotification = null;
+    private bool NotificationModalVisible = false;
+    private string SearchTerm = string.Empty;
+    private CancellationTokenSource? SearchCancellationTokenSource;
+
+    private async Task SearchTermChanged(string Value)
+    {
+        SearchTerm = Value;
+
+        SearchCancellationTokenSource?.Cancel();
+        SearchCancellationTokenSource?.Dispose();
+        SearchCancellationTokenSource = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(400, SearchCancellationTokenSource.Token);
+
+            if (Table is not null)
+            {
+                await Table.ReloadServerData();
+            }
+        }
+        catch (TaskCanceledException)
+        {
+            // A new character was typed before the 400ms delay completed.
+        }
+    }
+
+    private async Task ClearSearch()
+    {
+        SearchCancellationTokenSource?.Cancel();
+        SearchTerm = string.Empty;
+
+        if (Table is not null)
+        {
+            await Table.ReloadServerData();
+        }
+    }
+
+    private async Task<TableData<NotificationSummaryResponse>> LoadNotifications(TableState State, CancellationToken ct)
+    {
+        var PageNumber = State.Page + 1;
+        var PageSize = State.PageSize;
+
+        var Response = string.IsNullOrWhiteSpace(SearchTerm)
+            ? await HttpService.GetDataAsync($"/Notifications/GetAll?PageNumber={PageNumber}&PageSize={PageSize}", ct: ct)
+            : await HttpService.GetDataAsync($"/Notifications/Search?SearchTerm={Uri.EscapeDataString(SearchTerm)}&PageNumber={PageNumber}&PageSize={PageSize}", ct: ct);
+
+        if (Response.IsSuccessful && Response.Data is not null)
+        {
+            var PaginatedResponse = Response.GetData<PaginatedResponse<NotificationSummaryResponse>>();
+
+            return new TableData<NotificationSummaryResponse>
+            {
+                Items = PaginatedResponse?.Items,
+                TotalItems = PaginatedResponse!.TotalCount
+            };
+        }
+
+        Snackbar.Add("An error has occurred loading notifications!", Severity.Error);
+
+        return new TableData<NotificationSummaryResponse>
+        {
+            Items = [],
+            TotalItems = 0
+        };
+    }
+
+    private async Task OnNotificationSaved()
+    {
+        await Table!.ReloadServerData();
+        NotificationModalVisible = false;
+        SelectedNotification = null;
+    }
+
+    private void ToggleNotificationModal(NotificationSummaryResponse? notification)
+    {
+        SelectedNotification = notification;
+        NotificationModalVisible = !NotificationModalVisible;
+    }
+
+    public void Dispose()
+    {
+        SearchCancellationTokenSource?.Cancel();
+        SearchCancellationTokenSource?.Dispose();
+    }
+}

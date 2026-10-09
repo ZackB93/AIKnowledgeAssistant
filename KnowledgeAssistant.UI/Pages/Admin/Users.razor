@@ -1,6 +1,5 @@
 ﻿@using KnowledgeAssistant.Application.DTOs.API
 @using KnowledgeAssistant.Application.DTOs.Users
-@using KnowledgeAssistant.Application.Services
 @using KnowledgeAssistant.UI.Components.User
 
 @page "/admin/users"
@@ -170,10 +169,8 @@
         var PageSize = State.PageSize;
 
         var Response = string.IsNullOrWhiteSpace(SearchTerm)
-            ? await HttpService.GetDataAsync($"/User/GetAll?PageNumber={PageNumber}&PageSize={PageSize}",
-                ct: ct)
-            : await HttpService.GetDataAsync($"/User/Search?SearchTerm={Uri.EscapeDataString(SearchTerm)}&PageNumber={PageNumber}&PageSize={PageSize}",
-                ct: ct);
+            ? await HttpService.GetDataAsync($"/User/GetAll?PageNumber={PageNumber}&PageSize={PageSize}", ct: ct)
+            : await HttpService.GetDataAsync($"/User/Search?SearchTerm={Uri.EscapeDataString(SearchTerm)}&PageNumber={PageNumber}&PageSize={PageSize}", ct: ct);
 
         if (Response.IsSuccessful && Response.Data is not null)
         {
