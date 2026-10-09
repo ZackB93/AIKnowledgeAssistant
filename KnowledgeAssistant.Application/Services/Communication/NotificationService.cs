@@ -1,6 +1,5 @@
 ﻿using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Notifications;
-using KnowledgeAssistant.Application.Handlers;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
 using KnowledgeAssistant.Application.Services.Infrastructure;
 using KnowledgeAssistant.Domain.Entities.Notifications;
