@@ -1,14 +1,17 @@
 ﻿using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Notifications;
+using KnowledgeAssistant.Application.Handlers;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
+using KnowledgeAssistant.Application.Services.Infrastructure;
 using KnowledgeAssistant.Domain.Entities.Notifications;
+using KnowledgeAssistant.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 
 namespace KnowledgeAssistant.Application.Services.Communication
 {
     public interface INotificationService
     {
-        Task SendNotificationAsync(CreateNotificationRequest request, CancellationToken ct);
+        Task<NotificationResponse> SendNotificationAsync(CreateNotificationRequest request, CancellationToken ct);
         Task<NotificationResponse?> GetNotificationByIdAsync(int notificationId, CancellationToken ct);
         Task<PaginatedResponse<NotificationUserSummaryResponse>> GetNotificationsByUserIdAsync(int userId, int pageNumber, int pageSize, CancellationToken ct);
         Task<List<NotificationRecipientResponse>> GetNotificationRecipientsAsync(int notificationId, CancellationToken ct);
@@ -19,30 +22,70 @@ namespace KnowledgeAssistant.Application.Services.Communication
     public class NotificationService : INotificationService
     {
         private readonly INotificationRepository _notificationRepository;
+        private readonly IRabbitMQService _rabbitMQService;
+        private readonly IMessageHandler<InsertRecipientsChunkMessage> _chunkHandler;
+        private readonly bool _rabbitMQEnabled;
 
-        public NotificationService(INotificationRepository notificationRepository, IConfiguration configuration)
+        public NotificationService(
+            INotificationRepository notificationRepository,
+            IRabbitMQService rabbitMQService,
+            IMessageHandler<InsertRecipientsChunkMessage> chunkHandler,
+            IConfiguration configuration)
         {
             _notificationRepository = notificationRepository;
+            _rabbitMQService = rabbitMQService;
+            _chunkHandler = chunkHandler;
+            _rabbitMQEnabled = configuration.GetValue<bool>("RabbitMQ:Enabled");
+
         }
 
-        public async Task SendNotificationAsync(CreateNotificationRequest request, CancellationToken ct)
+        public async Task<NotificationResponse> SendNotificationAsync(CreateNotificationRequest request, CancellationToken ct)
         {
+            var userIds = request.UserIds.Distinct().ToList();
+
             var notification = new Notification
             {
                 Title = request.Title,
                 Body = request.Body,
                 CreatedAt = DateTime.UtcNow,
                 CreatedByUserId = request.CreatedByUserId,
-                Recipients = request.UserIds.Distinct().Select(userId => new NotificationRecipient
-                {
-                    UserId = userId,
-                    IsRead = false,
-                    DeliveredAt = DateTime.UtcNow
-                }).ToList()
+                Status = userIds.Count == 0 ? NotificationStatus.Completed : NotificationStatus.Queued,
+                TotalRecipients = userIds.Count
             };
 
             await _notificationRepository.AddAsync(notification, ct);
             await _notificationRepository.SaveChangesAsync(ct);
+
+            var chunks = userIds
+                .Chunk(1000)
+                .Select(chunk => new InsertRecipientsChunkMessage
+                {
+                    NotificationId = notification.Id,
+                    UserIds = chunk.ToList()
+                })
+                .ToList();
+
+            try
+            {
+                if (_rabbitMQEnabled)
+                {
+                    await _rabbitMQService.PublishBatchAsync(chunks, "notification-recipients", ct);
+                }
+                else
+                {
+                    foreach (var chunk in chunks)
+                    {
+                        await _chunkHandler.HandleAsync(chunk, ct);
+                    }
+                }
+            }
+            catch
+            {
+                notification.Status = NotificationStatus.Failed;
+                await _notificationRepository.SaveChangesAsync(ct);
+            }
+
+            return notification;
         }
 
         public async Task<NotificationResponse?> GetNotificationByIdAsync(int notificationId, CancellationToken ct)

@@ -6,6 +6,7 @@ namespace KnowledgeAssistant.Application.Interfaces.Repositories
     public interface INotificationRepository
     {
         Task AddAsync(Notification notification, CancellationToken ct);
+        Task<int> AddRecipientsChunkAsync(int notificationId, IReadOnlyCollection<int> userIds, CancellationToken ct);
         Task<Notification?> GetByIdAsync(int notificationId, CancellationToken ct);
         Task<List<NotificationRecipientResponse>> GetRecipientsResponseAsync(int notificationId, CancellationToken ct);
         Task<NotificationResponse?> GetResponseByIdAsync(int notificationId, CancellationToken ct);

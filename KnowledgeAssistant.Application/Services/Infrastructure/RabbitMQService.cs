@@ -7,7 +7,8 @@ namespace KnowledgeAssistant.Application.Services.Infrastructure
 {
     public interface IRabbitMQService
     {
-        Task PublishAsync<T>(T message, string queue, CancellationToken ct = default);
+        Task PublishAsync<T>(T message, string queue, CancellationToken ct);
+        Task PublishBatchAsync<T>(IEnumerable<T> messages, string queue, CancellationToken ct);
     }
 
     public class RabbitMQService : IRabbitMQService
@@ -50,6 +51,35 @@ namespace KnowledgeAssistant.Application.Services.Infrastructure
                 routingKey: queue,
                 body: body,
                 cancellationToken: ct);
+        }
+
+        public async Task PublishBatchAsync<T>(IEnumerable<T> messages, string queue, CancellationToken ct = default)
+        {
+            var connection = await GetConnectionAsync(ct);
+
+            await using var channel = await connection.CreateChannelAsync(cancellationToken: ct);
+
+            await channel.QueueDeclareAsync(
+                queue: queue,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                cancellationToken: ct);
+
+            var properties = new BasicProperties { DeliveryMode = DeliveryModes.Persistent };
+
+            foreach (var message in messages)
+            {
+                var body = JsonSerializer.SerializeToUtf8Bytes(message);
+
+                await channel.BasicPublishAsync(
+                    exchange: string.Empty,
+                    routingKey: queue,
+                    mandatory: false,
+                    basicProperties: properties,
+                    body: body,
+                    cancellationToken: ct);
+            }
         }
 
         private async Task<IConnection> GetConnectionAsync(CancellationToken ct)

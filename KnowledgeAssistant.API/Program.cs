@@ -6,6 +6,7 @@ using KnowledgeAssistant.Application.Services.Identity;
 using KnowledgeAssistant.Application.Services.Infrastructure;
 using KnowledgeAssistant.Application.Services.Knowledge;
 using KnowledgeAssistant.Domain.Entities.Emails;
+using KnowledgeAssistant.Domain.Entities.Notifications;
 using KnowledgeAssistant.Domain.Entities.Users;
 using KnowledgeAssistant.Infrastructure.BackgroundServices;
 using KnowledgeAssistant.Infrastructure.Data.Context;
@@ -140,7 +141,10 @@ builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IRabbitMQService, RabbitMQService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
+
 builder.Services.AddScoped<IMessageHandler<SendEmailMessage>, SendEmailHandler>();
+builder.Services.AddScoped<IMessageHandler<InsertRecipientsChunkMessage>, InsertRecipientsChunkHandler>();
+
 builder.Services.AddSingleton<IResend>(ResendClient.Create(builder.Configuration["Resend:Key"]!));
 builder.Services.AddHostedService<RabbitMQBackgroundService>();
 

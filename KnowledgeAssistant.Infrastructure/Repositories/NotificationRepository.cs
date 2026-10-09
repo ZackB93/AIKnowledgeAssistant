@@ -1,6 +1,7 @@
 ﻿using KnowledgeAssistant.Application.DTOs.Notifications;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
 using KnowledgeAssistant.Domain.Entities.Notifications;
+using KnowledgeAssistant.Domain.Enums;
 using KnowledgeAssistant.Infrastructure.Data.Context;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +19,61 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
         public async Task AddAsync(Notification notification, CancellationToken ct)
         {
             await _context.Notifications.AddAsync(notification, ct);
+        }
+
+        public async Task<int> AddRecipientsChunkAsync(int notificationId, IReadOnlyCollection<int> userIds, CancellationToken ct)
+        {
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+            return await strategy.ExecuteAsync(async () =>
+            {
+                // Users who already have a row (from a previous delivery of this same message)
+                var existing = await _context.NotificationRecipients
+                    .AsNoTracking()
+                    .Where(r => r.NotificationId == notificationId && userIds.Contains(r.UserId))
+                    .Select(r => r.UserId)
+                    .ToListAsync(ct);
+
+                var now = DateTime.UtcNow;
+
+                var newRows = userIds
+                    .Except(existing)
+                    .Select(userId => new NotificationRecipient
+                    {
+                        NotificationId = notificationId,
+                        UserId = userId,
+                        IsRead = false,
+                        DeliveredAt = now
+                    })
+                    .ToList();
+
+                await using var transaction = await _context.Database.BeginTransactionAsync(ct);
+
+                if (newRows.Count > 0)
+                {
+                    _context.NotificationRecipients.AddRange(newRows);
+                    await _context.SaveChangesAsync(ct);
+
+                    await _context.Notifications
+                        .Where(n => n.Id == notificationId)
+                        .ExecuteUpdateAsync(s => s.SetProperty(
+                            n => n.ProcessedRecipients,
+                            n => n.ProcessedRecipients + newRows.Count), ct);
+                }
+
+                await _context.Notifications
+                    .Where(n => n.Id == notificationId
+                             && n.ProcessedRecipients >= n.TotalRecipients
+                             && n.Status != NotificationStatus.Completed)
+                    .ExecuteUpdateAsync(s => s.SetProperty(n => n.Status, NotificationStatus.Completed), ct);
+
+                await transaction.CommitAsync(ct);
+
+                // Detach so a long-lived/scoped context doesn't keep 1000 tracked entities around
+                _context.ChangeTracker.Clear();
+
+                return newRows.Count;
+            });
         }
 
         public async Task<Notification?> GetByIdAsync(int notificationId, CancellationToken ct)

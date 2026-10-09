@@ -1,4 +1,6 @@
-﻿using KnowledgeAssistant.Domain.Entities.Emails;
+﻿using KnowledgeAssistant.Application.Handlers;
+using KnowledgeAssistant.Domain.Entities.Emails;
+using KnowledgeAssistant.Domain.Entities.Notifications;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -7,7 +9,6 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
-using KnowledgeAssistant.Application.Handlers;
 
 namespace KnowledgeAssistant.Infrastructure.BackgroundServices
 {
@@ -18,6 +19,7 @@ namespace KnowledgeAssistant.Infrastructure.BackgroundServices
         private readonly ILogger<RabbitMQBackgroundService> _logger;
         private IConnection? _connection;
         private IChannel? _channel;
+        private readonly List<IChannel> _channels = new();
         private readonly bool _enabled;
 
         public RabbitMQBackgroundService(IServiceScopeFactory scopeFactory, IConfiguration configuration, ILogger<RabbitMQBackgroundService> logger)
@@ -45,8 +47,6 @@ namespace KnowledgeAssistant.Infrastructure.BackgroundServices
             _connection = await factory.CreateConnectionAsync(stoppingToken);
             _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
-            await ConfigureQueuesAsync(stoppingToken);
-
             _logger.LogInformation("RabbitMQ background service started.");
 
             await StartConsumersAsync(stoppingToken);
@@ -61,86 +61,55 @@ namespace KnowledgeAssistant.Infrastructure.BackgroundServices
             }
         }
 
-        private async Task ConfigureQueuesAsync(CancellationToken cancellationToken)
+        private async Task StartConsumersAsync(CancellationToken ct)
         {
-            await _channel!.QueueDeclareAsync(
-                queue: "emails",
+            await StartConsumerAsync<SendEmailMessage>("emails", prefetch: 1, ct);
+            await StartConsumerAsync<InsertRecipientsChunkMessage>("notification-recipients", prefetch: 2, ct);
+        }
+
+        private async Task StartConsumerAsync<T>(string queue, ushort prefetch, CancellationToken ct)
+        {
+            var channel = await _connection!.CreateChannelAsync(cancellationToken: ct);
+            _channels.Add(channel);
+
+            await channel.QueueDeclareAsync(
+                queue: queue,
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
-                cancellationToken: cancellationToken);
+                cancellationToken: ct);
 
-            await _channel.BasicQosAsync(
-                prefetchSize: 0,
-                prefetchCount: 1,
-                global: false,
-                cancellationToken: cancellationToken);
+            await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: prefetch, global: false, cancellationToken: ct);
+
+            var consumer = new AsyncEventingBasicConsumer(channel);
+            consumer.ReceivedAsync += (_, eventArgs) => ProcessMessageAsync<T>(channel, queue, eventArgs, ct);
+
+            await channel.BasicConsumeAsync(queue: queue, autoAck: false, consumer: consumer, cancellationToken: ct);
+
+            _logger.LogInformation("RabbitMQ consumer started for queue {Queue}.", queue);
         }
 
-        private async Task StartConsumersAsync(CancellationToken cancellationToken)
-        {
-            await StartConsumerAsync<SendEmailMessage>("emails", cancellationToken);
-        }
-
-        private async Task StartConsumerAsync<T>(string queue, CancellationToken cancellationToken)
-        {
-            var consumer = new AsyncEventingBasicConsumer(_channel!);
-
-            consumer.ReceivedAsync += async (_, eventArgs) =>
-            {
-                await ProcessMessageAsync<T>(
-                    queue,
-                    eventArgs,
-                    cancellationToken);
-            };
-
-            await _channel!.BasicConsumeAsync(
-                queue: queue,
-                autoAck: false,
-                consumer: consumer,
-                cancellationToken: cancellationToken);
-
-            _logger.LogInformation($"RabbitMQ consumer started for queue {queue}.", queue);
-        }
-
-        private async Task ProcessMessageAsync<T>(string queue, BasicDeliverEventArgs eventArgs, CancellationToken cancellationToken)
+        private async Task ProcessMessageAsync<T>(IChannel channel, string queue, BasicDeliverEventArgs eventArgs, CancellationToken ct)
         {
             try
             {
                 var json = Encoding.UTF8.GetString(eventArgs.Body.ToArray());
-                var message = JsonSerializer.Deserialize<T>(json);
-
-                if (message == null)
-                {
-                    throw new InvalidOperationException($"Could not deserialize RabbitMQ message from queue '{queue}'.");
-                }
+                var message = JsonSerializer.Deserialize<T>(json)
+                    ?? throw new InvalidOperationException($"Could not deserialize message from queue '{queue}'.");
 
                 using var scope = _scopeFactory.CreateScope();
+                var handler = GetHandler<T>(scope.ServiceProvider, queue);
 
-                var handler = GetHandler<T>(
-                    scope.ServiceProvider,
-                    queue);
+                await handler.HandleAsync(message, ct);
 
-                await handler.HandleAsync(
-                    message,
-                    cancellationToken);
-
-                await _channel!.BasicAckAsync(
-                    deliveryTag: eventArgs.DeliveryTag,
-                    multiple: false,
-                    cancellationToken: cancellationToken);
-
-                _logger.LogInformation($"RabbitMQ message processed successfully from queue {queue}.", queue);
+                await channel.BasicAckAsync(eventArgs.DeliveryTag, multiple: false, cancellationToken: ct);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error processing RabbitMQ message from queue {queue}.", queue);
+                _logger.LogError(ex, "Error processing RabbitMQ message from queue {Queue}.", queue);
 
-                await _channel!.BasicNackAsync(
-                    deliveryTag: eventArgs.DeliveryTag,
-                    multiple: false,
-                    requeue: true,
-                    cancellationToken: cancellationToken);
+                // Retry once; if it was already redelivered and failed again, stop looping
+                await channel.BasicNackAsync(eventArgs.DeliveryTag, multiple: false, requeue: !eventArgs.Redelivered, cancellationToken: ct);
             }
         }
 
@@ -148,7 +117,7 @@ namespace KnowledgeAssistant.Infrastructure.BackgroundServices
         {
             return queue switch
             {
-                "emails" => serviceProvider.GetRequiredService<IMessageHandler<T>>(),
+                "emails" or "notification-recipients" => serviceProvider.GetRequiredService<IMessageHandler<T>>(),
                 _ => throw new InvalidOperationException($"No message handler configured for queue '{queue}'.")
             };
         }

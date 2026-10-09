@@ -11,6 +11,9 @@ namespace KnowledgeAssistant.Domain.Entities.Notifications
         public DateTime CreatedAt { get; set; }
         public int? CreatedByUserId { get; set; }
         public User? CreatedByUser { get; set; }
+        public NotificationStatus Status { get; set; } = NotificationStatus.Queued;
+        public int TotalRecipients { get; set; }
+        public int ProcessedRecipients { get; set; }
         public ICollection<NotificationRecipient> Recipients { get; set; } = [];
     }
 }

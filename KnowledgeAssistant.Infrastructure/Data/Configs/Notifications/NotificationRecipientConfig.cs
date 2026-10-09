@@ -1,6 +1,7 @@
 ﻿using KnowledgeAssistant.Domain.Entities.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Reflection.Emit;
 
 namespace KnowledgeAssistant.Infrastructure.Data.Configs.Notifications
 {
@@ -22,7 +23,7 @@ namespace KnowledgeAssistant.Infrastructure.Data.Configs.Notifications
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasIndex(r => new { r.UserId, r.IsRead });
+            builder.HasIndex(r => new { r.UserId, r.IsRead, r.NotificationId });
         }
     }
 }
