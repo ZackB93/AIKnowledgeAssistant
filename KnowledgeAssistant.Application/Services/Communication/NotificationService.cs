@@ -88,7 +88,7 @@ namespace KnowledgeAssistant.Application.Services.Communication
                 Title = notification.Title,
                 Body = notification.Body,
                 CreatedAt = notification.CreatedAt,
-                CreatedByUserId = notification.CreatedByUserId,
+                CreatedByUserId = (int)notification.CreatedByUserId,
                 Status = notification.Status,
                 TotalRecipients = notification.TotalRecipients
             };
