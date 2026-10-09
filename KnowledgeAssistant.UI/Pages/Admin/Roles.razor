@@ -132,10 +132,10 @@
     private readonly RoleViewModelValidator _validator = new();
     private RoleViewModel _viewModel = new();
 
-    private async Task<TableData<RoleResponse>> LoadRoles(TableState state, CancellationToken cancellationToken)
+    private async Task<TableData<RoleResponse>> LoadRoles(TableState state, CancellationToken ct)
     {
         var cache = new Cache { CacheKey = "Roles", CacheTimeMins = 30 };
-        var response = await HttpService.GetDataAsync("/Role/GetAll", CacheData: cache, CancellationToken: cancellationToken);
+        var response = await HttpService.GetDataAsync("/Role/GetAll", CacheData: cache, ct: ct);
 
         if (response.IsSuccessful && response.Data is not null)
         {

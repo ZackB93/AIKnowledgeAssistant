@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using KnowledgeAssistant.API.Controllers;
+﻿using KnowledgeAssistant.API.Controllers;
 using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Emails;
 using KnowledgeAssistant.Application.Services;
@@ -17,9 +16,9 @@ public class EmailControllerTests
     [Fact]
     public async Task GetEmail_Missing_ReturnsNotFound()
     {
-        _emails.Setup(s => s.GetEmailByIdAsync(1)).ReturnsAsync((EmailResponse?)null);
+        _emails.Setup(s => s.GetEmailByIdAsync(1, CancellationToken.None)).ReturnsAsync((EmailResponse?)null);
 
-        var result = await Create().GetEmail(1);
+        var result = await Create().GetEmail(1, CancellationToken.None);
 
         Assert.IsType<NotFoundObjectResult>(result.Result);
     }
@@ -28,9 +27,9 @@ public class EmailControllerTests
     public async Task GetEmail_Exists_ReturnsOk()
     {
         var email = new EmailResponse { Id = 1 };
-        _emails.Setup(s => s.GetEmailByIdAsync(1)).ReturnsAsync(email);
+        _emails.Setup(s => s.GetEmailByIdAsync(1, CancellationToken.None)).ReturnsAsync(email);
 
-        var result = await Create().GetEmail(1);
+        var result = await Create().GetEmail(1, CancellationToken.None);
 
         Assert.Same(email, result.BodyOf().Data);
     }
@@ -38,9 +37,9 @@ public class EmailControllerTests
     [Fact]
     public async Task GetEmailsByUserId_NoEmails_ReturnsNotFound()
     {
-        _emails.Setup(s => s.GetEmailsByUserIdAsync(9)).ReturnsAsync(new List<EmailResponse>());
+        _emails.Setup(s => s.GetEmailsByUserIdAsync(9, CancellationToken.None)).ReturnsAsync(new List<EmailResponse>());
 
-        var result = await Create().GetEmailsByUserId(9);
+        var result = await Create().GetEmailsByUserId(9, CancellationToken.None);
 
         Assert.IsType<NotFoundObjectResult>(result.Result);
     }
@@ -48,10 +47,10 @@ public class EmailControllerTests
     [Fact]
     public async Task GetEmails_PageSizeOmitted_DefaultsToTen()
     {
-        _emails.Setup(s => s.GetEmailsAsync(1, 10)).ReturnsAsync(new PaginatedResponse<EmailResponse>());
+        _emails.Setup(s => s.GetEmailsAsync(1, 10, CancellationToken.None)).ReturnsAsync(new PaginatedResponse<EmailResponse>());
 
-        await Create().GetEmails(1);
+        await Create().GetEmails(1, CancellationToken.None);
 
-        _emails.Verify(s => s.GetEmailsAsync(1, 10), Times.Once);
+        _emails.Verify(s => s.GetEmailsAsync(1, 10, CancellationToken.None), Times.Once);
     }
 }

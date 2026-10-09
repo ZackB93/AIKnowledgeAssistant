@@ -16,13 +16,13 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<bool> DoesUserOwnChatSessionAsync(int chatSessionId, int userId, CancellationToken ct = default)
+        public async Task<bool> DoesUserOwnChatSessionAsync(int chatSessionId, int userId, CancellationToken ct)
         {
             return await _context.ChatSessions
                 .AnyAsync(x => x.Id == chatSessionId && x.UserId == userId, ct);
         }
 
-        public async Task AddDocumentAsync(Document document, CancellationToken ct = default)
+        public async Task AddDocumentAsync(Document document, CancellationToken ct)
         {
             await _context.Documents.AddAsync(document, ct);
         }
@@ -30,7 +30,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
         public async Task<List<DocumentChunkSearchProjection>> GetDocumentChunksForSearchAsync(
             List<int> documentIds,
             int userId,
-            CancellationToken ct = default)
+            CancellationToken ct)
         {
             return await _context.DocumentChunks
                 .AsNoTracking()
@@ -51,7 +51,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
         public async Task<(List<DocumentResponse> Items, int TotalCount)> GetPaginatedDocumentsAsync(
             int pageNumber,
             int pageSize,
-            CancellationToken ct = default)
+            CancellationToken ct)
         {
             var totalCount = await _context.Documents.CountAsync(ct);
 
@@ -80,7 +80,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
             return (items, totalCount);
         }
 
-        public async Task SaveChangesAsync(CancellationToken ct = default)
+        public async Task SaveChangesAsync(CancellationToken ct)
         {
             await _context.SaveChangesAsync(ct);
         }

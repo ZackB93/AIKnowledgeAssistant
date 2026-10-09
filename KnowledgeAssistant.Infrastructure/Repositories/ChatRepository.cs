@@ -15,18 +15,18 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task AddChatSessionAsync(ChatSession session, CancellationToken ct = default)
+        public async Task AddChatSessionAsync(ChatSession session, CancellationToken ct)
         {
             await _context.ChatSessions.AddAsync(session, ct);
         }
 
-        public async Task<ChatSession?> GetChatSessionByIdAndUserIdAsync(int sessionId, int userId, CancellationToken ct = default)
+        public async Task<ChatSession?> GetChatSessionByIdAndUserIdAsync(int sessionId, int userId, CancellationToken ct)
         {
             return await _context.ChatSessions
                 .FirstOrDefaultAsync(x => x.Id == sessionId && x.UserId == userId, ct);
         }
 
-        public async Task<List<ChatSessionResponse>> GetChatSessionsByUserIdAsync(int userId, CancellationToken ct = default)
+        public async Task<List<ChatSessionResponse>> GetChatSessionsByUserIdAsync(int userId, CancellationToken ct)
         {
             return await _context.ChatSessions
                 .AsNoTracking()
@@ -44,12 +44,12 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                 .ToListAsync(ct);
         }
 
-        public async Task AddChatMessageAsync(ChatMessage message, CancellationToken ct = default)
+        public async Task AddChatMessageAsync(ChatMessage message, CancellationToken ct)
         {
             await _context.ChatMessages.AddAsync(message, ct);
         }
 
-        public async Task<List<ChatMessage>> GetChatMessagesBySessionIdAsync(int sessionId, CancellationToken ct = default)
+        public async Task<List<ChatMessage>> GetChatMessagesBySessionIdAsync(int sessionId, CancellationToken ct)
         {
             return await _context.ChatMessages
                 .AsNoTracking()
@@ -59,7 +59,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                 .ToListAsync(ct);
         }
 
-        public async Task AttachDocumentsToMessageAsync(int chatSessionId, long messageId, List<int> documentIds, int userId, CancellationToken ct = default)
+        public async Task AttachDocumentsToMessageAsync(int chatSessionId, long messageId, List<int> documentIds, int userId, CancellationToken ct)
         {
             if (!documentIds.Any())
             {
@@ -79,7 +79,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
             }
         }
 
-        public async Task SaveChangesAsync(CancellationToken ct = default)
+        public async Task SaveChangesAsync(CancellationToken ct)
         {
             await _context.SaveChangesAsync(ct);
         }

@@ -21,7 +21,7 @@ namespace KnowledgeAssistant.API.Controllers
         [RequestSizeLimit(11 * 1024 * 1024)]
         [RequestFormLimits(MultipartBodyLengthLimit = 11 * 1024 * 1024)]
         [Authorize]
-        public async Task<IActionResult> Upload([FromForm] IFormFile file, CancellationToken cancellationToken = default, [FromForm] int? chatSessionId = null)
+        public async Task<IActionResult> Upload([FromForm] IFormFile file, CancellationToken ct, [FromForm] int? chatSessionId = null)
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -30,7 +30,7 @@ namespace KnowledgeAssistant.API.Controllers
                 return Unauthorized();
             }
 
-            var response = await _documentService.UploadAsync(file, userId, cancellationToken, chatSessionId);
+            var response = await _documentService.UploadAsync(file, userId, ct, chatSessionId);
 
             return Ok(new ApiResult
             {
@@ -41,9 +41,9 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpGet("GetAll")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> GetDocuments(int pageNumber, int? pageSize = 10)
+        public async Task<ActionResult<ApiResult>> GetDocuments(int pageNumber, CancellationToken ct, int? pageSize = 10)
         {
-            var documents = await _documentService.GetDocumentsAsync(pageNumber, (int)pageSize!);
+            var documents = await _documentService.GetDocumentsAsync(pageNumber, (int)pageSize!, ct);
 
             return Ok(new ApiResult()
             {

@@ -13,7 +13,7 @@ namespace CallRatingService.API.Middleware
             _logger = logger;
         }
 
-        public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
+        public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken ct)
         {
             var (statusCode, title) = MapException(exception);
 
@@ -34,7 +34,7 @@ namespace CallRatingService.API.Middleware
             };
 
             httpContext.Response.StatusCode = statusCode;
-            await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+            await httpContext.Response.WriteAsJsonAsync(problemDetails, ct);
 
             return true;
         }

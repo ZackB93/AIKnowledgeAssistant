@@ -22,9 +22,9 @@ namespace KnowledgeAssistant.API.Controllers
         [HttpPost("SignIn")]
         [AllowAnonymous]
         [EnableRateLimiting("signinlimit")]
-        public async Task<ActionResult<ApiResult>> SignIn(SignIn request)
+        public async Task<ActionResult<ApiResult>> SignIn(SignIn request, CancellationToken ct)
         {
-            var SignInResponse = await _userService.SignInAsync(request);
+            var SignInResponse = await _userService.SignInAsync(request, ct);
 
             if (!SignInResponse.Success)
             {
@@ -44,9 +44,9 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpGet("GetById/{Id}")]
         [Authorize]
-        public async Task<ActionResult<ApiResult>> GetUserDetails(int id)
+        public async Task<ActionResult<ApiResult>> GetUserDetails(int id, CancellationToken ct)
         {
-            var user = await _userService.GetUserDetailsAsync(id);
+            var user = await _userService.GetUserDetailsAsync(id, ct);
 
             if (user is null)
             {
@@ -66,9 +66,9 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpGet("GetAll")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> GetUsers(int pageNumber, int? pageSize = 10)
+        public async Task<ActionResult<ApiResult>> GetUsers(int pageNumber, CancellationToken ct, int? pageSize = 10)
         {
-            var users = await _userService.GetUsersAsync(pageNumber, (int)pageSize!);
+            var users = await _userService.GetUsersAsync(pageNumber, (int)pageSize!, ct);
 
             return Ok(new ApiResult()
             {
@@ -79,9 +79,9 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpGet("Search")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> Search(string searchTerm, int pageNumber, int? pageSize = 10)
+        public async Task<ActionResult<ApiResult>> Search(string searchTerm, int pageNumber, CancellationToken ct, int? pageSize = 10)
         {
-            var searchedUsers = await _userService.SearchUsersAsync(searchTerm, pageNumber, (int)pageSize!);
+            var searchedUsers = await _userService.SearchUsersAsync(searchTerm, pageNumber, (int)pageSize!, ct);
 
             return Ok(new ApiResult()
             {
@@ -92,9 +92,9 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpPost("Create")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> Create(CreateUserRequest request)
+        public async Task<ActionResult<ApiResult>> Create(CreateUserRequest request, CancellationToken ct)
         {
-            var addedUser = await _userService.AddUserAsync(request);
+            var addedUser = await _userService.AddUserAsync(request, ct);
             var result = new ApiResult
             {
                 IsSuccessful = true,
@@ -107,9 +107,9 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpPost("Update")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> Update(UpdateUserRequest request)
+        public async Task<ActionResult<ApiResult>> Update(UpdateUserRequest request, CancellationToken ct)
         {
-            var updatedUser = await _userService.UpdateUserAsync(request);
+            var updatedUser = await _userService.UpdateUserAsync(request, ct);
 
             return Ok(new ApiResult()
             {
@@ -120,14 +120,14 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpGet("Exists")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> Exists(string email)
+        public async Task<ActionResult<ApiResult>> Exists(string email, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(email))
             {
                 return BadRequest("Email is required.");
             }
                
-            var exists = await _userService.UserExistsAsync(email);
+            var exists = await _userService.UserExistsAsync(email, ct);
 
             return Ok(new ApiResult()
             {

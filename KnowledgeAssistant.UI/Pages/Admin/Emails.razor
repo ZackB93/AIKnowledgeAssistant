@@ -166,16 +166,16 @@
         }
     }
 
-    private async Task<TableData<EmailResponse>> LoadEmails(TableState State, CancellationToken CancellationToken)
+    private async Task<TableData<EmailResponse>> LoadEmails(TableState State, CancellationToken ct)
     {
         var PageNumber = State.Page + 1;
         var PageSize = State.PageSize;
 
         var Response = string.IsNullOrWhiteSpace(SearchTerm)
             ? await HttpService.GetDataAsync($"/Email/GetAll?PageNumber={PageNumber}&PageSize={PageSize}",
-                CancellationToken: CancellationToken)
+                ct: ct)
             : await HttpService.GetDataAsync($"/Email/Search?SearchTerm={Uri.EscapeDataString(SearchTerm)}&PageNumber={PageNumber}&PageSize={PageSize}",
-                CancellationToken: CancellationToken);
+                ct: ct);
 
         if (Response.IsSuccessful && Response.Data is not null)
         {

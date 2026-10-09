@@ -1,4 +1,5 @@
 ﻿using KnowledgeAssistant.Domain.Entities.Users;
+using KnowledgeAssistant.Domain.Enums;
 
 namespace KnowledgeAssistant.Domain.Entities.Notifications
 {

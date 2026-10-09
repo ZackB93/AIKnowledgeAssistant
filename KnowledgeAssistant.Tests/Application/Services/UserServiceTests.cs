@@ -26,9 +26,9 @@ public class UserServiceTests : IDisposable
         var options = new DbContextOptionsBuilder<KnowledgeContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
+
         _context = new KnowledgeContext(options);
         _repository = new UserRepository(_context);
-
         _service = new UserService(_repository, _hasher.Object, _tokens.Object, _emails.Object, _cache.Object);
     }
 
@@ -53,12 +53,10 @@ public class UserServiceTests : IDisposable
     private void PasswordVerifiesAs(PasswordVerificationResult result) =>
         _hasher.Setup(h => h.VerifyHashedPassword(It.IsAny<User>(), "hash", It.IsAny<string>())).Returns(result);
 
-    // ---------- SignInAsync ----------
-
     [Fact]
     public async Task SignIn_UnknownEmail_Fails()
     {
-        var result = await _service.SignInAsync(new SignIn { EmailAddress = "nobody@test.com", Password = "pw" });
+        var result = await _service.SignInAsync(new SignIn { EmailAddress = "nobody@test.com", Password = "pw" }, CancellationToken.None);
 
         Assert.False(result.Success);
         Assert.Null(result.Token);
@@ -71,7 +69,7 @@ public class UserServiceTests : IDisposable
     {
         await SeedUserAsync(enabled: enabled, isDeleted: deleted);
 
-        var result = await _service.SignInAsync(new SignIn { EmailAddress = "jane@test.com", Password = "pw" });
+        var result = await _service.SignInAsync(new SignIn { EmailAddress = "jane@test.com", Password = "pw" }, CancellationToken.None);
 
         Assert.False(result.Success);
         _hasher.Verify(h => h.VerifyHashedPassword(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -83,7 +81,7 @@ public class UserServiceTests : IDisposable
         await SeedUserAsync();
         PasswordVerifiesAs(PasswordVerificationResult.Failed);
 
-        var result = await _service.SignInAsync(new SignIn { EmailAddress = "jane@test.com", Password = "bad" });
+        var result = await _service.SignInAsync(new SignIn { EmailAddress = "jane@test.com", Password = "bad" }, CancellationToken.None);
 
         Assert.False(result.Success);
         _tokens.Verify(t => t.GenerateToken(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>?>()), Times.Never);
@@ -96,14 +94,12 @@ public class UserServiceTests : IDisposable
         PasswordVerifiesAs(PasswordVerificationResult.Success);
         _tokens.Setup(t => t.GenerateToken(It.IsAny<string>(), "Jane", It.IsAny<IEnumerable<string>?>())).Returns("jwt");
 
-        var result = await _service.SignInAsync(new SignIn { EmailAddress = "jane@test.com", Password = "pw" });
+        var result = await _service.SignInAsync(new SignIn { EmailAddress = "jane@test.com", Password = "pw" }, CancellationToken.None);
 
         Assert.True(result.Success);
         Assert.Equal("jwt", result.Token);
         Assert.Equal("jane@test.com", result.User!.Email);
     }
-
-    // ---------- AddUserAsync ----------
 
     [Fact]
     public async Task AddUser_EmailAlreadyExists_ThrowsConflict()
@@ -111,7 +107,7 @@ public class UserServiceTests : IDisposable
         await SeedUserAsync("jane@test.com");
 
         await Assert.ThrowsAsync<ConflictException>(() => _service.AddUserAsync(
-            new CreateUserRequest { Email = " Jane@Test.com ", Password = "pw" }));
+            new CreateUserRequest { Email = " Jane@Test.com ", Password = "pw" }, CancellationToken.None));
     }
 
     [Fact]
@@ -129,7 +125,7 @@ public class UserServiceTests : IDisposable
             Email = " New@Test.com ",
             Password = "Passw0rd!",
             ReenterPassword = "Passw0rd!"
-        });
+        }, CancellationToken.None);
 
         Assert.Equal("new@test.com", response.Email);
 
@@ -137,6 +133,6 @@ public class UserServiceTests : IDisposable
         Assert.Equal("new@test.com", stored.EmailAddress);
         Assert.Equal("hashed", stored.PasswordHash);
 
-        _emails.Verify(e => e.QueueEmailAsync(response.Id, "new@test.com", "Welcome", It.IsAny<string>(), true), Times.Once);
+        _emails.Verify(e => e.QueueEmailAsync(response.Id, "new@test.com", "Welcome", It.IsAny<string>(), CancellationToken.None, true), Times.Once);
     }
 }

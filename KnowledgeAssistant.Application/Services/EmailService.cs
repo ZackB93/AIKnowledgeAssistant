@@ -10,12 +10,12 @@ namespace KnowledgeAssistant.Application.Services
 {
     public interface IEmailService
     {
-        Task QueueEmailAsync(int userId, string to, string subject, string body, bool isHtml = true);
-        Task SendEmailAsync(int emailId, CancellationToken cancellationToken = default);
-        Task<EmailResponse?> GetEmailByIdAsync(int emailId);
-        Task<List<EmailResponse>> GetEmailsByUserIdAsync(int userId);
-        Task<PaginatedResponse<EmailResponse>> GetEmailsAsync(int pageNumber, int pageSize);
-        Task<PaginatedResponse<EmailResponse>> SearchEmailsAsync(string searchTerm, int pageNumber, int pageSize);
+        Task QueueEmailAsync(int userId, string to, string subject, string body, CancellationToken ct, bool isHtml = true);
+        Task SendEmailAsync(int emailId, CancellationToken ct);
+        Task<EmailResponse?> GetEmailByIdAsync(int emailId, CancellationToken ct);
+        Task<List<EmailResponse>> GetEmailsByUserIdAsync(int userId, CancellationToken ct);
+        Task<PaginatedResponse<EmailResponse>> GetEmailsAsync(int pageNumber, int pageSize, CancellationToken ct);
+        Task<PaginatedResponse<EmailResponse>> SearchEmailsAsync(string searchTerm, int pageNumber, int pageSize, CancellationToken ct);
     }
 
     public class EmailService : IEmailService
@@ -37,7 +37,7 @@ namespace KnowledgeAssistant.Application.Services
             _rabbitMQEnabled = configuration.GetValue<bool>("RabbitMQ:Enabled");
         }
 
-        public async Task QueueEmailAsync(int userId, string to, string subject, string body, bool isHtml = true)
+        public async Task QueueEmailAsync(int userId, string to, string subject, string body, CancellationToken ct, bool isHtml = true)
         {
             var email = new Email
             {
@@ -51,22 +51,22 @@ namespace KnowledgeAssistant.Application.Services
                 RetryCount = 0
             };
 
-            await _emailRepository.AddAsync(email);
-            await _emailRepository.SaveChangesAsync();
+            await _emailRepository.AddAsync(email, ct);
+            await _emailRepository.SaveChangesAsync(ct);
 
             if (_rabbitMQEnabled)
             {
-                await _rabbitMQService.PublishAsync(new SendEmailMessage { EmailId = email.Id }, "emails");
+                await _rabbitMQService.PublishAsync(new SendEmailMessage { EmailId = email.Id }, "emails", ct);
             }
             else
             {
-                await SendEmailAsync(email.Id);
+                await SendEmailAsync(email.Id, ct);
             }
         }
 
-        public async Task SendEmailAsync(int emailId, CancellationToken cancellationToken = default)
+        public async Task SendEmailAsync(int emailId, CancellationToken ct)
         {
-            var email = await _emailRepository.GetByIdAsync(emailId, cancellationToken);
+            var email = await _emailRepository.GetByIdAsync(emailId, ct);
 
             if (email == null)
             {
@@ -74,7 +74,7 @@ namespace KnowledgeAssistant.Application.Services
             }
 
             email.Status = EmailStatus.Processing;
-            await _emailRepository.SaveChangesAsync(cancellationToken);
+            await _emailRepository.SaveChangesAsync(ct);
 
             try
             {
@@ -84,7 +84,7 @@ namespace KnowledgeAssistant.Application.Services
                     To = "zackzack93@hotmail.com",
                     Subject = email.Subject,
                     HtmlBody = email.Body
-                }, cancellationToken);
+                }, ct);
 
                 email.Status = EmailStatus.Sent;
                 email.SentAt = DateTime.UtcNow;
@@ -97,24 +97,24 @@ namespace KnowledgeAssistant.Application.Services
                 email.RetryCount++;
             }
 
-            await _emailRepository.SaveChangesAsync(cancellationToken);
+            await _emailRepository.SaveChangesAsync(ct);
         }
 
-        public Task<EmailResponse?> GetEmailByIdAsync(int emailId)
+        public Task<EmailResponse?> GetEmailByIdAsync(int emailId, CancellationToken ct)
         {
-            return _emailRepository.GetResponseByIdAsync(emailId);
+            return _emailRepository.GetResponseByIdAsync(emailId, ct);
         }
 
-        public Task<List<EmailResponse>> GetEmailsByUserIdAsync(int userId)
+        public Task<List<EmailResponse>> GetEmailsByUserIdAsync(int userId, CancellationToken ct)
         {
-            return _emailRepository.GetResponsesByUserIdAsync(userId);
+            return _emailRepository.GetResponsesByUserIdAsync(userId, ct);
         }
 
-        public async Task<PaginatedResponse<EmailResponse>> GetEmailsAsync(int pageNumber, int pageSize)
+        public async Task<PaginatedResponse<EmailResponse>> GetEmailsAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
             var (pageNumberValid, pageSizeValid) = NormalizePagination(pageNumber, pageSize);
 
-            var (items, totalCount) = await _emailRepository.GetPaginatedAsync(pageNumberValid, pageSizeValid);
+            var (items, totalCount) = await _emailRepository.GetPaginatedAsync(pageNumberValid, pageSizeValid, ct);
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSizeValid);
 
             return new PaginatedResponse<EmailResponse>
@@ -127,11 +127,11 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        public async Task<PaginatedResponse<EmailResponse>> SearchEmailsAsync(string searchTerm, int pageNumber, int pageSize)
+        public async Task<PaginatedResponse<EmailResponse>> SearchEmailsAsync(string searchTerm, int pageNumber, int pageSize, CancellationToken ct)
         {
             var (pageNumberValid, pageSizeValid) = NormalizePagination(pageNumber, pageSize);
 
-            var (items, totalCount) = await _emailRepository.SearchPaginatedAsync(searchTerm, pageNumberValid, pageSizeValid);
+            var (items, totalCount) = await _emailRepository.SearchPaginatedAsync(searchTerm, pageNumberValid, pageSizeValid, CancellationToken.None);
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSizeValid);
 
             return new PaginatedResponse<EmailResponse>

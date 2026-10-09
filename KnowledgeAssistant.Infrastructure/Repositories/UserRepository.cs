@@ -17,21 +17,21 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task AddAsync(User user, CancellationToken cancellationToken = default)
+        public async Task AddAsync(User user, CancellationToken ct)
         {
-            await _context.Users.AddAsync(user, cancellationToken);
+            await _context.Users.AddAsync(user, ct);
         }
 
-        public async Task<User?> GetByIdWithCredentialsAndRolesAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<User?> GetByIdWithCredentialsAndRolesAsync(int id, CancellationToken ct)
         {
             return await _context.Users
                 .Include(x => x.Credentials)
                 .Include(x => x.UserRoles)
                     .ThenInclude(x => x.Role)
-                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
         }
 
-        public async Task<SignInDetails?> GetSignInDetailsByEmailAsync(string email, CancellationToken cancellationToken = default)
+        public async Task<SignInDetails?> GetSignInDetailsByEmailAsync(string email, CancellationToken ct)
         {
             return await _context.UserCredentials
                 .AsNoTracking()
@@ -51,10 +51,10 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                         Description = ur.Role.Description
                     }).ToList()
                 })
-                .FirstOrDefaultAsync(cancellationToken);
+                .FirstOrDefaultAsync(ct);
         }
 
-        public async Task<UserResponse?> GetResponseByIdAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<UserResponse?> GetResponseByIdAsync(int id, CancellationToken ct)
         {
             return await _context.Users
                 .AsNoTracking()
@@ -84,12 +84,12 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                         }
                     }).ToList()
                 })
-                .FirstOrDefaultAsync(cancellationToken);
+                .FirstOrDefaultAsync(ct);
         }
 
-        public async Task<(List<UserResponse> Items, int TotalCount)> GetPagedResponsesAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<(List<UserResponse> Items, int TotalCount)> GetPagedResponsesAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
-            var totalCount = await _context.Users.CountAsync(cancellationToken);
+            var totalCount = await _context.Users.CountAsync(ct);
 
             var items = await _context.Users
                 .AsNoTracking()
@@ -104,12 +104,12 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     CreatedDateTime = x.CreatedDateTime,
                     Email = x.Credentials.EmailAddress
                 })
-                .ToListAsync(cancellationToken);
+                .ToListAsync(ct);
 
             return (items, totalCount);
         }
 
-        public async Task<(List<UserResponse> Items, int TotalCount)> SearchPagedResponsesAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<(List<UserResponse> Items, int TotalCount)> SearchPagedResponsesAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken ct)
         {
             var query = _context.Users.AsNoTracking().AsQueryable();
 
@@ -121,7 +121,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     x.Credentials.EmailAddress.Contains(searchTerm));
             }
 
-            var totalCount = await query.CountAsync(cancellationToken);
+            var totalCount = await query.CountAsync(ct);
 
             var items = await query
                 .OrderBy(x => x.Id)
@@ -135,28 +135,28 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     Email = x.Credentials.EmailAddress,
                     CreatedDateTime = x.CreatedDateTime
                 })
-                .ToListAsync(cancellationToken);
+                .ToListAsync(ct);
 
             return (items, totalCount);
         }
 
-        public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
+        public async Task<bool> ExistsByEmailAsync(string email, CancellationToken ct)
         {
             return await _context.UserCredentials
                 .AsNoTracking()
-                .AnyAsync(x => x.EmailAddress == email, cancellationToken);
+                .AnyAsync(x => x.EmailAddress == email, ct);
         }
 
-        public async Task UpdatePasswordHashAsync(int userId, string newHash, CancellationToken cancellationToken = default)
+        public async Task UpdatePasswordHashAsync(int userId, string newHash, CancellationToken ct)
         {
             await _context.UserCredentials
                 .Where(x => x.UserId == userId)
-                .ExecuteUpdateAsync(s => s.SetProperty(x => x.PasswordHash, newHash), cancellationToken);
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.PasswordHash, newHash), ct);
         }
 
-        public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+        public async Task SaveChangesAsync(CancellationToken ct)
         {
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync(ct);
         }
     }
 }

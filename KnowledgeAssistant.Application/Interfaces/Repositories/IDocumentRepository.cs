@@ -5,11 +5,11 @@ namespace KnowledgeAssistant.Application.Interfaces.Repositories
 {
     public interface IDocumentRepository
     {
-        Task<bool> DoesUserOwnChatSessionAsync(int chatSessionId, int userId, CancellationToken ct = default);
-        Task AddDocumentAsync(Document document, CancellationToken ct = default);
-        Task<List<DocumentChunkSearchProjection>> GetDocumentChunksForSearchAsync(List<int> documentIds, int userId, CancellationToken ct = default);
-        Task<(List<DocumentResponse> Items, int TotalCount)> GetPaginatedDocumentsAsync(int pageNumber, int pageSize, CancellationToken ct = default);
-        Task SaveChangesAsync(CancellationToken ct = default);
+        Task<bool> DoesUserOwnChatSessionAsync(int chatSessionId, int userId, CancellationToken ct);
+        Task AddDocumentAsync(Document document, CancellationToken ct);
+        Task<List<DocumentChunkSearchProjection>> GetDocumentChunksForSearchAsync(List<int> documentIds, int userId, CancellationToken ct);
+        Task<(List<DocumentResponse> Items, int TotalCount)> GetPaginatedDocumentsAsync(int pageNumber, int pageSize, CancellationToken ct);
+        Task SaveChangesAsync(CancellationToken ct);
     }
 
     public record DocumentChunkSearchProjection(

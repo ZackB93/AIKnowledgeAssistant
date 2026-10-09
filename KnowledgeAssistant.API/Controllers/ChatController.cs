@@ -1,6 +1,5 @@
 ﻿using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Chat;
-using KnowledgeAssistant.Application.DTOs.Users;
 using KnowledgeAssistant.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +20,7 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpGet("GetChatSessionsByUserId")]
         [Authorize]
-        public async Task<ActionResult<ApiResult>> GetChatSessionsByUserIdAsync()
+        public async Task<ActionResult<ApiResult>> GetChatSessionsByUserIdAsync(CancellationToken ct)
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -30,7 +29,7 @@ namespace KnowledgeAssistant.API.Controllers
                 return Unauthorized();
             }
 
-            var chatSessions = await _chatService.GetChatSessionsByUserIdAsync(userId);
+            var chatSessions = await _chatService.GetChatSessionsByUserIdAsync(userId, ct);
 
             if (!chatSessions.Any())
             {
@@ -50,9 +49,9 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpGet("GetChatMessagesBySessionId/{sessionId}")]
         [Authorize]
-        public async Task<ActionResult<ApiResult>> GetChatMessagesBySessionIdAsync(int sessionId)
+        public async Task<ActionResult<ApiResult>> GetChatMessagesBySessionIdAsync(int sessionId, CancellationToken ct)
         {
-            var chatSessionMessages = await _chatService.GetChatMessagesBySessionIdAsync(sessionId);
+            var chatSessionMessages = await _chatService.GetChatMessagesBySessionIdAsync(sessionId, ct);
 
             if (!chatSessionMessages.Any())
             {
@@ -72,7 +71,7 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpPost("AddSession")]
         [Authorize]
-        public async Task<ActionResult<ApiResult>> AddChatSession(AddChatSessionRequest request)
+        public async Task<ActionResult<ApiResult>> AddChatSession(AddChatSessionRequest request, CancellationToken ct)
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -81,7 +80,7 @@ namespace KnowledgeAssistant.API.Controllers
                 return Unauthorized();
             }
 
-            var addedChatSession = await _chatService.AddChatSessionAsync(request, userId);
+            var addedChatSession = await _chatService.AddChatSessionAsync(request, userId, ct);
             var result = new ApiResult
             {
                 IsSuccessful = true,
@@ -94,7 +93,7 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpPost("AddMessage")]
         [Authorize]
-        public async Task<ActionResult<ApiResult>> AddChatMessage(AddChatMessageRequest request)
+        public async Task<ActionResult<ApiResult>> AddChatMessage(AddChatMessageRequest request, CancellationToken ct)
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -103,7 +102,7 @@ namespace KnowledgeAssistant.API.Controllers
                 return Unauthorized();
             }
 
-            var chatResponse = await _chatService.AddChatMessageAsync(request, userId);
+            var chatResponse = await _chatService.AddChatMessageAsync(request, userId, ct);
 
             var result = new ApiResult
             {
@@ -116,7 +115,7 @@ namespace KnowledgeAssistant.API.Controllers
         }
 
         [HttpPost("RegenerateMessage")]
-        public async Task<IActionResult> RegenerateMessage(RegenerateMessageRequest request)
+        public async Task<IActionResult> RegenerateMessage(RegenerateMessageRequest request, CancellationToken ct)
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -125,7 +124,7 @@ namespace KnowledgeAssistant.API.Controllers
                 return Unauthorized();
             }
 
-            var regeneratedChatResponse = await _chatService.RegenerateChatMessageAsync(request, userId);
+            var regeneratedChatResponse = await _chatService.RegenerateChatMessageAsync(request, userId, ct);
 
             var result = new ApiResult
             {

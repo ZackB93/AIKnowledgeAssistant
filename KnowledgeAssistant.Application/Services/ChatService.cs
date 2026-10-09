@@ -10,11 +10,11 @@ namespace KnowledgeAssistant.Application.Services
 {
     public interface IChatService
     {
-        Task<ChatSessionResponse> AddChatSessionAsync(AddChatSessionRequest chatSessionRequest, int userId);
-        Task<ChatMessageResponse> AddChatMessageAsync(AddChatMessageRequest chatMessageRequest, int userId);
-        Task<ChatMessageResponse> RegenerateChatMessageAsync(RegenerateMessageRequest request, int userId);
-        Task<List<ChatSessionResponse>> GetChatSessionsByUserIdAsync(int userId);
-        Task<List<ChatMessageResponse>> GetChatMessagesBySessionIdAsync(int sessionId);
+        Task<ChatSessionResponse> AddChatSessionAsync(AddChatSessionRequest chatSessionRequest, int userId, CancellationToken ct);
+        Task<ChatMessageResponse> AddChatMessageAsync(AddChatMessageRequest chatMessageRequest, int userId, CancellationToken ct);
+        Task<ChatMessageResponse> RegenerateChatMessageAsync(RegenerateMessageRequest request, int userId, CancellationToken ct);
+        Task<List<ChatSessionResponse>> GetChatSessionsByUserIdAsync(int userId, CancellationToken ct);
+        Task<List<ChatMessageResponse>> GetChatMessagesBySessionIdAsync(int sessionId, CancellationToken ct);
     }
 
     public class ChatService : IChatService
@@ -33,7 +33,7 @@ namespace KnowledgeAssistant.Application.Services
             _documentService = documentService;
         }
 
-        public async Task<ChatSessionResponse> AddChatSessionAsync(AddChatSessionRequest chatSessionRequest, int userId)
+        public async Task<ChatSessionResponse> AddChatSessionAsync(AddChatSessionRequest chatSessionRequest, int userId, CancellationToken ct)
         {
             var now = DateTime.UtcNow;
 
@@ -45,8 +45,8 @@ namespace KnowledgeAssistant.Application.Services
                 UpdatedAt = now
             };
 
-            await _chatRepository.AddChatSessionAsync(chatSession);
-            await _chatRepository.SaveChangesAsync();
+            await _chatRepository.AddChatSessionAsync(chatSession, ct);
+            await _chatRepository.SaveChangesAsync(ct);
 
             return new ChatSessionResponse
             {
@@ -59,39 +59,43 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        public async Task<ChatMessageResponse> AddChatMessageAsync(AddChatMessageRequest chatMessageRequest, int userId)
+        public async Task<ChatMessageResponse> AddChatMessageAsync(AddChatMessageRequest chatMessageRequest, int userId, CancellationToken ct)
         {
-            var chatSession = await GetChatSessionAsync(chatMessageRequest.ChatSessionId, userId);
+            var chatSession = await GetChatSessionAsync(chatMessageRequest.ChatSessionId, userId, ct);
 
-            var userMessage = await SaveUserMessageAsync(chatSession, chatMessageRequest.Content);
+            var userMessage = await SaveUserMessageAsync(chatSession, chatMessageRequest.Content, ct);
 
             await AttachDocumentsToMessageAsync(
                 chatSession.Id,
                 userMessage.Id,
                 chatMessageRequest.DocumentIds,
-                userId);
+                userId,
+                ct);
 
             var documentSearchResults = await SearchDocumentContextAsync(
                 chatMessageRequest.Content,
                 chatMessageRequest.DocumentIds,
-                userId);
+                userId,
+                ct);
 
-            var chatMessages = await _chatRepository.GetChatMessagesBySessionIdAsync(chatSession.Id);
+            var chatMessages = await _chatRepository.GetChatMessagesBySessionIdAsync(chatSession.Id, ct);
 
             var messages = BuildChatMessages(chatMessages, documentSearchResults);
 
-            var response = await _chatClient.GetResponseAsync(messages);
+            var response = await _chatClient.GetResponseAsync(messages, cancellationToken: ct);
 
             var assistantMessage = await SaveAssistantMessageAsync(
                 chatSession,
-                response.Text);
+                response.Text,
+                ct);
 
             var newTitle = await GenerateTitleIfRequiredAsync(
                 chatSession,
                 chatMessages,
-                messages);
+                messages,
+                ct);
 
-            await _chatRepository.SaveChangesAsync();
+            await _chatRepository.SaveChangesAsync(ct);
 
             return new ChatMessageResponse
             {
@@ -104,14 +108,14 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        public async Task<List<ChatSessionResponse>> GetChatSessionsByUserIdAsync(int userId)
+        public async Task<List<ChatSessionResponse>> GetChatSessionsByUserIdAsync(int userId, CancellationToken ct)
         {
-            return await _chatRepository.GetChatSessionsByUserIdAsync(userId);
+            return await _chatRepository.GetChatSessionsByUserIdAsync(userId, ct);  
         }
 
-        public async Task<List<ChatMessageResponse>> GetChatMessagesBySessionIdAsync(int sessionId)
+        public async Task<List<ChatMessageResponse>> GetChatMessagesBySessionIdAsync(int sessionId, CancellationToken ct)
         {
-            var messages = await _chatRepository.GetChatMessagesBySessionIdAsync(sessionId);
+            var messages = await _chatRepository.GetChatMessagesBySessionIdAsync(sessionId, ct);
 
             return messages.Select(x => new ChatMessageResponse
             {
@@ -123,16 +127,16 @@ namespace KnowledgeAssistant.Application.Services
             }).ToList();
         }
 
-        public async Task<ChatMessageResponse> RegenerateChatMessageAsync(RegenerateMessageRequest request, int userId)
+        public async Task<ChatMessageResponse> RegenerateChatMessageAsync(RegenerateMessageRequest request, int userId, CancellationToken ct)
         {
-            var chatSession = await _chatRepository.GetChatSessionByIdAndUserIdAsync(request.ChatSessionId, userId);
+            var chatSession = await _chatRepository.GetChatSessionByIdAndUserIdAsync(request.ChatSessionId, userId, ct);
 
             if (chatSession == null)
             {
                 throw new InvalidOperationException("Chat session was not found.");
             }
 
-            var chatMessages = await _chatRepository.GetChatMessagesBySessionIdAsync(chatSession.Id);
+            var chatMessages = await _chatRepository.GetChatMessagesBySessionIdAsync(chatSession.Id, ct);
 
             var target = chatMessages.FirstOrDefault(x => x.Id == request.ChatMessageId);
 
@@ -168,12 +172,12 @@ namespace KnowledgeAssistant.Application.Services
                 })
                 .ToList();
 
-            var response = await _chatClient.GetResponseAsync(history);
+            var response = await _chatClient.GetResponseAsync(history, cancellationToken: ct);
 
             target.Content = response.Text;
             chatSession.UpdatedAt = DateTime.UtcNow;
 
-            await _chatRepository.SaveChangesAsync();
+            await _chatRepository.SaveChangesAsync(ct);
 
             return new ChatMessageResponse
             {
@@ -185,9 +189,9 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        private async Task<ChatSession> GetChatSessionAsync(int chatSessionId, int userId)
+        private async Task<ChatSession> GetChatSessionAsync(int chatSessionId, int userId, CancellationToken ct)
         {
-            var chatSession = await _chatRepository.GetChatSessionByIdAndUserIdAsync(chatSessionId, userId);
+            var chatSession = await _chatRepository.GetChatSessionByIdAndUserIdAsync(chatSessionId, userId, ct);
 
             if (chatSession == null)
             {
@@ -197,7 +201,7 @@ namespace KnowledgeAssistant.Application.Services
             return chatSession;
         }
 
-        private async Task<ChatMessage> SaveUserMessageAsync(ChatSession chatSession, string content)
+        private async Task<ChatMessage> SaveUserMessageAsync(ChatSession chatSession, string content, CancellationToken ct)
         {
             var now = DateTime.UtcNow;
 
@@ -209,31 +213,31 @@ namespace KnowledgeAssistant.Application.Services
                 CreatedAt = now
             };
 
-            await _chatRepository.AddChatMessageAsync(userMessage);
+            await _chatRepository.AddChatMessageAsync(userMessage, ct);
 
             chatSession.UpdatedAt = now;
 
             return userMessage;
         }
 
-        private async Task AttachDocumentsToMessageAsync(int chatSessionId, long messageId, List<int> documentIds, int userId)
+        private async Task AttachDocumentsToMessageAsync(int chatSessionId, long messageId, List<int> documentIds, int userId, CancellationToken ct)
         {
             if (!documentIds.Any())
             {
                 return;
             }
 
-            await _chatRepository.AttachDocumentsToMessageAsync(chatSessionId, messageId, documentIds, userId);
+            await _chatRepository.AttachDocumentsToMessageAsync(chatSessionId, messageId, documentIds, userId, ct);
         }
 
-        private async Task<List<DocumentSearchResult>> SearchDocumentContextAsync(string query, List<int> documentIds, int userId)
+        private async Task<List<DocumentSearchResult>> SearchDocumentContextAsync(string query, List<int> documentIds, int userId, CancellationToken ct)
         {
             if (!documentIds.Any())
             {
                 return new();
             }
 
-            return await _documentService.SearchAsync(query, documentIds, userId);
+            return await _documentService.SearchAsync(query, documentIds, userId, ct);
         }
 
         private static List<AIChatMessage> BuildChatMessages(List<ChatMessage> chatMessages, List<DocumentSearchResult> documentSearchResults)
@@ -290,7 +294,7 @@ namespace KnowledgeAssistant.Application.Services
             return messages;
         }
 
-        private async Task<ChatMessage> SaveAssistantMessageAsync(ChatSession chatSession, string content)
+        private async Task<ChatMessage> SaveAssistantMessageAsync(ChatSession chatSession, string content, CancellationToken ct)
         {
             var assistantMessage = new ChatMessage
             {
@@ -300,14 +304,14 @@ namespace KnowledgeAssistant.Application.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _chatRepository.AddChatMessageAsync(assistantMessage);
+            await _chatRepository.AddChatMessageAsync(assistantMessage, ct);
 
             chatSession.UpdatedAt = assistantMessage.CreatedAt;
 
             return assistantMessage;
         }
 
-        private async Task<string?> GenerateTitleIfRequiredAsync(ChatSession chatSession, List<ChatMessage> chatMessages, List<AIChatMessage> messages)
+        private async Task<string?> GenerateTitleIfRequiredAsync(ChatSession chatSession, List<ChatMessage> chatMessages, List<AIChatMessage> messages, CancellationToken ct)
         {
             var userMessageCount = chatMessages.Count(x => x.Role == "user");
 
@@ -316,14 +320,14 @@ namespace KnowledgeAssistant.Application.Services
                 return null;
             }
 
-            var title = await GenerateChatTitleAsync(messages);
+            var title = await GenerateChatTitleAsync(messages, ct);
 
             chatSession.Title = title;
 
             return title;
         }
 
-        private async Task<string> GenerateChatTitleAsync(List<AIChatMessage> messages)
+        private async Task<string> GenerateChatTitleAsync(List<AIChatMessage> messages, CancellationToken ct)
         {
             var titlePrompt = new AIChatMessage(ChatRole.System,
             """
@@ -345,7 +349,7 @@ namespace KnowledgeAssistant.Application.Services
 
             titleMessages.AddRange(messages);
 
-            var response = await _chatClient.GetResponseAsync(titleMessages);
+            var response = await _chatClient.GetResponseAsync(titleMessages, cancellationToken: ct);
 
             return response.Text.Trim();
         }

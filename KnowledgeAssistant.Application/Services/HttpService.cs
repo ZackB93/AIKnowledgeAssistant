@@ -12,9 +12,9 @@ namespace KnowledgeAssistant.Application.Services
 {
     public interface IHttpService
     {
-        Task<ApiResult> GetDataAsync(string Endpoint, Cache? CacheData = null, CancellationToken CancellationToken = default);
-        Task<ApiResult> PostDataAsync<TRequest>(string Endpoint, TRequest Payload, CancellationToken CancellationToken = default);
-        Task<ApiResult> PostFileAsync(string url, MultipartFormDataContent content, CancellationToken CancellationToken = default);
+        Task<ApiResult> GetDataAsync(string Endpoint, Cache? CacheData = null, CancellationToken ct = default);
+        Task<ApiResult> PostDataAsync<TRequest>(string Endpoint, TRequest Payload, CancellationToken ct = default);
+        Task<ApiResult> PostFileAsync(string url, MultipartFormDataContent content, CancellationToken ct = default);
     }
 
     public class HttpService : IHttpService
@@ -32,7 +32,7 @@ namespace KnowledgeAssistant.Application.Services
             _navigationManager = navigationManager;
         }
 
-        public async Task<ApiResult> GetDataAsync(string Endpoint, Cache? CacheData = null, CancellationToken CancellationToken = default)
+        public async Task<ApiResult> GetDataAsync(string Endpoint, Cache? CacheData = null, CancellationToken ct = default)
         {
             // Check if data is in cache first
             if (CacheData?.CacheKey is not null)
@@ -59,9 +59,9 @@ namespace KnowledgeAssistant.Application.Services
                     Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
                 }
 
-                var Response = await Client.GetAsync(Endpoint, CancellationToken);
+                var Response = await Client.GetAsync(Endpoint, ct);
                 var Result = await Response.Content.ReadFromJsonAsync<ApiResult>(
-                    new JsonSerializerOptions(JsonSerializerDefaults.Web), cancellationToken: CancellationToken);
+                    new JsonSerializerOptions(JsonSerializerDefaults.Web), cancellationToken: ct);
 
                 if (Result is null)
                 {
@@ -75,7 +75,7 @@ namespace KnowledgeAssistant.Application.Services
 
                 return Result;
             }
-            catch (OperationCanceledException) when (CancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 return new ApiResult { IsSuccessful = false, Message = "Request cancelled." };
             }
@@ -89,7 +89,7 @@ namespace KnowledgeAssistant.Application.Services
             }
         }
 
-        public async Task<ApiResult> PostDataAsync<TRequest>(string Endpoint, TRequest Payload, CancellationToken CancellationToken = default)
+        public async Task<ApiResult> PostDataAsync<TRequest>(string Endpoint, TRequest Payload, CancellationToken ct = default)
         {
             try
             {
@@ -106,13 +106,13 @@ namespace KnowledgeAssistant.Application.Services
                     Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
                 }
 
-                var Response = await Client.PostAsJsonAsync(Endpoint, Payload, CancellationToken);
+                var Response = await Client.PostAsJsonAsync(Endpoint, Payload, ct);
                 var Result = await Response.Content.ReadFromJsonAsync<ApiResult>(
-                    new JsonSerializerOptions(JsonSerializerDefaults.Web), cancellationToken: CancellationToken);
+                    new JsonSerializerOptions(JsonSerializerDefaults.Web), cancellationToken: ct);
 
                 return Result ?? new ApiResult { IsSuccessful = false, Message = "The API returned an empty response." };
             }
-            catch (OperationCanceledException) when (CancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 return new ApiResult { IsSuccessful = false, Message = "Request cancelled." };
             }
@@ -126,7 +126,7 @@ namespace KnowledgeAssistant.Application.Services
             }
         }
 
-        public async Task<ApiResult> PostFileAsync(string Endpoint, MultipartFormDataContent Content, CancellationToken CancellationToken = default)
+        public async Task<ApiResult> PostFileAsync(string Endpoint, MultipartFormDataContent Content, CancellationToken ct = default)
         {
             try
             {
@@ -143,14 +143,14 @@ namespace KnowledgeAssistant.Application.Services
                     Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
                 }
 
-                var Response = await Client.PostAsync(Endpoint, Content, CancellationToken);
+                var Response = await Client.PostAsync(Endpoint, Content, ct);
 
                 var Result = await Response.Content.ReadFromJsonAsync<ApiResult>(
-                    new JsonSerializerOptions(JsonSerializerDefaults.Web), cancellationToken: CancellationToken);
+                    new JsonSerializerOptions(JsonSerializerDefaults.Web), cancellationToken: ct);
 
                 return Result ?? new ApiResult { IsSuccessful = false, Message = "The API returned an empty response." };
             }
-            catch (OperationCanceledException) when (CancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 return new ApiResult { IsSuccessful = false, Message = "Request cancelled." };
             }

@@ -19,9 +19,9 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpPost("Create")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> CreateRole(CreateRoleRequest request)
+        public async Task<ActionResult<ApiResult>> CreateRole(CreateRoleRequest request, CancellationToken ct)
         {
-            var role = await _roleService.CreateRoleAsync(request);
+            var role = await _roleService.CreateRoleAsync(request, ct);
 
             return Ok(new ApiResult()
             {
@@ -32,9 +32,9 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpPost("Update")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> UpdateRole(UpdateRoleRequest request)
+        public async Task<ActionResult<ApiResult>> UpdateRole(UpdateRoleRequest request, CancellationToken ct)
         {
-            var role = await _roleService.GetRoleByIdAsync(request.Id);
+            var role = await _roleService.GetRoleByIdAsync(request.Id, ct);
 
             if (role is null)
             {
@@ -45,7 +45,7 @@ namespace KnowledgeAssistant.API.Controllers
                 });
             }
 
-            var updatedRole = await _roleService.UpdateRoleAsync(request);
+            var updatedRole = await _roleService.UpdateRoleAsync(request, ct );
 
             return Ok(new ApiResult()
             {
@@ -56,9 +56,9 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpGet("GetAll")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> GetRoles()
+        public async Task<ActionResult<ApiResult>> GetRoles(CancellationToken ct)
         {
-            var roles = await _roleService.GetRolesAsync();
+            var roles = await _roleService.GetRolesAsync(ct);
 
             return Ok(new ApiResult()
             {
@@ -69,9 +69,9 @@ namespace KnowledgeAssistant.API.Controllers
 
         [HttpGet("GetById/{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResult>> GetRoleById(int id)
+        public async Task<ActionResult<ApiResult>> GetRoleById(int id, CancellationToken ct)
         {
-            var role = await _roleService.GetRoleByIdAsync(id);
+            var role = await _roleService.GetRoleByIdAsync(id, ct);
 
             if (role is null)
             {

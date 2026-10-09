@@ -13,9 +13,9 @@ namespace KnowledgeAssistant.Application.Services
 {
     public interface IDocumentService
     {
-        Task<DocumentResponse> UploadAsync(IFormFile file, int userId, CancellationToken cancellationToken = default, int? chatSessionId = null);
-        Task<List<DocumentSearchResult>> SearchAsync(string query, List<int> documentIds, int userId, CancellationToken cancellationToken = default);
-        Task<PaginatedResponse<DocumentResponse>> GetDocumentsAsync(int pageNumber, int pageSize);
+        Task<DocumentResponse> UploadAsync(IFormFile file, int userId, CancellationToken ct, int? chatSessionId = null);
+        Task<List<DocumentSearchResult>> SearchAsync(string query, List<int> documentIds, int userId, CancellationToken ct);
+        Task<PaginatedResponse<DocumentResponse>> GetDocumentsAsync(int pageNumber, int pageSize, CancellationToken ct);
     }
 
     public class DocumentService : IDocumentService
@@ -35,14 +35,14 @@ namespace KnowledgeAssistant.Application.Services
             _embeddings = embeddings;
         }
 
-        public async Task<DocumentResponse> UploadAsync(IFormFile file, int userId, CancellationToken cancellationToken = default, int? chatSessionId = null)
+        public async Task<DocumentResponse> UploadAsync(IFormFile file, int userId, CancellationToken ct, int? chatSessionId = null)
         {
-            await ValidateUploadAsync(file, chatSessionId, userId, cancellationToken);
+            await ValidateUploadAsync(file, chatSessionId, userId, ct);
 
             var extension = Path.GetExtension(file.FileName);
 
             // Extract, chunk, embed.
-            var text = await ExtractTextAsync(file, extension, cancellationToken);
+            var text = await ExtractTextAsync(file, extension, ct);
 
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -56,7 +56,7 @@ namespace KnowledgeAssistant.Application.Services
             for (var i = 0; i < chunks.Count; i += EmbeddingBatchSize)
             {
                 var batch = chunks.Skip(i).Take(EmbeddingBatchSize).ToList();
-                var generated = await _embeddings.GenerateAsync(batch, cancellationToken: cancellationToken);
+                var generated = await _embeddings.GenerateAsync(batch, cancellationToken: ct);
 
                 embeddings.AddRange(generated);
             }
@@ -85,8 +85,8 @@ namespace KnowledgeAssistant.Application.Services
                 }).ToList()
             };
 
-            await _documentRepository.AddDocumentAsync(document, cancellationToken);
-            await _documentRepository.SaveChangesAsync(cancellationToken);
+            await _documentRepository.AddDocumentAsync(document, ct);
+            await _documentRepository.SaveChangesAsync(ct);
 
             return new DocumentResponse
             {
@@ -101,7 +101,7 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        public async Task<List<DocumentSearchResult>> SearchAsync(string query, List<int> documentIds, int userId, CancellationToken cancellationToken = default)
+        public async Task<List<DocumentSearchResult>> SearchAsync(string query, List<int> documentIds, int userId, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(query) || !documentIds.Any())
             {
@@ -109,13 +109,13 @@ namespace KnowledgeAssistant.Application.Services
             }
 
             // Generate an embedding for the user's question.
-            var queryEmbedding = await _embeddings.GenerateAsync(query, cancellationToken: cancellationToken);
+            var queryEmbedding = await _embeddings.GenerateAsync(query, cancellationToken: ct);
 
             // Keep as ReadOnlyMemory<float> (or float[] array) across await boundaries.
             ReadOnlyMemory<float> queryMemory = queryEmbedding.Vector;
 
             // Only retrieve chunks belonging to the user's selected documents.
-            var chunks = await _documentRepository.GetDocumentChunksForSearchAsync(documentIds, userId, cancellationToken);
+            var chunks = await _documentRepository.GetDocumentChunksForSearchAsync(documentIds, userId, ct);
 
             var results = new List<DocumentSearchResult>();
 
@@ -157,7 +157,7 @@ namespace KnowledgeAssistant.Application.Services
                 .ToList();
         }
 
-        public async Task<PaginatedResponse<DocumentResponse>> GetDocumentsAsync(int pageNumber, int pageSize)
+        public async Task<PaginatedResponse<DocumentResponse>> GetDocumentsAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
             var maxPageSize = 50;
 
@@ -165,7 +165,7 @@ namespace KnowledgeAssistant.Application.Services
             if (pageSize < 1) pageSize = 10;
             if (pageSize > maxPageSize) pageSize = maxPageSize;
 
-            var (documents, totalCount) = await _documentRepository.GetPaginatedDocumentsAsync(pageNumber, pageSize);
+            var (documents, totalCount) = await _documentRepository.GetPaginatedDocumentsAsync(pageNumber, pageSize, ct);
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
             return new PaginatedResponse<DocumentResponse>
@@ -178,7 +178,7 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        private async Task ValidateUploadAsync(IFormFile file, int? chatSessionId, int userId, CancellationToken cancellationToken)
+        private async Task ValidateUploadAsync(IFormFile file, int? chatSessionId, int userId, CancellationToken ct)
         {
             if (file is null || file.Length == 0)
             {
@@ -199,7 +199,7 @@ namespace KnowledgeAssistant.Application.Services
 
             if (chatSessionId is not null)
             {
-                var ownsSession = await _documentRepository.DoesUserOwnChatSessionAsync(chatSessionId.Value, userId, cancellationToken);
+                var ownsSession = await _documentRepository.DoesUserOwnChatSessionAsync(chatSessionId.Value, userId, ct);
 
                 if (!ownsSession)
                 {
@@ -229,10 +229,10 @@ namespace KnowledgeAssistant.Application.Services
             return dot / (Math.Sqrt(magnitudeA) * Math.Sqrt(magnitudeB));
         }
 
-        private static async Task<string> ExtractTextAsync(IFormFile file, string extension, CancellationToken cancellationToken)
+        private static async Task<string> ExtractTextAsync(IFormFile file, string extension, CancellationToken ct)
         {
             await using var memory = new MemoryStream();
-            await file.CopyToAsync(memory, cancellationToken);
+            await file.CopyToAsync(memory, ct);
 
             memory.Position = 0;
 
@@ -243,7 +243,7 @@ namespace KnowledgeAssistant.Application.Services
                 case ".txt":
                 case ".md":
                     using (var reader = new StreamReader(memory, leaveOpen: true))
-                        text = await reader.ReadToEndAsync(cancellationToken);
+                        text = await reader.ReadToEndAsync(ct);
                     break;
 
                 case ".pdf":

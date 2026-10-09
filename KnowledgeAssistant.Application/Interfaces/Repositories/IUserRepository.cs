@@ -6,14 +6,14 @@ namespace KnowledgeAssistant.Application.Interfaces.Repositories
 {
     public interface IUserRepository
     {
-        Task AddAsync(User user, CancellationToken cancellationToken = default);
-        Task<User?> GetByIdWithCredentialsAndRolesAsync(int id, CancellationToken cancellationToken = default);
-        Task<SignInDetails?> GetSignInDetailsByEmailAsync(string email, CancellationToken cancellationToken = default);
-        Task<UserResponse?> GetResponseByIdAsync(int id, CancellationToken cancellationToken = default);
-        Task<(List<UserResponse> Items, int TotalCount)> GetPagedResponsesAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
-        Task<(List<UserResponse> Items, int TotalCount)> SearchPagedResponsesAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
-        Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);
-        Task UpdatePasswordHashAsync(int userId, string newHash, CancellationToken cancellationToken = default);
-        Task SaveChangesAsync(CancellationToken cancellationToken = default);
+        Task AddAsync(User user, CancellationToken ct);
+        Task<User?> GetByIdWithCredentialsAndRolesAsync(int id, CancellationToken ct);
+        Task<SignInDetails?> GetSignInDetailsByEmailAsync(string email, CancellationToken ct);
+        Task<UserResponse?> GetResponseByIdAsync(int id, CancellationToken ct);
+        Task<(List<UserResponse> Items, int TotalCount)> GetPagedResponsesAsync(int pageNumber, int pageSize, CancellationToken ct);
+        Task<(List<UserResponse> Items, int TotalCount)> SearchPagedResponsesAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken ct);
+        Task<bool> ExistsByEmailAsync(string email, CancellationToken ct);
+        Task UpdatePasswordHashAsync(int userId, string newHash, CancellationToken ct);
+        Task SaveChangesAsync(CancellationToken ct);
     }
 }

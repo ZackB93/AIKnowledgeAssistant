@@ -15,18 +15,18 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task AddAsync(Role role, CancellationToken cancellationToken = default)
+        public async Task AddAsync(Role role, CancellationToken ct)
         {
-            await _context.Roles.AddAsync(role, cancellationToken);
+            await _context.Roles.AddAsync(role, ct);
         }
 
-        public async Task<Role?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<Role?> GetByIdAsync(int id, CancellationToken ct)
         {
             return await _context.Roles
-                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
         }
 
-        public async Task<RoleResponse?> GetResponseByIdAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<RoleResponse?> GetResponseByIdAsync(int id, CancellationToken ct)
         {
             return await _context.Roles
                 .AsNoTracking()
@@ -38,10 +38,10 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     Description = x.Description,
                     CreatedDateTime = x.CreatedDateTime
                 })
-                .FirstOrDefaultAsync(cancellationToken);
+                .FirstOrDefaultAsync(ct);
         }
 
-        public async Task<List<RoleResponse>> GetAllResponsesAsync(CancellationToken cancellationToken = default)
+        public async Task<List<RoleResponse>> GetAllResponsesAsync(CancellationToken ct)
         {
             return await _context.Roles
                 .AsNoTracking()
@@ -53,12 +53,12 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     Description = x.Description,
                     CreatedDateTime = x.CreatedDateTime
                 })
-                .ToListAsync(cancellationToken);
+                .ToListAsync(ct);
         }
 
-        public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+        public async Task SaveChangesAsync(CancellationToken ct)
         {
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync(ct);
         }
     }
 }

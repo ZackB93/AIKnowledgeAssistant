@@ -88,7 +88,7 @@ builder.Services.AddRateLimiter(options =>
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-    options.OnRejected = async (context, cancellationToken) =>
+    options.OnRejected = async (context, ct) =>
     {
         context.HttpContext.Response.ContentType = "application/json";
 
@@ -98,13 +98,13 @@ builder.Services.AddRateLimiter(options =>
                 error = "Too many requests.",
                 message = "Login attempts exceeded, please try again later."
             },
-            cancellationToken);
+            ct);
     };
 });
 
 builder.Services.AddOpenApi(options =>
 {
-    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    options.AddDocumentTransformer((document, context, ct) =>
     {
         document.Components ??= new();
         document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();

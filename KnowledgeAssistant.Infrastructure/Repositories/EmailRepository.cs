@@ -15,18 +15,18 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task AddAsync(Email email, CancellationToken cancellationToken = default)
+        public async Task AddAsync(Email email, CancellationToken ct)
         {
-            await _context.Emails.AddAsync(email, cancellationToken);
+            await _context.Emails.AddAsync(email, ct);
         }
 
-        public async Task<Email?> GetByIdAsync(int emailId, CancellationToken cancellationToken = default)
+        public async Task<Email?> GetByIdAsync(int emailId, CancellationToken ct = default)
         {
             return await _context.Emails
-                .FirstOrDefaultAsync(x => x.Id == emailId, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == emailId, ct);
         }
 
-        public async Task<EmailResponse?> GetResponseByIdAsync(int emailId, CancellationToken cancellationToken = default)
+        public async Task<EmailResponse?> GetResponseByIdAsync(int emailId, CancellationToken ct)
         {
             return await _context.Emails
                 .AsNoTracking()
@@ -47,10 +47,10 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     ErrorMessage = x.ErrorMessage,
                     RetryCount = x.RetryCount
                 })
-                .FirstOrDefaultAsync(cancellationToken);
+                .FirstOrDefaultAsync(ct);
         }
 
-        public async Task<List<EmailResponse>> GetResponsesByUserIdAsync(int userId, CancellationToken cancellationToken = default)
+        public async Task<List<EmailResponse>> GetResponsesByUserIdAsync(int userId, CancellationToken ct)
         {
             return await _context.Emails
                 .AsNoTracking()
@@ -69,12 +69,12 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     FailedAt = x.FailedAt,
                     ErrorMessage = x.ErrorMessage,
                 })
-                .ToListAsync(cancellationToken);
+                .ToListAsync(ct);
         }
 
-        public async Task<(List<EmailResponse> Items, int TotalCount)> GetPaginatedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<(List<EmailResponse> Items, int TotalCount)> GetPaginatedAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
-            var totalCount = await _context.Emails.CountAsync(cancellationToken);
+            var totalCount = await _context.Emails.CountAsync(ct);
 
             var items = await _context.Emails
                 .AsNoTracking()
@@ -95,12 +95,12 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     FailedAt = x.FailedAt,
                     ErrorMessage = x.ErrorMessage
                 })
-                .ToListAsync(cancellationToken);
+                .ToListAsync(ct);
 
             return (items, totalCount);
         }
 
-        public async Task<(List<EmailResponse> Items, int TotalCount)> SearchPaginatedAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<(List<EmailResponse> Items, int TotalCount)> SearchPaginatedAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken ct)
         {
             var query = _context.Emails.AsNoTracking().AsQueryable();
 
@@ -112,7 +112,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     x.User.LastName.Contains(searchTerm));
             }
 
-            var totalCount = await query.CountAsync(cancellationToken);
+            var totalCount = await query.CountAsync(ct);
 
             var items = await query
                 .OrderBy(x => x.Id)
@@ -131,14 +131,14 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     SentAt = x.SentAt,
                     FailedAt = x.FailedAt,
                 })
-                .ToListAsync(cancellationToken);
+                .ToListAsync(ct);
 
             return (items, totalCount);
         }
 
-        public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+        public async Task SaveChangesAsync(CancellationToken ct)
         {
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync(ct);
         }
     }
 }

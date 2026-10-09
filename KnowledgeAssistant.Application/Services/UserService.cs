@@ -10,13 +10,13 @@ namespace KnowledgeAssistant.Application.Services
 {
     public interface IUserService
     {
-        Task<SignInResponse> SignInAsync(SignIn request, CancellationToken cancellationToken = default);
-        Task<PaginatedResponse<UserResponse>> SearchUsersAsync(string searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
-        Task<UserResponse> AddUserAsync(CreateUserRequest request, CancellationToken cancellationToken = default);
-        Task<UserResponse> UpdateUserAsync(UpdateUserRequest request, CancellationToken cancellationToken = default);
-        Task<PaginatedResponse<UserResponse>> GetUsersAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
-        Task<UserResponse?> GetUserDetailsAsync(int userId, CancellationToken cancellationToken = default);
-        Task<UserExistsResponse> UserExistsAsync(string email, CancellationToken cancellationToken = default);
+        Task<SignInResponse> SignInAsync(SignIn request, CancellationToken ct);
+        Task<PaginatedResponse<UserResponse>> SearchUsersAsync(string searchTerm, int pageNumber, int pageSize, CancellationToken ct);
+        Task<UserResponse> AddUserAsync(CreateUserRequest request, CancellationToken ct);
+        Task<UserResponse> UpdateUserAsync(UpdateUserRequest request, CancellationToken ct);
+        Task<PaginatedResponse<UserResponse>> GetUsersAsync(int pageNumber, int pageSize, CancellationToken ct);
+        Task<UserResponse?> GetUserDetailsAsync(int userId, CancellationToken ct);
+        Task<UserExistsResponse> UserExistsAsync(string email, CancellationToken ct);
     }
 
     public class UserService : IUserService
@@ -43,9 +43,9 @@ namespace KnowledgeAssistant.Application.Services
             _cacheService = cacheService;
         }
 
-        public async Task<SignInResponse> SignInAsync(SignIn request, CancellationToken cancellationToken = default)
+        public async Task<SignInResponse> SignInAsync(SignIn request, CancellationToken ct)
         {
-            var credentials = await _userRepository.GetSignInDetailsByEmailAsync(request.EmailAddress, cancellationToken);
+            var credentials = await _userRepository.GetSignInDetailsByEmailAsync(request.EmailAddress, ct);
 
             if (credentials is null)
             {
@@ -84,7 +84,7 @@ namespace KnowledgeAssistant.Application.Services
             if (passwordResult == PasswordVerificationResult.SuccessRehashNeeded)
             {
                 var newHash = _passwordHasher.HashPassword(dummyUser, request.Password);
-                await _userRepository.UpdatePasswordHashAsync(credentials.UserId, newHash, cancellationToken);
+                await _userRepository.UpdatePasswordHashAsync(credentials.UserId, newHash, ct);
             }
 
             var token = _tokenService.GenerateToken(
@@ -110,12 +110,12 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        public async Task<PaginatedResponse<UserResponse>> GetUsersAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<PaginatedResponse<UserResponse>> GetUsersAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
             var normalizedPageNumber = pageNumber < 1 ? 1 : pageNumber;
             var normalizedPageSize = Math.Clamp(pageSize < 1 ? 10 : pageSize, 1, 50);
 
-            var (items, totalCount) = await _userRepository.GetPagedResponsesAsync(normalizedPageNumber, normalizedPageSize, cancellationToken);
+            var (items, totalCount) = await _userRepository.GetPagedResponsesAsync(normalizedPageNumber, normalizedPageSize, ct);
 
             return new PaginatedResponse<UserResponse>
             {
@@ -127,12 +127,12 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        public async Task<PaginatedResponse<UserResponse>> SearchUsersAsync(string searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+        public async Task<PaginatedResponse<UserResponse>> SearchUsersAsync(string searchTerm, int pageNumber, int pageSize, CancellationToken ct)
         {
             var normalizedPageNumber = pageNumber < 1 ? 1 : pageNumber;
             var normalizedPageSize = Math.Clamp(pageSize < 1 ? 10 : pageSize, 1, 50);
 
-            var (items, totalCount) = await _userRepository.SearchPagedResponsesAsync(searchTerm, normalizedPageNumber, normalizedPageSize, cancellationToken);
+            var (items, totalCount) = await _userRepository.SearchPagedResponsesAsync(searchTerm, normalizedPageNumber, normalizedPageSize, ct);
 
             return new PaginatedResponse<UserResponse>
             {
@@ -144,13 +144,13 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        public async Task<UserResponse?> GetUserDetailsAsync(int userId, CancellationToken cancellationToken = default)
+        public async Task<UserResponse?> GetUserDetailsAsync(int userId, CancellationToken ct)
         {
             var cacheKey = GetUserCacheKey(userId);
             var cachedUser = _cacheService.GetFromCache<UserResponse>(cacheKey);
             if (cachedUser is not null) return cachedUser;
 
-            var user = await _userRepository.GetResponseByIdAsync(userId, cancellationToken);
+            var user = await _userRepository.GetResponseByIdAsync(userId, ct);
 
             if (user is not null)
             {
@@ -160,11 +160,11 @@ namespace KnowledgeAssistant.Application.Services
             return user;
         }
 
-        public async Task<UserResponse> AddUserAsync(CreateUserRequest request, CancellationToken cancellationToken = default)
+        public async Task<UserResponse> AddUserAsync(CreateUserRequest request, CancellationToken ct)
         {
             var normalizedEmail = request.Email.Trim().ToLowerInvariant();
 
-            if (await _userRepository.ExistsByEmailAsync(normalizedEmail, cancellationToken))
+            if (await _userRepository.ExistsByEmailAsync(normalizedEmail, ct))
             {
                 throw new ConflictException($"User with Email {request.Email} already exists.");
             }
@@ -195,14 +195,15 @@ namespace KnowledgeAssistant.Application.Services
                 User = newUser
             }).ToList();
 
-            await _userRepository.AddAsync(newUser, cancellationToken);
-            await _userRepository.SaveChangesAsync(cancellationToken);
+            await _userRepository.AddAsync(newUser, ct);
+            await _userRepository.SaveChangesAsync(ct);
 
             await _emailService.QueueEmailAsync(
                 newUser.Id,
                 newUser.Credentials.EmailAddress,
                 "Welcome",
-                "Thank you for registering with Knowledge Assistant, your account has now been created!"
+                "Thank you for registering with Knowledge Assistant, your account has now been created!",
+                ct: ct
             );
 
             return new UserResponse
@@ -222,9 +223,9 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        public async Task<UserResponse> UpdateUserAsync(UpdateUserRequest request, CancellationToken cancellationToken = default)
+        public async Task<UserResponse> UpdateUserAsync(UpdateUserRequest request, CancellationToken ct)
         {
-            var user = await _userRepository.GetByIdWithCredentialsAndRolesAsync(request.Id, cancellationToken);
+            var user = await _userRepository.GetByIdWithCredentialsAndRolesAsync(request.Id, ct);
 
             if (user is null)
             {
@@ -247,7 +248,7 @@ namespace KnowledgeAssistant.Application.Services
                 RoleId = roleId
             }).ToList();
 
-            await _userRepository.SaveChangesAsync(cancellationToken);
+            await _userRepository.SaveChangesAsync(ct);
 
             _cacheService.RemoveFromCache(GetUserCacheKey(user.Id));
 
@@ -278,10 +279,10 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        public async Task<UserExistsResponse> UserExistsAsync(string email, CancellationToken cancellationToken = default)
+        public async Task<UserExistsResponse> UserExistsAsync(string email, CancellationToken ct)
         {
             var normalizedEmail = email.Trim().ToLowerInvariant();
-            var exists = await _userRepository.ExistsByEmailAsync(normalizedEmail, cancellationToken);
+            var exists = await _userRepository.ExistsByEmailAsync(normalizedEmail, ct);
 
             return new UserExistsResponse { Exists = exists };
         }

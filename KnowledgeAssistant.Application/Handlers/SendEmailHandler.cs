@@ -4,7 +4,7 @@ using KnowledgeAssistant.Application.Services;
 namespace KnowledgeAssistant.Application.Handlers;
 public interface IMessageHandler<T>
 {
-    Task HandleAsync(T message, CancellationToken cancellationToken = default);
+    Task HandleAsync(T message, CancellationToken ct = default);
 }
 
 public class SendEmailHandler: IMessageHandler<SendEmailMessage>
@@ -16,8 +16,8 @@ public class SendEmailHandler: IMessageHandler<SendEmailMessage>
         _emailService = emailService;
     }
 
-    public async Task HandleAsync(SendEmailMessage message, CancellationToken cancellationToken = default)
+    public async Task HandleAsync(SendEmailMessage message, CancellationToken ct = default)
     {
-        await _emailService.SendEmailAsync(message.EmailId, cancellationToken);
+        await _emailService.SendEmailAsync(message.EmailId, ct);
     }
 }

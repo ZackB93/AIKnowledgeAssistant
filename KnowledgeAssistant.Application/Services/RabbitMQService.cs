@@ -7,7 +7,7 @@ namespace KnowledgeAssistant.Application.Services
 {
     public interface IRabbitMQService
     {
-        Task PublishAsync<T>(T message, string queue, CancellationToken cancellationToken = default);
+        Task PublishAsync<T>(T message, string queue, CancellationToken ct = default);
     }
 
     public class RabbitMQService : IRabbitMQService
@@ -29,18 +29,18 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        public async Task PublishAsync<T>(T message, string queue, CancellationToken cancellationToken = default)
+        public async Task PublishAsync<T>(T message, string queue, CancellationToken ct = default)
         {
-            var connection = await GetConnectionAsync(cancellationToken);
+            var connection = await GetConnectionAsync(ct);
 
-            await using var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
+            await using var channel = await connection.CreateChannelAsync(cancellationToken: ct);
 
             await channel.QueueDeclareAsync(
                 queue: queue,
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
-                cancellationToken: cancellationToken);
+                cancellationToken: ct);
 
             var json = JsonSerializer.Serialize(message);
             var body = Encoding.UTF8.GetBytes(json);
@@ -49,17 +49,17 @@ namespace KnowledgeAssistant.Application.Services
                 exchange: string.Empty,
                 routingKey: queue,
                 body: body,
-                cancellationToken: cancellationToken);
+                cancellationToken: ct);
         }
 
-        private async Task<IConnection> GetConnectionAsync(CancellationToken cancellationToken)
+        private async Task<IConnection> GetConnectionAsync(CancellationToken ct)
         {
             if (_connection is { IsOpen: true })
             {
                 return _connection;
             }           
 
-            await _connectionLock.WaitAsync(cancellationToken);
+            await _connectionLock.WaitAsync(ct);
 
             try
             {
@@ -68,7 +68,7 @@ namespace KnowledgeAssistant.Application.Services
                     return _connection;
                 }
 
-                _connection = await _connectionFactory.CreateConnectionAsync(cancellationToken);
+                _connection = await _connectionFactory.CreateConnectionAsync(ct);
 
                 return _connection;
             }

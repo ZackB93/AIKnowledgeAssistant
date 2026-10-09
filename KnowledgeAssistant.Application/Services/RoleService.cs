@@ -6,10 +6,10 @@ namespace KnowledgeAssistant.Application.Services
 {
     public interface IRoleService
     {
-        Task<RoleResponse> CreateRoleAsync(CreateRoleRequest request, CancellationToken cancellationToken = default);
-        Task<RoleResponse?> UpdateRoleAsync(UpdateRoleRequest request, CancellationToken cancellationToken = default);
-        Task<List<RoleResponse>> GetRolesAsync(CancellationToken cancellationToken = default);
-        Task<RoleResponse?> GetRoleByIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<RoleResponse> CreateRoleAsync(CreateRoleRequest request, CancellationToken ct);
+        Task<RoleResponse?> UpdateRoleAsync(UpdateRoleRequest request, CancellationToken ct);
+        Task<List<RoleResponse>> GetRolesAsync(CancellationToken ct);
+        Task<RoleResponse?> GetRoleByIdAsync(int id, CancellationToken ct);
     }
 
     public class RoleService : IRoleService
@@ -26,7 +26,7 @@ namespace KnowledgeAssistant.Application.Services
             _cacheService = cacheService;
         }
 
-        public async Task<RoleResponse> CreateRoleAsync(CreateRoleRequest request, CancellationToken cancellationToken = default)
+        public async Task<RoleResponse> CreateRoleAsync(CreateRoleRequest request, CancellationToken ct)
         {
             var role = new Role
             {
@@ -34,8 +34,8 @@ namespace KnowledgeAssistant.Application.Services
                 Description = request.Description?.Trim()
             };
 
-            await _roleRepository.AddAsync(role, cancellationToken);
-            await _roleRepository.SaveChangesAsync(cancellationToken);
+            await _roleRepository.AddAsync(role, ct);
+            await _roleRepository.SaveChangesAsync(ct);
 
             _cacheService.RemoveFromCache(RolesCacheKey);
 
@@ -48,9 +48,9 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        public async Task<RoleResponse?> UpdateRoleAsync(UpdateRoleRequest request, CancellationToken cancellationToken = default)
+        public async Task<RoleResponse?> UpdateRoleAsync(UpdateRoleRequest request, CancellationToken ct)
         {
-            var role = await _roleRepository.GetByIdAsync(request.Id, cancellationToken);
+            var role = await _roleRepository.GetByIdAsync(request.Id, ct);
 
             if (role is null)
             {
@@ -60,7 +60,7 @@ namespace KnowledgeAssistant.Application.Services
             role.Name = request.Name.Trim();
             role.Description = request.Description?.Trim();
 
-            await _roleRepository.SaveChangesAsync(cancellationToken);
+            await _roleRepository.SaveChangesAsync(ct);
 
             _cacheService.RemoveFromCache(RolesCacheKey);
             _cacheService.RemoveFromCache(GetRoleCacheKey(role.Id));
@@ -74,25 +74,25 @@ namespace KnowledgeAssistant.Application.Services
             };
         }
 
-        public async Task<List<RoleResponse>> GetRolesAsync(CancellationToken cancellationToken = default)
+        public async Task<List<RoleResponse>> GetRolesAsync(CancellationToken ct)
         {
             var cachedRoles = _cacheService.GetFromCache<List<RoleResponse>>(RolesCacheKey);
             if (cachedRoles is not null) return cachedRoles;
 
-            var roles = await _roleRepository.GetAllResponsesAsync(cancellationToken);
+            var roles = await _roleRepository.GetAllResponsesAsync(ct);
 
             _cacheService.SaveToCache(RolesCacheKey, roles, TimeSpan.FromHours(1));
 
             return roles;
         }
 
-        public async Task<RoleResponse?> GetRoleByIdAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<RoleResponse?> GetRoleByIdAsync(int id, CancellationToken ct)
         {
             var cacheKey = GetRoleCacheKey(id);
             var cachedRole = _cacheService.GetFromCache<RoleResponse>(cacheKey);
             if (cachedRole is not null) return cachedRole;
 
-            var role = await _roleRepository.GetResponseByIdAsync(id, cancellationToken);
+            var role = await _roleRepository.GetResponseByIdAsync(id, ct);
 
             if (role is not null)
             {
