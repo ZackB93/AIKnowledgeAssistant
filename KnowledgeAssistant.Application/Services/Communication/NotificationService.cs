@@ -23,18 +23,15 @@ namespace KnowledgeAssistant.Application.Services.Communication
     {
         private readonly INotificationRepository _notificationRepository;
         private readonly IRabbitMQService _rabbitMQService;
-        private readonly IMessageHandler<InsertRecipientsChunkMessage> _chunkHandler;
         private readonly bool _rabbitMQEnabled;
 
         public NotificationService(
             INotificationRepository notificationRepository,
             IRabbitMQService rabbitMQService,
-            IMessageHandler<InsertRecipientsChunkMessage> chunkHandler,
             IConfiguration configuration)
         {
             _notificationRepository = notificationRepository;
             _rabbitMQService = rabbitMQService;
-            _chunkHandler = chunkHandler;
             _rabbitMQEnabled = configuration.GetValue<bool>("RabbitMQ:Enabled");
 
         }
@@ -75,7 +72,7 @@ namespace KnowledgeAssistant.Application.Services.Communication
                 {
                     foreach (var chunk in chunks)
                     {
-                        await _chunkHandler.HandleAsync(chunk, ct);
+                        await _notificationRepository.AddRecipientsChunkAsync(chunk.NotificationId, chunk.UserIds, ct);
                     }
                 }
             }
@@ -85,7 +82,16 @@ namespace KnowledgeAssistant.Application.Services.Communication
                 await _notificationRepository.SaveChangesAsync(ct);
             }
 
-            return notification;
+            return new NotificationResponse
+            {
+                Id = notification.Id,
+                Title = notification.Title,
+                Body = notification.Body,
+                CreatedAt = notification.CreatedAt,
+                CreatedByUserId = notification.CreatedByUserId,
+                Status = notification.Status,
+                TotalRecipients = notification.TotalRecipients
+            };
         }
 
         public async Task<NotificationResponse?> GetNotificationByIdAsync(int notificationId, CancellationToken ct)
