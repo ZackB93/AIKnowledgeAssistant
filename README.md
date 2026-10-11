@@ -584,7 +584,7 @@ This makes changing AI providers easier in the future.
 
 The project is intentionally being developed incrementally, with the following features planned to extend the application's AI, messaging and background-processing capabilities.
 
-### Separate Vector Database (PostgreSQL + pgvector)
+### 1. Separate Vector Database (PostgreSQL + pgvector)
 
 Introduce a dedicated PostgreSQL database using the pgvector extension to store and query document embeddings independently of the existing SQL Server database.
 
@@ -614,7 +614,7 @@ Relevant Context
 OpenAI Chat Completion
 ```
 
-### RabbitMQ Retry & Dead-Letter Handling
+### 2. RabbitMQ Retry & Dead-Letter Handling
 
 Introduce retry and dead-letter handling for failed background operations.
 
@@ -639,6 +639,47 @@ Dead-Letter Queue
 ```
 
 This will initially support operations such as document processing, email and notifications.
+
+### 3. Azure Deployment & Cloud Infrastructure
+
+Prepare the application for deployment to Microsoft Azure, establishing a production-ready cloud environment using Azure's application hosting, database, security and DevOps services.
+
+This will demonstrate how the application's existing .NET architecture can be deployed, configured and maintained in a cloud environment, with automated build and deployment pipelines.
+
+This will initially include:
+- **Azure App Service:** Hosting the Blazor Web App and ASP.NET Core API.
+- **Azure SQL Database:** Hosting relational application data, including users, chat sessions, messages and document metadata.
+- **Azure Database for PostgreSQL:** Hosting the dedicated vector database using the pgvector extension for document embeddings and similarity search.
+- **Azure Key Vault:** Securely storing API keys, secrets and connection strings, using managed identities where supported.
+- **Azure DevOps CI/CD:** Implementing automated build, test and deployment pipelines to validate changes and deploy the application to Azure.
+- **Azure Application Insights:** Monitoring application performance, exceptions, requests and diagnostic telemetry.
+- **Azure Blob Storage:** Evaluating cloud-based file storage for uploaded documents and other file-based content.
+- **RabbitMQ Hosting:** Configuring the existing RabbitMQ messaging infrastructure for cloud connectivity, supporting background document processing, email and notifications.
+- **Infrastructure as Code:** Exploring Azure Bicep to provision and manage cloud resources consistently across environments.
+
+The deployment will retain the application's existing separation of concerns, with Azure SQL Database handling relational application data and PostgreSQL + pgvector providing specialised vector search capabilities.
+
+This will establish a repeatable deployment process with secure configuration, automated testing, centralised monitoring and a clear path from local development to a production Azure environment.
+
+```text
+GitHub Repository
+        ↓
+Azure DevOps CI/CD Pipeline
+        ↓
+Build & Automated Tests
+        ↓
+Deployment to Azure
+        ↓
+Azure App Service
+        ├── Azure SQL Database
+        ├── Azure Database for PostgreSQL + pgvector
+        ├── Azure Key Vault
+        ├── Azure Blob Storage
+        ├── RabbitMQ (Managed Hosting)
+        └── Application Insights
+```
+
+This will provide practical experience with Azure cloud hosting, DevOps automation, managed services, application security, messaging infrastructure and production monitoring.
 
 ---
 
