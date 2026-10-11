@@ -1,5 +1,6 @@
 ﻿.emoji-input-wrapper {
     display: flex;
+    position: relative;
     align-items: flex-end;
     gap: 4px;
 }
