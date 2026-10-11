@@ -154,7 +154,8 @@ RabbitMQ must be running locally, either as a Windows service or through Docker.
 * **RabbitMQ**
 * **ASP.NET Core Background Services**
 * **Queued email processing**
-
+* **Queued notification batch processing**
+  
 ### Testing & Development
 
 * **xUnit**
@@ -582,6 +583,36 @@ This makes changing AI providers easier in the future.
 ## 08 · To Do
 
 The project is intentionally being developed incrementally, with the following features planned to extend the application's AI, messaging and background-processing capabilities.
+
+### Separate Vector Database (PostgreSQL + pgvector)
+
+Introduce a dedicated PostgreSQL database using the pgvector extension to store and query document embeddings independently of the existing SQL Server database.
+
+This will separate vector search from the application's relational data, providing a more specialised foundation for similarity search and future improvements to the RAG pipeline.
+
+This will initially include:
+- Storing document embeddings in PostgreSQL using pgvector.
+- Implementing vector similarity search using PostgreSQL's vector operators and indexing capabilities.
+- Integrating the vector database into the existing document ingestion and retrieval workflows.
+- Keeping application data, users, chat sessions and messages in SQL Server.
+
+This will allow the application to use purpose-built vector search alongside its existing relational data architecture.
+
+```text
+Document Upload
+      ↓
+Document Processing
+      ↓
+Chunking & Embedding Generation
+      ↓
+PostgreSQL + pgvector
+      ↓
+Vector Similarity Search
+      ↓
+Relevant Context
+      ↓
+OpenAI Chat Completion
+```
 
 ### RabbitMQ Retry & Dead-Letter Handling
 
