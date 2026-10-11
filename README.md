@@ -155,7 +155,7 @@ RabbitMQ must be running locally, either as a Windows service or through Docker.
 * **ASP.NET Core Background Services**
 * **Queued email processing**
 * **Queued notification batch processing**
-* 
+  
 ### Testing & Development
 
 * **xUnit**
