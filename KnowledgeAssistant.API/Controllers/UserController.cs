@@ -5,6 +5,7 @@ using KnowledgeAssistant.Application.Services.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Security.Claims;
 
 namespace KnowledgeAssistant.API.Controllers
 {
@@ -133,6 +134,46 @@ namespace KnowledgeAssistant.API.Controllers
             {
                 IsSuccessful = true,
                 Data = exists
+            });
+        }
+
+        [HttpGet("Dashboard")]
+        [Authorize]
+        public async Task<ActionResult<ApiResult>> Dashboard(CancellationToken ct)
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var dashboardData = await _userService.GetDashboardDataAsync(userId, ct);
+
+            return Ok(new ApiResult()
+            {
+                IsSuccessful = true,
+                Data = dashboardData
+            });
+        }
+
+        [HttpGet("AdminDashboard")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResult>> AdminDashboard(CancellationToken ct)
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var dashboardData = await _userService.GetAdminDashboardDataAsync(userId, ct);
+
+            return Ok(new ApiResult()
+            {
+                IsSuccessful = true,
+                Data = dashboardData
             });
         }
     }

@@ -1,5 +1,6 @@
 ﻿using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Authentication;
+using KnowledgeAssistant.Application.DTOs.Dashboard;
 using KnowledgeAssistant.Application.DTOs.Roles;
 using KnowledgeAssistant.Application.DTOs.Users;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
@@ -19,6 +20,8 @@ namespace KnowledgeAssistant.Application.Services.Identity
         Task<PaginatedResponse<UserResponse>> GetUsersAsync(int pageNumber, int pageSize, CancellationToken ct);
         Task<UserResponse?> GetUserDetailsAsync(int userId, CancellationToken ct);
         Task<UserExistsResponse> UserExistsAsync(string email, CancellationToken ct);
+        Task<UserDashboardVM> GetDashboardDataAsync(int userId, CancellationToken ct);
+        Task<AdminDashboardVM> GetAdminDashboardDataAsync(int userId, CancellationToken ct);
     }
 
     public class UserService : IUserService
@@ -104,6 +107,7 @@ namespace KnowledgeAssistant.Application.Services.Identity
                 {
                     Id = credentials.UserId,
                     FirstName = credentials.FirstName,
+                    LastName = credentials.LastName,
                     Email = credentials.EmailAddress,
                     Roles = credentials.Roles
                         .Select(r => new UserRoleResponse { RoleId = r.Id, Role = r })
@@ -287,6 +291,16 @@ namespace KnowledgeAssistant.Application.Services.Identity
             var exists = await _userRepository.ExistsByEmailAsync(normalizedEmail, ct);
 
             return new UserExistsResponse { Exists = exists };
+        }
+
+        public async Task<UserDashboardVM> GetDashboardDataAsync(int userId, CancellationToken ct)
+        {
+            return new();
+        }
+
+        public async Task<AdminDashboardVM> GetAdminDashboardDataAsync(int userId, CancellationToken ct)
+        {
+            return new();
         }
     }
 }

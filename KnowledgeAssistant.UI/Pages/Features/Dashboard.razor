@@ -1,8 +1,276 @@
-﻿@page "/dashboard"
+﻿@using KnowledgeAssistant.UI.Components.Dashboard
+@using KnowledgeAssistant.Application.DTOs.Dashboard
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+
+@page "/dashboard"
 @attribute [Authorize]
 
-<PageTitle>Knowledge Assistant - Dashboard</PageTitle>
+<PageTitle>Dashboard</PageTitle>
 
-@code{
+@if (loading)
+{
+    <LoadingSpinner />
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.Large" Class="pa-0">
+        @if (isAdmin && admin is not null && viewMode == DashboardView.Admin)
+        {
+            @AdminView
+        }
+        else
+        {
+            @UserView
+        }
+    </MudContainer>
+}
 
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthState { get; set; }
+
+    private UserDashboardVM? user;
+    private AdminDashboardVM? admin;
+
+    private bool isAdmin = false;
+    private bool loading = true;
+
+    private enum DashboardView { User, Admin }
+
+    private DashboardView viewMode = DashboardView.User;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthState is not null)
+        {
+            var state = await AuthState;
+
+            if (state.User.Identity?.IsAuthenticated == true)
+            {
+                isAdmin = state.User.IsInRole("Admin");
+            }
+        }
+
+        user = UserDashboardVM.Sample();
+
+        if (isAdmin)
+        {
+            admin = AdminDashboardVM.Sample();
+            viewMode = DashboardView.Admin; // auto-select admin for admins
+        }
+
+        loading = false;
+    }
+
+    private static string IconFor(FeedKind kind) => kind switch
+    {
+        FeedKind.Success => Icons.Material.Filled.CheckCircle,
+        FeedKind.Warning => Icons.Material.Filled.Warning,
+        FeedKind.Info => Icons.Material.Filled.Info,
+        _ => Icons.Material.Filled.Circle
+    };
+
+    private static Color ColorFor(FeedKind kind) => kind switch
+    {
+        FeedKind.Success => Color.Success,
+        FeedKind.Warning => Color.Warning,
+        FeedKind.Info => Color.Info,
+        _ => Color.Default
+    };
+
+    private RenderFragment AdminView => @<div>
+
+        <MudGrid Spacing="3">
+
+            <MudItem xs="12" sm="6" md="3">
+                <StatCard Label="Users" Value="@admin!.TotalUsers.ToString("N0")" Hint="@($"+{admin.NewUsersThisWeek} this week")"
+                          Icon="@Icons.Material.Filled.People" Color="Color.Info" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <StatCard Label="Chats" Value="@admin.TotalChats.ToString("N0")" Hint="@($"{admin.ChatsThisMonth:N0} this month")"
+                          Icon="@Icons.Material.Filled.Forum" Color="Color.Warning" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <StatCard Label="Documents" Value="@admin.TotalDocuments.ToString("N0")" Hint="@($"{admin.StorageUsedGb:0.#} GB stored")"
+                          Icon="@Icons.Material.Filled.Description" Color="Color.Primary" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <StatCard Label="Notifications" Value="@admin.TotalNotificationsSent.ToString("N0")" Hint="@($"{admin.NotificationReadRate:P0} read")"
+                          Icon="@Icons.Material.Filled.Notifications" Color="Color.Success" />
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudPaper Class="glass-card pa-4" Elevation="0">
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <MudText Typo="Typo.h6">AI chats per month</MudText>
+                        <MudText Typo="Typo.caption" Style="opacity:.7">Last 6 months</MudText>
+                    </div>
+                    <MonthlyBarChart Data="admin.ChatsPerMonth" SeriesName="Chats" />
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="glass-card pa-4 mud-height-full" Elevation="0">
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <MudText Typo="Typo.h6">Newest users</MudText>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" Href="/admin/users">Manage users</MudButton>
+                    </div>
+
+                    @if (!admin.NewestUsers.Any())
+                    {
+                        <MudText Typo="Typo.body2" Style="opacity:.7">No users yet.</MudText>
+                    }
+
+                    @foreach (var (u, i) in admin.NewestUsers.Select((u, i) => (u, i)))
+                    {
+                        @if (i > 0)
+                        {
+                            <MudDivider Style="opacity:.25" />
+                        }
+
+                        <div class="d-flex align-center gap-3 py-2">
+                            <MudAvatar Color="Color.Primary" Size="Size.Medium">@u.FullName[0]</MudAvatar>
+                            <div style="flex:1; min-width:0">
+                                <MudText Typo="Typo.subtitle2">@u.FullName</MudText>
+                                <MudText Typo="Typo.caption" Style="opacity:.7">@u.Email</MudText>
+                            </div>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                     Color="@(u.IsEnabled ? Color.Success : Color.Default)">
+                                @(u.IsEnabled ? "Enabled" : "Disabled")
+                            </MudChip>
+                        </div>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="glass-card pa-4 mud-height-full" Elevation="0">
+                    <MudText Typo="Typo.h6" Class="mb-2">Recent activity</MudText>
+
+                    @if (!admin.RecentActivity.Any())
+                    {
+                        <MudText Typo="Typo.body2" Style="opacity:.7">Nothing yet.</MudText>
+                    }
+
+                    @foreach (var (a, i) in admin.RecentActivity.Select((a, i) => (a, i)))
+                    {
+                        @if (i > 0)
+                        {
+                            <MudDivider Style="opacity:.25" />
+                        }
+
+                        <div class="d-flex align-center gap-3 py-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@ColorFor(a.Kind)" Size="Size.Small" />
+                            <div>
+                                <MudText Typo="Typo.subtitle2">@a.Text</MudText>
+                                <MudText Typo="Typo.caption" Style="opacity:.7">@a.OccurredUtc.ToRelative()</MudText>
+                            </div>
+                        </div>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </div>;
+
+    private RenderFragment UserView => @<div>
+
+        <div class="d-flex justify-space-between align-center flex-wrap gap-3 mb-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add" Href="/chat">New chat</MudButton>
+        </div>
+
+        <MudGrid Spacing="3">
+
+            <MudItem xs="12" sm="4">
+                <StatCard Label="Notifications" Value="@user.UnreadNotifications.ToString()" Hint="unread"
+                          Icon="@Icons.Material.Filled.Notifications" Color="Color.Warning" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <StatCard Label="AI chats" Value="@user.TotalChats.ToString("N0")" Hint="@($"{user.ChatsThisMonth} this month")"
+                          Icon="@Icons.Material.Filled.Chat" Color="Color.Info" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <StatCard Label="Documents" Value="@user.TotalDocuments.ToString("N0")" Hint="total"
+                          Icon="@Icons.Material.Filled.Description" Color="Color.Success" />
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudPaper Class="glass-card pa-4" Elevation="0">
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <MudText Typo="Typo.h6">My AI chats per month</MudText>
+                        <MudText Typo="Typo.caption" Style="opacity:.7">Last 6 months</MudText>
+                    </div>
+                    <MonthlyBarChart Data="@user.ChatsPerMonth" SeriesName="My chats" />
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="glass-card pa-4 mud-height-full" Elevation="0">
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <MudText Typo="Typo.h6">Recent chats</MudText>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" Href="/chat">View all</MudButton>
+                    </div>
+
+                    @if (user.RecentChats.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" Style="opacity:.7">No chats yet. Start your first one!</MudText>
+                    }
+
+                    @foreach (var (chat, i) in user.RecentChats.Select((c, i) => (c, i)))
+                    {
+                        @if (i > 0)
+                        {
+                            <MudDivider Style="opacity:.25" />
+                        }
+
+                        <div class="d-flex align-center gap-3 py-2">
+                            <MudAvatar Color="Color.Primary" Size="Size.Medium">
+                                <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Size="Size.Small" />
+                            </MudAvatar>
+                            <div style="flex:1; min-width:0">
+                                <MudText Typo="Typo.subtitle2">@chat.Title</MudText>
+                                <MudText Typo="Typo.body2" Style="opacity:.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
+                                    You asked: @chat.LastQuestion
+                                </MudText>
+                            </div>
+                            <MudText Typo="Typo.caption" Style="opacity:.7; white-space:nowrap">@chat.LastActivityUtc.ToRelative()</MudText>
+                        </div>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="glass-card pa-4 mud-height-full" Elevation="0">
+                    <MudText Typo="Typo.h6" Class="mb-2">Notifications</MudText>
+
+                    @if (user.RecentNotifications.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" Style="opacity:.7">You're all caught up.</MudText>
+                    }
+
+                    @foreach (var (note, i) in user.RecentNotifications.Select((n, i) => (n, i)))
+                    {
+                        @if (i > 0)
+                        {
+                            <MudDivider Style="opacity:.25" />
+                        }
+
+                        <div class="d-flex align-center gap-3 py-2">
+                            <MudIcon Icon="@IconFor(note.Kind)" Color="@ColorFor(note.Kind)" />
+                            <div style="flex:1; min-width:0">
+                                <MudText Typo="Typo.subtitle2" Style="@(note.IsRead ? "opacity:.6" : "")">@note.Text</MudText>
+                                <MudText Typo="Typo.caption" Style="opacity:.7">@note.CreatedUtc.ToRelative()</MudText>
+                            </div>
+
+                            @if (!note.IsRead)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Circle" Color="Color.Primary" Size="Size.Small" />
+                            }
+                        </div>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </div>;
 }

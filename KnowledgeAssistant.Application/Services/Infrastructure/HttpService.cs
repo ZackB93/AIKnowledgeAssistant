@@ -1,9 +1,7 @@
 ﻿using KnowledgeAssistant.Application.DTOs.API;
-using KnowledgeAssistant.Application.DTOs.Authentication;
 using KnowledgeAssistant.Application.DTOs.Cache;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http;
-using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;

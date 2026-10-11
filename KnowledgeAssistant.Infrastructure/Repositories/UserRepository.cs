@@ -42,6 +42,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     EmailAddress = x.EmailAddress,
                     PasswordHash = x.PasswordHash,
                     FirstName = x.User.FirstName,
+                    LastName = x.User.LastName,
                     Enabled = x.User.Enabled,
                     IsDeleted = x.User.IsDeleted,
                     Roles = x.User.UserRoles.Select(ur => new RoleResponse

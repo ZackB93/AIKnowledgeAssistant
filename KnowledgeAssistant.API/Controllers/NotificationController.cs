@@ -1,7 +1,6 @@
 ﻿using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Notifications;
 using KnowledgeAssistant.Application.Services.Communication;
-using KnowledgeAssistant.Application.Services.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -1,0 +1,42 @@
+﻿@using KnowledgeAssistant.Application.DTOs.Dashboard
+
+<div class="monthly-chart">
+    <MudChart T="double"
+              ChartType="ChartType.Bar"
+              ChartSeries="@_series"
+              ChartLabels="@_labels"
+              ChartOptions="@_options"
+              Width="100%"
+              Height="@Height" />
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<MonthlyCount> Data { get; set; } = Array.Empty<MonthlyCount>();
+
+    [Parameter]
+    public string SeriesName { get; set; } = "Chats";
+
+    [Parameter]
+    public string Height { get; set; } = "240px";
+
+    private List<ChartSeries<double>> _series = new();
+    private string[] _labels = Array.Empty<string>();
+
+    private readonly BarChartOptions _options = new()
+    {
+        ChartPalette = new[] { "#4d7fc7" }
+    };
+
+    protected override void OnParametersSet()
+    {
+        _labels = Data.Select(d => d.Label).ToArray();
+
+        var counts = Data.Select(d => (double)d.Count).ToArray();
+
+        _series = new()
+        {
+            new ChartSeries<double> { Name = SeriesName, Data = counts }
+        };
+    }
+}

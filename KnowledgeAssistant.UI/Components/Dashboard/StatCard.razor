@@ -1,0 +1,29 @@
+﻿<MudPaper Class="glass-card pa-4 mud-height-full" Elevation="0">
+    <div class="d-flex justify-space-between align-start">
+        <div>
+            <MudText Typo="Typo.body2" Style="opacity:.7">@Label</MudText>
+            <MudText Typo="Typo.h4" Class="my-1">@Value</MudText>
+            <MudText Typo="Typo.caption" Style="opacity:.7">@Hint</MudText>
+        </div>
+        <MudAvatar Color="@Color" Variant="Variant.Outlined">
+            <MudIcon Icon="@Icon" />
+        </MudAvatar>
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = "";
+
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = "";
+
+    [Parameter]
+    public string Hint { get; set; } = "";
+
+    [Parameter]
+    public string Icon { get; set; } = Icons.Material.Filled.Info;
+
+    [Parameter]
+    public Color Color { get; set; } = Color.Primary;
+}

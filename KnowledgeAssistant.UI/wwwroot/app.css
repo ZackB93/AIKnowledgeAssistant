@@ -302,7 +302,7 @@ h5 {
 }
 
 /* ---- 7c. Buttons inside a glass card ---- */
-.glass-card-modal .mud-button-filled.mud-button-filled-primary
+.glass-card-modal .mud-button-filled.mud-button-filled-primary,
 .glass-card .mud-button-filled.mud-button-filled-primary {
     background: linear-gradient(135deg, #3d76c4, #1a3a6e) !important;
 }
