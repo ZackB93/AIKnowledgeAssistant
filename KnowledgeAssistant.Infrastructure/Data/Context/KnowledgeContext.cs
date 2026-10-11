@@ -1,4 +1,5 @@
-﻿using KnowledgeAssistant.Domain.Entities.Chat;
+﻿using KnowledgeAssistant.Domain.Entities.Audit;
+using KnowledgeAssistant.Domain.Entities.Chat;
 using KnowledgeAssistant.Domain.Entities.Documents;
 using KnowledgeAssistant.Domain.Entities.Emails;
 using KnowledgeAssistant.Domain.Entities.Notifications;
@@ -21,10 +22,12 @@ namespace KnowledgeAssistant.Infrastructure.Data.Context
         public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
         public DbSet<Role> Roles => Set<Role>();
         public DbSet<UserRole> UserRoles => Set<UserRole>();
-        public DbSet<Domain.Entities.Documents.Document> Documents => Set<Domain.Entities.Documents.Document>();
+        public DbSet<Document> Documents => Set<Document>();
         public DbSet<DocumentChunk> DocumentChunks => Set<DocumentChunk>();
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<NotificationRecipient> NotificationRecipients => Set<NotificationRecipient>();
+        public DbSet<ActivityAudit> ActivityAudit => Set<ActivityAudit>();
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
