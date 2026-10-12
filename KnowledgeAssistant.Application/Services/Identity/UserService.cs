@@ -333,7 +333,7 @@ namespace KnowledgeAssistant.Application.Services.Identity
 
             var dashboardAdminData = await _dashboardRepository.GetAdminDashboardDataAsync(ct);
 
-            _cacheService.SaveToCache(cacheKey, dashboardAdminData, TimeSpan.FromMinutes(5));
+            _cacheService.SaveToCache(cacheKey, dashboardAdminData, TimeSpan.FromMinutes(2));
 
             return dashboardAdminData;
         }

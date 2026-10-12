@@ -40,6 +40,8 @@ else
     private bool isAdmin = false;
     private bool loading = true;
 
+    public int userId;
+
     private enum DashboardView { User, Admin }
 
     private DashboardView viewMode = DashboardView.User;
@@ -53,6 +55,7 @@ else
             if (state.User.Identity?.IsAuthenticated == true)
             {
                 isAdmin = state.User.IsInRole("Admin");
+                userId = int.Parse(state.User.FindFirst("UserId")?.Value ?? "0");
             }
         }
 
@@ -60,8 +63,8 @@ else
 
         if (isAdmin)
         {
-           // admin = await PopulateAdminDashboardDataAsync();
-            //viewMode = DashboardView.Admin; // auto-select admin for admins
+           admin = await PopulateAdminDashboardDataAsync();
+           viewMode = DashboardView.Admin; // auto-select admin for admins
         }
 
         loading = false;
@@ -69,7 +72,7 @@ else
 
     private async Task<UserDashboardVM?> PopulateUserDashboardDataAsync()
     {
-        var cacheOptions = new Cache() { CacheKey = "UserDashboard", CacheTimeMins = 2 };
+        var cacheOptions = new Cache() { CacheKey = $"user_dashboard_{userId}", CacheTimeMins = 1 };
         var response = await HttpService.GetDataAsync("/User/Dashboard", cacheOptions);
 
         if (response.IsSuccessful && response.Data is not null)
@@ -82,7 +85,7 @@ else
 
     private async Task<AdminDashboardVM?> PopulateAdminDashboardDataAsync()
     {
-        var cacheOptions = new Cache() { CacheKey = "AdminDashboard", CacheTimeMins = 5 };
+        var cacheOptions = new Cache() { CacheKey = "admin_dashboard", CacheTimeMins = 2 };
         var response = await HttpService.GetDataAsync("/User/AdminDashboard", cacheOptions);
 
         if(response.IsSuccessful && response.Data is not null)
@@ -141,10 +144,10 @@ else
             </MudItem>
 
             <MudItem xs="12" md="6">
-                <MudPaper Class="glass-card pa-4 mud-height-full" Elevation="0">
+                <MudPaper Class="glass-card pa-4" Elevation="0" Style="height: 292px; overflow-y: auto;">
                     <div class="d-flex justify-space-between align-center mb-2">
                         <MudText Typo="Typo.h6">Newest users</MudText>
-                        <MudButton Variant="Variant.Text" Size="Size.Small" Href="/admin/users">Manage users</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="@Color.Primary" Size="Size.Small" Href="/admin/users">Manage users</MudButton>
                     </div>
 
                     @if (!admin.NewestUsers.Any())
@@ -175,7 +178,7 @@ else
             </MudItem>
 
             <MudItem xs="12" md="6">
-                <MudPaper Class="glass-card pa-4 mud-height-full" Elevation="0">
+                <MudPaper Class="glass-card pa-4" Elevation="0" Style="height: 292px; overflow-y: auto;">
                     <MudText Typo="Typo.h6" Class="mb-2">Recent activity</MudText>
 
                     @if (!admin.RecentActivity.Any())
@@ -233,7 +236,7 @@ else
                 <MudPaper Class="glass-card pa-4" Elevation="0" Style="height: 292px; overflow-y: auto;">
                     <div class="d-flex justify-space-between align-center mb-2">
                         <MudText Typo="Typo.h6">Recent chats</MudText>
-                        <MudButton Variant="Variant.Outlined" Size="Size.Small" Href="/chat">View all</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="@Color.Primary" Size="Size.Small" Href="/chat">View all</MudButton>
                     </div>
 
                     @if (user.RecentChats.Count == 0)
