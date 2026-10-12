@@ -328,7 +328,11 @@ Contains automated tests covering important application behaviour across control
 
 <div align="center">
 
-N/A
+User
+<img src="screenshots/user_dashboard.png" alt="User Dashboard" width="850">
+
+Admin
+<img src="screenshots/admin_dashboard.png" alt="Admin Dashboard" width="850">
 
 </div>
 
