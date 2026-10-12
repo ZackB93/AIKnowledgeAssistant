@@ -328,10 +328,10 @@ Contains automated tests covering important application behaviour across control
 
 <div align="center">
 
-User
+<p>User Dashboard</p>
 <img src="screenshots/user_dashboard.png" alt="User Dashboard" width="850">
 
-Admin
+<p>Admin Dashboard</p>
 <img src="screenshots/admin_dashboard.png" alt="Admin Dashboard" width="850">
 
 </div>
