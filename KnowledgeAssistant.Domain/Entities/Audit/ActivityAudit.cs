@@ -10,7 +10,7 @@ namespace KnowledgeAssistant.Domain.Entities.Audit
         public string? UserName { get; set; }
         public AuditAction Action { get; set; }
         public string? Description { get; set; }
-        public string EntityName { get; set; } = null!;
+        public string EntityName { get; set; } = string.Empty;
         public string? EntityId { get; set; }
         public string? OldValues { get; set; }
         public string? NewValues { get; set; }

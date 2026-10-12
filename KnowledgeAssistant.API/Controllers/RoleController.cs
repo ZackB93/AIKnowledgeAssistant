@@ -56,7 +56,6 @@ namespace KnowledgeAssistant.API.Controllers
         }
 
         [HttpGet("GetAll")]
-        [OutputCache(Duration = 120)]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> GetRoles(CancellationToken ct)
         {
@@ -70,7 +69,6 @@ namespace KnowledgeAssistant.API.Controllers
         }
 
         [HttpGet("GetById/{id}")]
-        [OutputCache(Duration = 120)]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> GetRoleById(int id, CancellationToken ct)
         {

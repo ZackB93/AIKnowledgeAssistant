@@ -134,7 +134,7 @@
 
     private async Task<TableData<RoleResponse>> LoadRoles(TableState state, CancellationToken ct)
     {
-        var cache = new Cache { CacheKey = "Roles", CacheTimeMins = 30 };
+        var cache = new Cache { CacheKey = "roles", CacheTimeMins = 30 };
         var response = await HttpService.GetDataAsync("/Role/GetAll", CacheData: cache, ct: ct);
 
         if (response.IsSuccessful && response.Data is not null)

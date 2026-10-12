@@ -1,6 +1,8 @@
 using CallRatingService.API.Middleware;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using KnowledgeAssistant.Application.Handlers;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
+using KnowledgeAssistant.Application.Services.Auditing;
 using KnowledgeAssistant.Application.Services.Communication;
 using KnowledgeAssistant.Application.Services.Identity;
 using KnowledgeAssistant.Application.Services.Infrastructure;
@@ -10,6 +12,7 @@ using KnowledgeAssistant.Domain.Entities.Notifications;
 using KnowledgeAssistant.Domain.Entities.Users;
 using KnowledgeAssistant.Infrastructure.BackgroundServices;
 using KnowledgeAssistant.Infrastructure.Data.Context;
+using KnowledgeAssistant.Infrastructure.Data.Interceptors;
 using KnowledgeAssistant.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -51,8 +54,11 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddDbContext<KnowledgeContext>(options => 
-    options.UseSqlServer( builder.Configuration.GetConnectionString("KnowledgeDatabase")));
+builder.Services.AddDbContext<KnowledgeContext>((serviceProvider, options) =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("KnowledgeDatabase"));
+    options.AddInterceptors(serviceProvider.GetRequiredService<ActivityAuditInterceptor>());
+});
 
 builder.Host.UseSerilog((context, config) =>
 {
@@ -61,7 +67,7 @@ builder.Host.UseSerilog((context, config) =>
             connectionString: context.Configuration.GetConnectionString("KnowledgeDatabase"),
             sinkOptions: new MSSqlServerSinkOptions
             { 
-                TableName = "ErrorLogs", AutoCreateSqlTable = true
+                TableName = "Logs", AutoCreateSqlTable = true
             }).Enrich.FromLogContext();
 });
 
@@ -122,6 +128,7 @@ builder.Services.AddOpenApi(options =>
     });
 });
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -142,7 +149,8 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IRabbitMQService, RabbitMQService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-
+builder.Services.AddScoped<IActivityAuditService, ActivityAuditService>();
+builder.Services.AddScoped<ActivityAuditInterceptor>();
 builder.Services.AddScoped<IMessageHandler<SendEmailMessage>, SendEmailHandler>();
 builder.Services.AddScoped<IMessageHandler<InsertRecipientsChunkMessage>, InsertRecipientsChunkHandler>();
 
@@ -155,6 +163,7 @@ builder.Services.AddScoped<IEmailRepository, EmailRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 
 builder.Services.AddChatClient(services => new ChatClient(
     builder.Configuration["OpenAI:Model"]!,

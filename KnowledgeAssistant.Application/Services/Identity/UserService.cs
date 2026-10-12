@@ -4,6 +4,7 @@ using KnowledgeAssistant.Application.DTOs.Dashboard;
 using KnowledgeAssistant.Application.DTOs.Roles;
 using KnowledgeAssistant.Application.DTOs.Users;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
+using KnowledgeAssistant.Application.Services.Auditing;
 using KnowledgeAssistant.Application.Services.Communication;
 using KnowledgeAssistant.Application.Services.Infrastructure;
 using KnowledgeAssistant.Domain.Entities.Users;
@@ -31,6 +32,7 @@ namespace KnowledgeAssistant.Application.Services.Identity
         private readonly ITokenService _tokenService;
         private readonly IEmailService _emailService;
         private readonly ICacheService _cacheService;
+        private readonly IActivityAuditService _activityAuditService;
 
         private static string GetUserCacheKey(int userId) => $"user_{userId}";
 
@@ -39,13 +41,15 @@ namespace KnowledgeAssistant.Application.Services.Identity
             IPasswordHasher<User> passwordHasher,
             ITokenService tokenService,
             IEmailService emailService,
-            ICacheService cacheService)
+            ICacheService cacheService,
+            IActivityAuditService activityAuditService)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
             _tokenService = tokenService;
             _emailService = emailService;
             _cacheService = cacheService;
+            _activityAuditService = activityAuditService;
         }
 
         public async Task<SignInResponse> SignInAsync(SignIn request, CancellationToken ct)
@@ -97,6 +101,16 @@ namespace KnowledgeAssistant.Application.Services.Identity
                 username: credentials.FirstName,
                 roles: credentials.Roles.Select(r => r.Name).ToList()
             );
+
+            await _activityAuditService.LogActivityAsync(new()
+            {
+                UserId = credentials.UserId.ToString(),
+                UserName = $"{credentials.FirstName} {credentials.LastName}",
+                DateTime = DateTime.UtcNow,
+                Action = Domain.Enums.AuditAction.LoggedIn,
+                Description = $"User {credentials.FirstName} {credentials.LastName} logged in to system.",
+                EntityName = "UserCredentials",
+            }, ct);
 
             return new SignInResponse
             {
