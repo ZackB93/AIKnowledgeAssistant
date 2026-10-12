@@ -1,4 +1,5 @@
-﻿using KnowledgeAssistant.Application.DTOs.API;
+﻿using DocumentFormat.OpenXml.Spreadsheet;
+using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Authentication;
 using KnowledgeAssistant.Application.DTOs.Dashboard;
 using KnowledgeAssistant.Application.DTOs.Roles;
@@ -22,12 +23,13 @@ namespace KnowledgeAssistant.Application.Services.Identity
         Task<UserResponse?> GetUserDetailsAsync(int userId, CancellationToken ct);
         Task<UserExistsResponse> UserExistsAsync(string email, CancellationToken ct);
         Task<UserDashboardVM> GetDashboardDataAsync(int userId, CancellationToken ct);
-        Task<AdminDashboardVM> GetAdminDashboardDataAsync(int userId, CancellationToken ct);
+        Task<AdminDashboardVM> GetAdminDashboardDataAsync(CancellationToken ct);
     }
 
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IDashboardRepository _dashboardRepository;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly ITokenService _tokenService;
         private readonly IEmailService _emailService;
@@ -35,9 +37,11 @@ namespace KnowledgeAssistant.Application.Services.Identity
         private readonly IActivityAuditService _activityAuditService;
 
         private static string GetUserCacheKey(int userId) => $"user_{userId}";
+        private static string GetUserDashboardCacheKey(int userId) => $"user_dashboard_{userId}";
 
         public UserService(
             IUserRepository userRepository,
+            IDashboardRepository dashboardRepository,
             IPasswordHasher<User> passwordHasher,
             ITokenService tokenService,
             IEmailService emailService,
@@ -45,6 +49,7 @@ namespace KnowledgeAssistant.Application.Services.Identity
             IActivityAuditService activityAuditService)
         {
             _userRepository = userRepository;
+            _dashboardRepository = dashboardRepository;
             _passwordHasher = passwordHasher;
             _tokenService = tokenService;
             _emailService = emailService;
@@ -309,12 +314,28 @@ namespace KnowledgeAssistant.Application.Services.Identity
 
         public async Task<UserDashboardVM> GetDashboardDataAsync(int userId, CancellationToken ct)
         {
-            return new();
+            var cacheKey = GetUserDashboardCacheKey(userId);
+            var cachedData = _cacheService.GetFromCache<UserDashboardVM>(cacheKey);
+            if (cachedData is not null) return cachedData;
+
+            var dashboardData = await _dashboardRepository.GetUserDashboardDataAsync(userId, ct);
+
+            _cacheService.SaveToCache(cacheKey, dashboardData, TimeSpan.FromMinutes(1));
+
+            return dashboardData;
         }
 
-        public async Task<AdminDashboardVM> GetAdminDashboardDataAsync(int userId, CancellationToken ct)
+        public async Task<AdminDashboardVM> GetAdminDashboardDataAsync(CancellationToken ct)
         {
-            return new();
+            var cacheKey = "admin_dashboard";
+            var cachedData = _cacheService.GetFromCache<AdminDashboardVM>(cacheKey);
+            if (cachedData is not null) return cachedData;
+
+            var dashboardAdminData = await _dashboardRepository.GetAdminDashboardDataAsync(ct);
+
+            _cacheService.SaveToCache(cacheKey, dashboardAdminData, TimeSpan.FromMinutes(5));
+
+            return dashboardAdminData;
         }
     }
 }

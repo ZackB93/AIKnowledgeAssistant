@@ -161,14 +161,7 @@ namespace KnowledgeAssistant.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> AdminDashboard(CancellationToken ct)
         {
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!int.TryParse(userIdString, out var userId))
-            {
-                return Unauthorized();
-            }
-
-            var dashboardData = await _userService.GetAdminDashboardDataAsync(userId, ct);
+            var dashboardData = await _userService.GetAdminDashboardDataAsync(ct);
 
             return Ok(new ApiResult()
             {

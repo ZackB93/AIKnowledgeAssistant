@@ -1,7 +1,6 @@
 ﻿using KnowledgeAssistant.Application.DTOs.Documents;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
 using KnowledgeAssistant.Domain.Entities.Documents;
-using KnowledgeAssistant.Infrastructure.Data; // Replace with your actual DbContext namespace
 using KnowledgeAssistant.Infrastructure.Data.Context;
 using Microsoft.EntityFrameworkCore;
 

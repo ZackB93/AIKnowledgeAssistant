@@ -3,7 +3,6 @@ using KnowledgeAssistant.Application.DTOs.Roles;
 using KnowledgeAssistant.Application.Services.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.OutputCaching;
 
 namespace KnowledgeAssistant.API.Controllers
 {

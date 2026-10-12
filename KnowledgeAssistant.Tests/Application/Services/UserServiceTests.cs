@@ -1,6 +1,7 @@
 ﻿using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Authentication;
 using KnowledgeAssistant.Application.DTOs.Users;
+using KnowledgeAssistant.Application.Services.Auditing;
 using KnowledgeAssistant.Application.Services.Communication;
 using KnowledgeAssistant.Application.Services.Identity;
 using KnowledgeAssistant.Application.Services.Infrastructure;
@@ -17,10 +18,12 @@ public class UserServiceTests : IDisposable
 {
     private readonly KnowledgeContext _context;
     private readonly UserRepository _repository;
+    private readonly DashboardRepository _dashboardRepository;
     private readonly Mock<IPasswordHasher<User>> _hasher = new();
     private readonly Mock<ITokenService> _tokens = new();
     private readonly Mock<IEmailService> _emails = new();
     private readonly Mock<ICacheService> _cache = new();
+    private readonly Mock<IActivityAuditService> _activityAudit = new();
     private readonly UserService _service;
 
     public UserServiceTests()
@@ -31,7 +34,8 @@ public class UserServiceTests : IDisposable
 
         _context = new KnowledgeContext(options);
         _repository = new UserRepository(_context);
-        _service = new UserService(_repository, _hasher.Object, _tokens.Object, _emails.Object, _cache.Object);
+        _dashboardRepository = new DashboardRepository(_context);
+        _service = new UserService(_repository, _dashboardRepository, _hasher.Object, _tokens.Object, _emails.Object, _cache.Object, _activityAudit.Object);
     }
 
     public void Dispose() => _context.Dispose();

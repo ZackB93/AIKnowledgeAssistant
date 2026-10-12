@@ -1,13 +1,19 @@
 ﻿@using KnowledgeAssistant.Application.DTOs.Dashboard
+@using ApexCharts
 
 <div class="monthly-chart">
-    <MudChart T="double"
-              ChartType="ChartType.Bar"
-              ChartSeries="@_series"
-              ChartLabels="@_labels"
-              ChartOptions="@_options"
-              Width="100%"
-              Height="@Height" />
+    <ApexChart TItem="MonthlyCount"
+               Options="@_options"
+               Height="@Height"
+               XAxisType="XAxisType.Category">
+
+        <ApexPointSeries TItem="MonthlyCount"
+                         Items="@ChartData"
+                         Name="@SeriesName"
+                         SeriesType="SeriesType.Bar"
+                         XValue="@(d => d.Label)"
+                         YValue="@(d => (decimal)d.Count)" />
+    </ApexChart>
 </div>
 
 @code {
@@ -18,25 +24,93 @@
     public string SeriesName { get; set; } = "Chats";
 
     [Parameter]
-    public string Height { get; set; } = "240px";
+    public string Height { get; set; } = "280px";
 
-    private List<ChartSeries<double>> _series = new();
-    private string[] _labels = Array.Empty<string>();
+    private List<MonthlyCount> ChartData => Data.ToList();
 
-    private readonly BarChartOptions _options = new()
+    private ApexChartOptions<MonthlyCount> _options = new()
     {
-        ChartPalette = new[] { "#4d7fc7" }
-    };
-
-    protected override void OnParametersSet()
-    {
-        _labels = Data.Select(d => d.Label).ToArray();
-
-        var counts = Data.Select(d => (double)d.Count).ToArray();
-
-        _series = new()
+        Chart = new Chart
         {
-            new ChartSeries<double> { Name = SeriesName, Data = counts }
-        };
-    }
+            Background = "transparent",
+            Toolbar = new Toolbar
+            {
+                Show = false
+            },
+            Animations = new Animations
+            {
+                Enabled = false
+            }
+        },
+        Theme = new Theme
+        {
+            Mode = Mode.Dark
+        },
+        Colors = new List<string> { "#5B8DEF" },
+        PlotOptions = new PlotOptions
+        {
+            Bar = new PlotOptionsBar
+            {
+                BorderRadius = 6,
+                ColumnWidth = "42%"
+            }
+        },
+        DataLabels = new DataLabels
+        {
+            Enabled = false
+        },
+        Grid = new Grid
+        {
+            BorderColor = "rgba(255,255,255,0.10)",
+            StrokeDashArray = 4,
+            Padding = new Padding
+            {
+                Left = 8,
+                Right = 12
+            }
+        },
+        Legend = new Legend
+        {
+            Show = false
+        },
+        Tooltip = new Tooltip
+        {
+            Enabled = true
+        },
+        Xaxis = new XAxis
+        {
+            Labels = new XAxisLabels
+            {
+                Style = new AxisLabelStyle
+                {
+                    Colors = "#B7C6DE",
+                    FontSize = "12px"
+                }
+            },
+            AxisBorder = new AxisBorder
+            {
+                Show = false
+            },
+            AxisTicks = new AxisTicks
+            {
+                Show = false
+            }
+        },
+        Yaxis = new List<YAxis>
+        {
+            new()
+            {
+                Min = 0,
+                ForceNiceScale = true,
+                Labels = new YAxisLabels
+                {
+                    Style = new AxisLabelStyle
+                    {
+                        Colors = "#B7C6DE",
+                        FontSize = "12px"
+                    }
+                }
+            }
+        }
+    };
 }

@@ -1,3 +1,4 @@
+using ApexCharts;
 using KnowledgeAssistant.Application.Services.Infrastructure;
 using KnowledgeAssistant.UI.Components;
 using KnowledgeAssistant.UI.Helpers;
@@ -12,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddApexCharts();
 builder.Services.AddMudServices(config =>
 {
     config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;
