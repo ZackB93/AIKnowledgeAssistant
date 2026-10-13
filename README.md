@@ -386,8 +386,6 @@ Contains automated tests covering important application behaviour across control
 
 <div align="center">
 
-N/A
-
 <img src="screenshots/admin_notifications.png" alt="Notifications" width="850">
 <img src="screenshots/admin_notification_details.png" alt="Notifications" width="850">
 <img src="screenshots/admin_notification_recipients.png" alt="Notifications" width="850">
