@@ -13,8 +13,8 @@ namespace KnowledgeAssistant.Application.Services.Communication
         Task<NotificationResponse> SendNotificationAsync(CreateNotificationRequest request, CancellationToken ct);
         Task<NotificationResponse?> GetNotificationByIdAsync(int notificationId, CancellationToken ct);
         Task<PaginatedResponse<NotificationUserSummaryResponse>> GetNotificationsByUserIdAsync(int userId, int pageNumber, int pageSize, CancellationToken ct);
-        Task<List<NotificationRecipientResponse>> GetNotificationRecipientsAsync(int notificationId, CancellationToken ct);
         Task<PaginatedResponse<NotificationSummaryResponse>> GetNotificationsAsync(int pageNumber, int pageSize, CancellationToken ct);
+        Task<PaginatedResponse<NotificationRecipientResponse>> GetRecipientsAsync(int notificationId, int pageNumber, int pageSize, CancellationToken ct);
         Task<PaginatedResponse<NotificationSummaryResponse>> SearchNotificationsAsync(string searchTerm, int pageNumber, int pageSize, CancellationToken ct);
     }
 
@@ -115,9 +115,21 @@ namespace KnowledgeAssistant.Application.Services.Communication
             };
         }
 
-        public async Task<List<NotificationRecipientResponse>> GetNotificationRecipientsAsync(int notificationId, CancellationToken ct)
+        public async Task<PaginatedResponse<NotificationRecipientResponse>> GetRecipientsAsync(int notificationId, int pageNumber, int pageSize, CancellationToken ct)
         {
-            return await _notificationRepository.GetRecipientsResponseAsync(notificationId, ct);
+            var (pageNumberValid, pageSizeValid) = NormalizePagination(pageNumber, pageSize);
+
+            var (items, totalCount) = await _notificationRepository.GetRecipientsPaginatedAsync(notificationId, pageNumberValid, pageSizeValid, ct);
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSizeValid);
+
+            return new PaginatedResponse<NotificationRecipientResponse>
+            {
+                Items = items,
+                PageNumber = pageNumberValid,
+                PageSize = pageSizeValid,
+                TotalCount = totalCount,
+                TotalPages = totalPages
+            };
         }
 
         public async Task<PaginatedResponse<NotificationSummaryResponse>> GetNotificationsAsync(int pageNumber, int pageSize, CancellationToken ct)

@@ -82,24 +82,6 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                 .FirstOrDefaultAsync(x => x.Id == notificationId, ct);
         }
 
-        public async Task<List<NotificationRecipientResponse>> GetRecipientsResponseAsync(int notificationId, CancellationToken ct)
-        {
-            return await _context.NotificationRecipients
-                .AsNoTracking()
-                .Where(x => x.NotificationId == notificationId)
-                .Select(x => new NotificationRecipientResponse
-                {
-                    Id = x.Id,
-                    NotificationId = x.NotificationId,
-                    UserId = x.UserId,
-                    IsRead = x.IsRead,
-                    ReadAt = x.ReadAt,
-                    UserName = x.User.FirstName + " " + x.User.LastName,
-                    DeliveredAt = x.DeliveredAt
-                })
-                .ToListAsync(ct);
-        }
-
         public async Task<NotificationResponse?> GetResponseByIdAsync(int notificationId, CancellationToken ct)
         {
             return await _context.Notifications
@@ -142,6 +124,51 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
         }
 
         public async Task<(List<NotificationSummaryResponse> items, int totalCount)> GetPaginatedAsync(int pageNumber, int pageSize, CancellationToken ct)
+        {
+            var totalCount = await _context.Notifications.CountAsync(ct);
+
+            var items = await _context.Notifications
+                .AsNoTracking()
+                .OrderBy(x => x.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => new NotificationSummaryResponse
+                {
+                    Id = x.Id,
+                })
+                .ToListAsync(ct);
+
+            return (items, totalCount);
+        }
+
+        public async Task<(List<NotificationRecipientResponse> items, int totalCount)> GetRecipientsPaginatedAsync(int notificationId, int pageNumber, int pageSize, CancellationToken ct)
+        {
+            var query = _context.NotificationRecipients
+                .AsNoTracking()
+                .Where(r => r.NotificationId == notificationId);
+
+            var totalCount = await query.CountAsync(ct);
+
+            var items = await query
+                .OrderByDescending(r => r.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(r => new NotificationRecipientResponse
+                {
+                    Id = r.Id,
+                    NotificationId = r.NotificationId,
+                    UserId = r.UserId,
+                    IsRead = r.IsRead,
+                    ReadAt = r.ReadAt,
+                    UserName = r.User.FirstName + " " + r.User.LastName,
+                    DeliveredAt = r.DeliveredAt
+                })
+                .ToListAsync(ct);
+
+            return (items, totalCount);
+        }
+
+        public async Task<(List<NotificationSummaryResponse> items, int totalCount)> GetRPaginatedAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
             var totalCount = await _context.Notifications.CountAsync(ct);
 

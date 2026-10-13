@@ -5,20 +5,23 @@
 @implements IDisposable
 
 <MudContainer MaxWidth="MaxWidth.Medium">
-    <MudPaper Class="pa-4 glass-card">
+    <MudPaper Class="pa-4 glass-card" Style=@(FromView == ViewType.NotificationsPage ? "border: none;" : string.Empty)>
 
-        <MudText Typo="Typo.h5" Class="mb-2">System Users</MudText>
+        @if(FromView == ViewType.UsersPage)
+        {
+            <MudText Typo="Typo.h5" Class="mb-2">System Users</MudText>
 
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   FullWidth="false"
-                   StartIcon="@Icons.Material.Filled.AddCircle"
-                   Size="Size.Small"
-                   OnClick="() => ToggleUserModal(new(){ Id = -1})"
-                   Class="mb-2">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       FullWidth="false"
+                       StartIcon="@Icons.Material.Filled.AddCircle"
+                       Size="Size.Small"
+                       OnClick="() => ToggleUserModal(new(){ Id = -1 })"
+                       Class="mb-2">
 
-            <MudText>Add New User</MudText>
-        </MudButton>
+                <MudText>Add New User</MudText>
+            </MudButton>
+        }
 
         <MudStack Row="true" Spacing="1" Class="mb-2">
             <MudTextField T="string"
@@ -68,15 +71,28 @@
                 <MudTd DataLabel="Email">@context.Email</MudTd>
                 <MudTd DataLabel="Enabled">@context.Enabled</MudTd>
                 <MudTd>
-                    <MudButton Variant="Variant.Outlined"
-                               Color="Color.Primary"
-                               FullWidth="false"
-                               StartIcon="@Icons.Material.Filled.Edit"
-                               OnClick="() => ToggleUserModal(context)"
-                               Size="Size.Small">
+                    @if(FromView == ViewType.UsersPage)
+                    {
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Edit"
+                                   OnClick="() => ToggleUserModal(context)"
+                                   Size="Size.Small">
 
-                        <MudText>Edit</MudText>
-                    </MudButton>
+                            <MudText>Edit</MudText>
+                        </MudButton>
+                    }
+                    else
+                    {
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   StartIcon="@(context.Selected ? Icons.Material.Filled.Check : Icons.Material.Filled.FrontHand)"
+                                   OnClick="() => context.Selected ? UnselectUser(context) : SelectUser(context)"
+                                   Size="Size.Small">
+
+                            <MudText>@(context.Selected ? "Selected" : "Select")</MudText>
+                        </MudButton>
+                    }
                 </MudTd>
             </RowTemplate>
 
@@ -112,7 +128,7 @@
 </Modal>
 
 @code
-{
+    {
     [Inject]
     private IHttpService HttpService { get; set; } = null!;
 
@@ -121,6 +137,12 @@
 
     [Parameter]
     public ViewType FromView { get; set; } = ViewType.UsersPage;
+
+    [Parameter]
+    public EventCallback<int> OnUserSelected { get; set;}
+
+    [Parameter]
+    public EventCallback<int> OnUserUnselected { get; set; }
 
     private MudTable<UserResponse>? Table;
     private UserResponse? SelectedUser;
@@ -209,6 +231,18 @@
     {
         SelectedUser = user;
         UserModalVisible = !UserModalVisible;
+    }
+
+    private async Task SelectUser(UserResponse user)
+    {
+        await OnUserSelected.InvokeAsync(user.Id);
+        user.Selected = true;
+    }
+
+    private async Task UnselectUser(UserResponse user)
+    {
+        await OnUserUnselected.InvokeAsync(user.Id);
+        user.Selected = false;
     }
 
     public void Dispose()

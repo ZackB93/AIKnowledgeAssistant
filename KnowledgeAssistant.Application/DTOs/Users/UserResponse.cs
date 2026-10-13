@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace KnowledgeAssistant.Application.DTOs.Users
 {
@@ -20,5 +21,8 @@ namespace KnowledgeAssistant.Application.DTOs.Users
         public DateTime CreatedDateTime { get; set; }
         public bool IsDeleted { get; set; } = false;
         public List<UserRoleResponse> Roles { get; set; } = new();
+
+        [JsonIgnore]
+        public bool Selected { get; set; } = false; // UI use
     }
 }

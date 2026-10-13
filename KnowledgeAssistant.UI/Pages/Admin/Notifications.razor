@@ -1,5 +1,7 @@
 ﻿@using KnowledgeAssistant.Application.DTOs.API
+@using KnowledgeAssistant.Application.DTOs.Cache
 @using KnowledgeAssistant.Application.DTOs.Notifications
+@using KnowledgeAssistant.UI.Components.User
 
 @page "/admin/notifications"
 @attribute [Authorize(Roles = "Admin")]
@@ -17,6 +19,7 @@
                    FullWidth="false"
                    StartIcon="@Icons.Material.Filled.Send"
                    Size="Size.Small"
+                   OnClick="OpenSendModal"
                    Class="mb-2">
 
             <MudText>Send Notification</MudText>
@@ -59,16 +62,17 @@
                 <MudTh>Created Date</MudTh>
                 <MudTh>Created By</MudTh>
                 <MudTh>Title</MudTh>
+                <MudTh>Status</MudTh>
                 <MudTh>Recipient Count</MudTh>
                 <MudTh>Read Count</MudTh>
-                <MudTh></MudTh>
             </HeaderContent>
 
             <RowTemplate>
-                <MudTd DataLabel="ID">@context.Id</MudTd>  
+                <MudTd DataLabel="ID">@context.Id</MudTd>
                 <MudTd DataLabel="Created Date">@context.CreatedAt.ToString("dd/MM/yyyy hh:mm tt")</MudTd>
                 <MudTd DataLabel="Created By">@context.CreatedByUserName</MudTd>
                 <MudTd DataLabel="Title">@context.Title</MudTd>
+                <MudTd DataLabel="Status">@context.Status</MudTd>
                 <MudTd DataLabel="Recipient Count">@context.RecipientCount</MudTd>
                 <MudTd DataLabel="Read Count">@context.ReadCount</MudTd>
                 <MudTd>
@@ -105,11 +109,168 @@
     </MudPaper>
 </MudContainer>
 
+<Modal @bind-Visible="@(SendModalVisible)"
+       Title="Send Notification"
+       ShowCloseButton="true">
+
+    @if (SelectingRecipients)
+    {
+        <MudStack Spacing="2">
+            <MudButton Variant="Variant.Filled"
+                       Color="@Color.Primary"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.ArrowBack"
+                       OnClick="() => SelectingRecipients = false">
+                Back
+            </MudButton>
+
+            <MudButton Variant="Variant.Filled"
+                       Color="@Color.Primary"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.ArrowBack"
+                       Disabled="@(!SelectedUserIds.Any())"
+                       OnClick="() => SelectingRecipients = false">
+                        Confirm @(SelectedUserIds.Count > 0 ? $"{SelectedUserIds.Count} selection{(SelectedUserIds.Count > 1 ? "s" : string.Empty)}" : string.Empty)
+            </MudButton>
+
+            <Overview OnUserSelected="(user) => HandleUserSelected(user)"
+                      OnUserUnselected="(user) => HandleUserUnselected(user)"
+                      FromView="@UI.Components.User.Overview.ViewType.NotificationsPage" />
+        </MudStack>
+    }
+    else
+    {
+        <MudForm @ref="SendForm" @bind-IsValid="SendFormValid">
+            <MudStack Spacing="2">
+
+                <MudTextField T="string"
+                              @bind-Value="SendTitle"
+                              Label="Title"
+                              Variant="Variant.Outlined"
+                              Required="true"
+                              OnlyValidateIfDirty="true"
+                              RequiredError="Title is required"
+                              MaxLength="200" />
+
+                <MudTextField T="string"
+                              @bind-Value="SendBody"
+                              Label="Message"
+                              Variant="Variant.Outlined"
+                              Lines="5"
+                              Required="true"
+                              OnlyValidateIfDirty="true"
+                              RequiredError="Message is required"
+                              MaxLength="2000" />
+
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.GroupAdd"
+                               OnClick="() => SelectingRecipients = true">
+                        @(SelectedUserIds.Count == 0 ? "Select Recipients" : "Change Recipients")
+                    </MudButton>
+
+                    <MudText Typo="Typo.body2" Color="@(RecipientsError ? Color.Error : Color.Default)">
+                        @(SelectedUserIds.Count == 0
+                            ? "No recipients selected"
+                            : $"{SelectedUserIds.Count} recipient(s) selected")
+                    </MudText>
+                </MudStack>
+
+                <MudStack Row="true" Justify="Justify.FlexEnd">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Send"
+                               Disabled="Sending"
+                               OnClick="SendNotificationAsync">
+                        @(Sending ? "Sending..." : "Send")
+                    </MudButton>
+                </MudStack>
+
+            </MudStack>
+        </MudForm>
+    }
+
+</Modal>
+
 <Modal @bind-Visible="@(NotificationModalVisible)"
        Title="Notification Details"
        ShowCloseButton="true">
 
+    @if (SelectedNotificationError)
+    {
+        
+    }
+    else if(SelectedNotification is null)
+    {
+        <LoadingSpinner />   
+    }
+    else
+    {
+        <MudTabs Elevation="0" Rounded="true" PanelClass="pa-4" @key="SelectedNotification.Id">
 
+            <MudTabPanel Text="Details">
+                <MudStack Spacing="3">
+                    <MudText Typo="Typo.h6">@SelectedNotification.Title</MudText>
+
+                    <MudStack Row="true" Spacing="4" Wrap="Wrap.Wrap">
+                        <MudChip T="string" Size="Size.Small">@SelectedNotification.Status</MudChip>
+                        <MudText Typo="Typo.body2">
+                            Created: @SelectedNotification.CreatedAt.ToString("g")
+                        </MudText>
+                        <MudText Typo="Typo.body2">
+                            Created By: @SelectedNotification.CreatedByUserId
+                        </MudText>
+                        <MudText Typo="Typo.body2">
+                            Recipients: @SelectedNotification.TotalRecipients
+                        </MudText>
+                    </MudStack>
+
+                    <MudDivider />
+
+                    <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">@SelectedNotification.Body</MudText>
+                </MudStack>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Recipients">
+                <MudTable T="NotificationRecipientResponse"
+                          ServerData="LoadRecipients"
+                          Dense="true"
+                          Hover="true"
+                          Elevation="0">
+                    <HeaderContent>
+                        <MudTh>User</MudTh>
+                        <MudTh>Read</MudTh>
+                        <MudTh>Read At</MudTh>
+                        <MudTh>Delivered At</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="User">@context.UserName</MudTd>
+                        <MudTd DataLabel="Read">
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Color="@(context.IsRead ? Color.Success : Color.Default)">
+                                @(context.IsRead ? "Read" : "Unread")
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Read At">@(context.ReadAt?.ToString("g") ?? "-")</MudTd>
+                        <MudTd DataLabel="Delivered At">@context.DeliveredAt.ToString("g")</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText>No recipients found.</MudText>
+                    </NoRecordsContent>
+                    <LoadingContent>
+                        <MudText>Loading...</MudText>
+                    </LoadingContent>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 5, 10, 25 }" />
+                    </PagerContent>
+                </MudTable>
+            </MudTabPanel>
+
+        </MudTabs>
+    }
 
 </Modal>
 
@@ -122,8 +283,20 @@
     private ISnackbar Snackbar { get; set; } = null!;
 
     private MudTable<NotificationSummaryResponse>? Table;
-    private NotificationSummaryResponse? SelectedNotification = null;
+    private NotificationResponse? SelectedNotification = null;
     private bool NotificationModalVisible = false;
+    private bool SendModalVisible = false;
+
+    // Send notification modal state
+    private MudForm? SendForm;
+    private bool SendFormValid;
+    private bool SelectingRecipients;
+    private bool Sending;
+    private bool RecipientsError;
+    private string SendTitle = string.Empty;
+    private string SendBody = string.Empty;
+    private List<int> SelectedUserIds = new();
+    private bool SelectedNotificationError = false;
     private string SearchTerm = string.Empty;
     private CancellationTokenSource? SearchCancellationTokenSource;
 
@@ -167,8 +340,8 @@
         var PageSize = State.PageSize;
 
         var Response = string.IsNullOrWhiteSpace(SearchTerm)
-            ? await HttpService.GetDataAsync($"/Notifications/GetAll?PageNumber={PageNumber}&PageSize={PageSize}", ct: ct)
-            : await HttpService.GetDataAsync($"/Notifications/Search?SearchTerm={Uri.EscapeDataString(SearchTerm)}&PageNumber={PageNumber}&PageSize={PageSize}", ct: ct);
+            ? await HttpService.GetDataAsync($"/Notification/GetAll?pageNumber={PageNumber}&pageSize={PageSize}", ct: ct)
+            : await HttpService.GetDataAsync($"/Notification/Search?searchTerm={Uri.EscapeDataString(SearchTerm)}&pageNumber={PageNumber}&pageSize={PageSize}", ct: ct);
 
         if (Response.IsSuccessful && Response.Data is not null)
         {
@@ -190,6 +363,101 @@
         };
     }
 
+    private async Task<TableData<NotificationRecipientResponse>> LoadRecipients(TableState State, CancellationToken ct)
+    {
+        var PageNumber = State.Page + 1;
+        var PageSize = State.PageSize;
+
+        var Response = await HttpService.GetDataAsync($"/Notification/GetRecipients?notificationId={SelectedNotification!.Id}&pageNumber={PageNumber}&pageSize={PageSize}",ct: ct);
+
+        if (Response.IsSuccessful && Response.Data is not null)
+        {
+            var PaginatedResponse = Response.GetData<PaginatedResponse<NotificationRecipientResponse>>();
+
+            return new TableData<NotificationRecipientResponse>
+            {
+                Items = PaginatedResponse?.Items ?? [],
+                TotalItems = PaginatedResponse?.TotalCount ?? 0
+            };
+        }
+
+        Snackbar.Add("An error has occurred loading notification recipients!", Severity.Error);
+
+        return new TableData<NotificationRecipientResponse>
+        {
+            Items = [],
+            TotalItems = 0
+        };
+    }
+
+    private void OpenSendModal()
+    {
+        SendTitle = string.Empty;
+        SendBody = string.Empty;
+
+        SelectedUserIds = new();
+
+        SelectingRecipients = false;
+        RecipientsError = false;
+        SendModalVisible = true;
+    }
+
+    private void HandleUserSelected(int userId)
+    {
+        SelectedUserIds.Add(userId);
+        RecipientsError = false;
+    }
+
+    private void HandleUserUnselected(int userId)
+    {
+        SelectedUserIds.Remove(userId);
+        RecipientsError = false;
+    }
+
+    private async Task SendNotificationAsync()
+    {
+        await SendForm!.ValidateAsync();
+
+        RecipientsError = SelectedUserIds.Count == 0;
+
+        if (!SendFormValid || RecipientsError)
+        {
+            if (RecipientsError)
+            {
+                Snackbar.Add("Select at least one recipient.", Severity.Warning);
+            }
+            return;
+        }
+
+        Sending = true;
+
+        var request = new CreateNotificationRequest
+        {
+            Title = SendTitle.Trim(),
+            Body = SendBody.Trim(),
+            UserIds = SelectedUserIds
+        };
+
+        var response = await HttpService.PostDataAsync("/Notification/Send", request);
+
+        if (response.IsSuccessful)
+        {
+            Snackbar.Add("Notification sent!", Severity.Success);
+            SendModalVisible = false;
+
+            if (Table is not null)
+            {
+                await Table.ReloadServerData();
+            }
+        }
+        else
+        {
+            Snackbar.Add("An error has occurred sending the notification!", Severity.Error);
+        }
+
+        Sending = false;
+    }
+
     private async Task OnNotificationSaved()
     {
         await Table!.ReloadServerData();
@@ -197,9 +465,26 @@
         SelectedNotification = null;
     }
 
-    private void ToggleNotificationModal(NotificationSummaryResponse? notification)
+    private async Task ToggleNotificationModal(NotificationSummaryResponse? notification)
     {
-        SelectedNotification = notification;
+        SelectedNotificationError = false;
+
+        if(notification is not null)
+        {
+            var cachedData = new Cache() { CacheKey = $"notification:{notification.Id}", CacheTimeMins = 2 };
+            var requestedNotificationResponse = await HttpService.GetDataAsync($"/Notification/GetById?id={notification.Id}", cachedData);
+
+            if(requestedNotificationResponse.IsSuccessful && requestedNotificationResponse.Data is not null)
+            {
+                SelectedNotification = requestedNotificationResponse.GetData<NotificationResponse>();
+            }
+            else
+            {
+                SelectedNotificationError = true;
+                Snackbar.Add("An error has occurred trying to load the notification!", Severity.Error);
+            }
+        }
+
         NotificationModalVisible = !NotificationModalVisible;
     }
 

@@ -90,6 +90,19 @@ namespace KnowledgeAssistant.API.Controllers
             });
         }
 
+        [HttpGet("GetRecipients")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResult>> GetRecipients(int notificationId, int pageNumber, CancellationToken ct, int? pageSize = 10)
+        {
+            var recipients = await _notificationService.GetRecipientsAsync(notificationId, pageNumber, (int)pageSize!, ct);
+
+            return Ok(new ApiResult()
+            {
+                IsSuccessful = true,
+                Data = recipients
+            });
+        }
+
         [HttpGet("Search")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> Search(string searchTerm, int pageNumber, CancellationToken ct, int? pageSize = 10)

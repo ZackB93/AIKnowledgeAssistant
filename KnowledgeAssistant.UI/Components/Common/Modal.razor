@@ -1,7 +1,7 @@
 ﻿@using MudBlazor
 
 <MudOverlay Visible="Visible" DarkBackground="true" ZIndex="9999">
-    <MudPaper Class="modal-container glass-card-modal glass-card" Elevation="25">
+    <MudPaper Class="modal-container glass-card-modal glass-card" Elevation="25" Style=@(!string.IsNullOrEmpty(Width) ? Width : string.Empty)>
         <div class="modal-header">
             <MudText Typo="Typo.h5">@Title</MudText>
             @if (ShowCloseButton)
@@ -44,6 +44,9 @@
 
     [Parameter]
     public RenderFragment? FooterContent { get; set; }
+
+    [Parameter]
+    public string? Width { get; set; } = null;
 
     private async Task Close()
     {

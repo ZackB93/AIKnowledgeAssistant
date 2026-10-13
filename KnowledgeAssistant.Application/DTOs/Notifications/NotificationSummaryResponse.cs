@@ -10,6 +10,7 @@ namespace KnowledgeAssistant.Application.DTOs.Notifications
         public int Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+        public NotificationStatus Status { get; set; }
         public int CreatedByUserId { get; set; }
         public string CreatedByUserName { get; set; } = string.Empty;
         public int RecipientCount { get; set; }
