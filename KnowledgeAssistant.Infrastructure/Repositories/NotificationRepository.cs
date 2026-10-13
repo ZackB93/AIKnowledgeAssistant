@@ -94,6 +94,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     Body = x.Body,
                     CreatedAt = x.CreatedAt,
                     CreatedByUserId = (int)x.CreatedByUserId!,
+                    CreatedByName = x.CreatedByUser.FirstName + " " + x.CreatedByUser.LastName,
                     Status = x.Status,
                     TotalRecipients = x.Recipients.Count()
                 })

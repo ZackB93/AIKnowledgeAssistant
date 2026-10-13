@@ -214,63 +214,72 @@
     else
     {
         <MudTabs Elevation="0" Rounded="true" Class="pa-4" @key="SelectedNotification.Id">
+            <MudTabPanel Text="Details" Icon="@Icons.Material.Filled.Info">
+                <MudPaper Class="pa-4 glass-card" Style="border: none;">
+                    <MudStack Spacing="2" Class="pt-2">
 
-            <MudTabPanel Text="Details" Icon="@Icons.Material.Filled.Details">
-                <MudStack Spacing="3">
+                        <MudTextField T="string"
+                                      Label="Title"
+                                      Value="@SelectedNotification.Title"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      ReadOnly="true" />
 
-                    <MudStack Spacing="1">
-                        <MudText Typo="Typo.h6">@SelectedNotification.Title</MudText>
-                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">
-                            @SelectedNotification.Status
-                        </MudChip>
+                        <MudTextField T="string"
+                                      Label="Status"
+                                      Value="@SelectedNotification.Status.ToString()"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      ReadOnly="true" />
+
+                        <MudTextField T="string"
+                                      Label="Created"
+                                      Value="@SelectedNotification.CreatedAt.ToString("dd/MM/yyyy hh:mm tt")"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      ReadOnly="true" />
+
+                        <MudTextField T="string"
+                                      Label="Created By"
+                                      Value="@SelectedNotification.CreatedByName"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      ReadOnly="true" />
+
+                        <MudTextField T="string"
+                                      Label="Total Recipients"
+                                      Value="@SelectedNotification.TotalRecipients.ToString()"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      ReadOnly="true" />
+
+                        <MudTextField T="string"
+                                      Label="Message"
+                                      Value="@SelectedNotification.Body"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Lines="5"
+                                      ReadOnly="true" />
+
                     </MudStack>
-
-                    <MudDivider />
-
-                    <MudGrid Spacing="2">
-                        <MudItem xs="12" sm="4">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Created</MudText>
-                            <MudText Typo="Typo.body2">
-                                @SelectedNotification.CreatedAt.ToString("dd/MM/yyyy hh:mm tt")
-                            </MudText>
-                        </MudItem>
-
-                        <MudItem xs="12" sm="4">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Created By</MudText>
-                            <MudText Typo="Typo.body2">@SelectedNotification.CreatedByName</MudText>
-                        </MudItem>
-
-                        <MudItem xs="12" sm="4">
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">Recipients</MudText>
-                            <MudText Typo="Typo.body2">@SelectedNotification.TotalRecipients</MudText>
-                        </MudItem>
-                    </MudGrid>
-
-                    <MudDivider />
-
-                    <MudStack Spacing="1">
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">Message</MudText>
-                        <MudPaper Outlined="true" Class="pa-3">
-                            <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">@SelectedNotification.Body</MudText>
-                        </MudPaper>
-                    </MudStack>
-
-                </MudStack>
+                </MudPaper>
             </MudTabPanel>
 
             <MudTabPanel Text="Recipients" Icon="@Icons.Material.Filled.Person">
-                <MudPaper Class="pa-4">
+                <MudPaper Class="pa-4 glass-card" Style="border: none;">
                     <MudTable T="NotificationRecipientResponse"
                               ServerData="LoadRecipients"
                               Dense="true"
                               Hover="true"
                               Elevation="0">
+
                         <HeaderContent>
                             <MudTh>User</MudTh>
                             <MudTh>Read</MudTh>
                             <MudTh>Read At</MudTh>
                             <MudTh>Delivered At</MudTh>
                         </HeaderContent>
+
                         <RowTemplate>
                             <MudTd DataLabel="User">@context.UserName</MudTd>
                             <MudTd DataLabel="Read">
@@ -283,12 +292,15 @@
                             <MudTd DataLabel="Read At">@(context.ReadAt?.ToString("g") ?? "-")</MudTd>
                             <MudTd DataLabel="Delivered At">@context.DeliveredAt.ToString("g")</MudTd>
                         </RowTemplate>
+
                         <NoRecordsContent>
                             <MudText>No recipients found.</MudText>
                         </NoRecordsContent>
+
                         <LoadingContent>
                             <MudText>Loading...</MudText>
                         </LoadingContent>
+
                         <PagerContent>
                             <MudTablePager PageSizeOptions="new int[] { 5, 10, 25 }" />
                         </PagerContent>
