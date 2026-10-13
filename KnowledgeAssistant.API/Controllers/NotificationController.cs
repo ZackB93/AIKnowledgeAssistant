@@ -3,6 +3,7 @@ using KnowledgeAssistant.Application.DTOs.Notifications;
 using KnowledgeAssistant.Application.Services.Communication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace KnowledgeAssistant.API.Controllers
 {
@@ -61,6 +62,26 @@ namespace KnowledgeAssistant.API.Controllers
             {
                 IsSuccessful = true,
                 Data = notification
+            });
+        }
+
+        [HttpGet("GetUnreadCount")]
+        [Authorize]
+        public async Task<ActionResult<ApiResult>> GetNotificationUnreadCount(CancellationToken ct)
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var countResponse = await _notificationService.GetUnreadNotificationsCountByUserIdAsync(userId, ct);
+
+            return Ok(new ApiResult()
+            {
+                IsSuccessful = true,
+                Data = countResponse
             });
         }
 

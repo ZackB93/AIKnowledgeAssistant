@@ -1,4 +1,5 @@
-﻿using KnowledgeAssistant.Application.DTOs.API;
+﻿using DocumentFormat.OpenXml.Office2010.PowerPoint;
+using KnowledgeAssistant.Application.DTOs.API;
 using KnowledgeAssistant.Application.DTOs.Notifications;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
 using KnowledgeAssistant.Application.Services.Infrastructure;
@@ -16,6 +17,7 @@ namespace KnowledgeAssistant.Application.Services.Communication
         Task<PaginatedResponse<NotificationSummaryResponse>> GetNotificationsAsync(int pageNumber, int pageSize, CancellationToken ct);
         Task<PaginatedResponse<NotificationRecipientResponse>> GetRecipientsAsync(int notificationId, int pageNumber, int pageSize, CancellationToken ct);
         Task<PaginatedResponse<NotificationSummaryResponse>> SearchNotificationsAsync(string searchTerm, int pageNumber, int pageSize, CancellationToken ct);
+        Task<NotificationCountResponse> GetUnreadNotificationsCountByUserIdAsync(int userId, CancellationToken ct);
     }
 
     public class NotificationService : INotificationService
@@ -32,7 +34,6 @@ namespace KnowledgeAssistant.Application.Services.Communication
             _notificationRepository = notificationRepository;
             _rabbitMQService = rabbitMQService;
             _rabbitMQEnabled = configuration.GetValue<bool>("RabbitMQ:Enabled");
-
         }
 
         public async Task<NotificationResponse> SendNotificationAsync(CreateNotificationRequest request, CancellationToken ct)
@@ -113,6 +114,11 @@ namespace KnowledgeAssistant.Application.Services.Communication
                 TotalCount = totalCount,
                 TotalPages = totalPages
             };
+        }
+
+        public async Task<NotificationCountResponse> GetUnreadNotificationsCountByUserIdAsync(int userId, CancellationToken ct)
+        {
+            return await _notificationRepository.GetUnreadNotificationCountByUserId(userId, ct);
         }
 
         public async Task<PaginatedResponse<NotificationRecipientResponse>> GetRecipientsAsync(int notificationId, int pageNumber, int pageSize, CancellationToken ct)

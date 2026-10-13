@@ -82,6 +82,18 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                 .FirstOrDefaultAsync(x => x.Id == notificationId, ct);
         }
 
+        public async Task<NotificationCountResponse> GetUnreadNotificationCountByUserId(int userId, CancellationToken ct)
+        {
+            var unreadCount = await _context.NotificationRecipients
+              .AsNoTracking()
+              .CountAsync(r => r.UserId == userId && !r.IsRead, ct);
+
+            return new NotificationCountResponse
+            {
+                Count = unreadCount
+            };
+        }
+
         public async Task<NotificationResponse?> GetResponseByIdAsync(int notificationId, CancellationToken ct)
         {
             return await _context.Notifications
