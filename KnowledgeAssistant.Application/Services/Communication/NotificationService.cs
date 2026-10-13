@@ -45,7 +45,7 @@ namespace KnowledgeAssistant.Application.Services.Communication
                 Body = request.Body,
                 CreatedAt = DateTime.UtcNow,
                 CreatedByUserId = request.CreatedByUserId,
-                Status = userIds.Count == 0 ? NotificationStatus.Completed : NotificationStatus.Queued,
+                Status = NotificationStatus.Queued,
                 TotalRecipients = userIds.Count
             };
 

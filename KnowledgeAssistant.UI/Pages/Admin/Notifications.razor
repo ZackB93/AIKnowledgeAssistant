@@ -1,7 +1,9 @@
-﻿@using KnowledgeAssistant.Application.DTOs.API
+﻿@using System.Security.Claims
+@using KnowledgeAssistant.Application.DTOs.API
 @using KnowledgeAssistant.Application.DTOs.Cache
 @using KnowledgeAssistant.Application.DTOs.Notifications
 @using KnowledgeAssistant.UI.Components.User
+@using Microsoft.AspNetCore.Components.Authorization
 
 @page "/admin/notifications"
 @attribute [Authorize(Roles = "Admin")]
@@ -65,6 +67,7 @@
                 <MudTh>Status</MudTh>
                 <MudTh>Recipient Count</MudTh>
                 <MudTh>Read Count</MudTh>
+                <MudTh></MudTh>
             </HeaderContent>
 
             <RowTemplate>
@@ -148,6 +151,7 @@
                               Label="Title"
                               Variant="Variant.Outlined"
                               Required="true"
+                              Placeholder="Enter title"
                               OnlyValidateIfDirty="true"
                               RequiredError="Title is required"
                               MaxLength="200" />
@@ -158,6 +162,7 @@
                               Variant="Variant.Outlined"
                               Lines="5"
                               Required="true"
+                              Placeholder="Enter body"
                               OnlyValidateIfDirty="true"
                               RequiredError="Message is required"
                               MaxLength="2000" />
@@ -208,67 +213,88 @@
     }
     else
     {
-        <MudTabs Elevation="0" Rounded="true" PanelClass="pa-4" @key="SelectedNotification.Id">
+        <MudTabs Elevation="0" Rounded="true" Class="pa-4" @key="SelectedNotification.Id">
 
-            <MudTabPanel Text="Details">
+            <MudTabPanel Text="Details" Icon="@Icons.Material.Filled.Details">
                 <MudStack Spacing="3">
-                    <MudText Typo="Typo.h6">@SelectedNotification.Title</MudText>
 
-                    <MudStack Row="true" Spacing="4" Wrap="Wrap.Wrap">
-                        <MudChip T="string" Size="Size.Small">@SelectedNotification.Status</MudChip>
-                        <MudText Typo="Typo.body2">
-                            Created: @SelectedNotification.CreatedAt.ToString("g")
-                        </MudText>
-                        <MudText Typo="Typo.body2">
-                            Created By: @SelectedNotification.CreatedByUserId
-                        </MudText>
-                        <MudText Typo="Typo.body2">
-                            Recipients: @SelectedNotification.TotalRecipients
-                        </MudText>
+                    <MudStack Spacing="1">
+                        <MudText Typo="Typo.h6">@SelectedNotification.Title</MudText>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">
+                            @SelectedNotification.Status
+                        </MudChip>
                     </MudStack>
 
                     <MudDivider />
 
-                    <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">@SelectedNotification.Body</MudText>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="4">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Created</MudText>
+                            <MudText Typo="Typo.body2">
+                                @SelectedNotification.CreatedAt.ToString("dd/MM/yyyy hh:mm tt")
+                            </MudText>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="4">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Created By</MudText>
+                            <MudText Typo="Typo.body2">@SelectedNotification.CreatedByName</MudText>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="4">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Recipients</MudText>
+                            <MudText Typo="Typo.body2">@SelectedNotification.TotalRecipients</MudText>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudDivider />
+
+                    <MudStack Spacing="1">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Message</MudText>
+                        <MudPaper Outlined="true" Class="pa-3">
+                            <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">@SelectedNotification.Body</MudText>
+                        </MudPaper>
+                    </MudStack>
+
                 </MudStack>
             </MudTabPanel>
 
-            <MudTabPanel Text="Recipients">
-                <MudTable T="NotificationRecipientResponse"
-                          ServerData="LoadRecipients"
-                          Dense="true"
-                          Hover="true"
-                          Elevation="0">
-                    <HeaderContent>
-                        <MudTh>User</MudTh>
-                        <MudTh>Read</MudTh>
-                        <MudTh>Read At</MudTh>
-                        <MudTh>Delivered At</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="User">@context.UserName</MudTd>
-                        <MudTd DataLabel="Read">
-                            <MudChip T="string"
-                                     Size="Size.Small"
-                                     Color="@(context.IsRead ? Color.Success : Color.Default)">
-                                @(context.IsRead ? "Read" : "Unread")
-                            </MudChip>
-                        </MudTd>
-                        <MudTd DataLabel="Read At">@(context.ReadAt?.ToString("g") ?? "-")</MudTd>
-                        <MudTd DataLabel="Delivered At">@context.DeliveredAt.ToString("g")</MudTd>
-                    </RowTemplate>
-                    <NoRecordsContent>
-                        <MudText>No recipients found.</MudText>
-                    </NoRecordsContent>
-                    <LoadingContent>
-                        <MudText>Loading...</MudText>
-                    </LoadingContent>
-                    <PagerContent>
-                        <MudTablePager PageSizeOptions="new int[] { 5, 10, 25 }" />
-                    </PagerContent>
-                </MudTable>
+            <MudTabPanel Text="Recipients" Icon="@Icons.Material.Filled.Person">
+                <MudPaper Class="pa-4">
+                    <MudTable T="NotificationRecipientResponse"
+                              ServerData="LoadRecipients"
+                              Dense="true"
+                              Hover="true"
+                              Elevation="0">
+                        <HeaderContent>
+                            <MudTh>User</MudTh>
+                            <MudTh>Read</MudTh>
+                            <MudTh>Read At</MudTh>
+                            <MudTh>Delivered At</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="User">@context.UserName</MudTd>
+                            <MudTd DataLabel="Read">
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Color="@(context.IsRead ? Color.Success : Color.Error)">
+                                    @(context.IsRead ? "Read" : "Unread")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Read At">@(context.ReadAt?.ToString("g") ?? "-")</MudTd>
+                            <MudTd DataLabel="Delivered At">@context.DeliveredAt.ToString("g")</MudTd>
+                        </RowTemplate>
+                        <NoRecordsContent>
+                            <MudText>No recipients found.</MudText>
+                        </NoRecordsContent>
+                        <LoadingContent>
+                            <MudText>Loading...</MudText>
+                        </LoadingContent>
+                        <PagerContent>
+                            <MudTablePager PageSizeOptions="new int[] { 5, 10, 25 }" />
+                        </PagerContent>
+                    </MudTable>
+                </MudPaper>
             </MudTabPanel>
-
         </MudTabs>
     }
 
@@ -282,23 +308,36 @@
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
 
+    [Inject]
+    private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
+
     private MudTable<NotificationSummaryResponse>? Table;
     private NotificationResponse? SelectedNotification = null;
+    private MudForm? SendForm;
+
     private bool NotificationModalVisible = false;
     private bool SendModalVisible = false;
-
-    // Send notification modal state
-    private MudForm? SendForm;
     private bool SendFormValid;
     private bool SelectingRecipients;
     private bool Sending;
     private bool RecipientsError;
+    private bool SelectedNotificationError = false;
+
     private string SendTitle = string.Empty;
     private string SendBody = string.Empty;
-    private List<int> SelectedUserIds = new();
-    private bool SelectedNotificationError = false;
     private string SearchTerm = string.Empty;
+    private List<int> SelectedUserIds = new();
+    private int UserId;
     private CancellationTokenSource? SearchCancellationTokenSource;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        UserId = Convert.ToInt32(user.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+    }
 
     private async Task SearchTermChanged(string Value)
     {
@@ -435,7 +474,8 @@
         {
             Title = SendTitle.Trim(),
             Body = SendBody.Trim(),
-            UserIds = SelectedUserIds
+            UserIds = SelectedUserIds,
+            CreatedByUserId = UserId         
         };
 
         var response = await HttpService.PostDataAsync("/Notification/Send", request);

@@ -90,6 +90,12 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                 .Select(x => new NotificationResponse
                 {
                     Id = x.Id,
+                    Title = x.Title,
+                    Body = x.Body,
+                    CreatedAt = x.CreatedAt,
+                    CreatedByUserId = (int)x.CreatedByUserId!,
+                    Status = x.Status,
+                    TotalRecipients = x.Recipients.Count()
                 })
                 .FirstOrDefaultAsync(ct);
         }
@@ -128,15 +134,22 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
             var totalCount = await _context.Notifications.CountAsync(ct);
 
             var items = await _context.Notifications
-                .AsNoTracking()
-                .OrderBy(x => x.Id)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .Select(x => new NotificationSummaryResponse
-                {
-                    Id = x.Id,
-                })
-                .ToListAsync(ct);
+                   .AsNoTracking()
+                   .OrderByDescending(x => x.CreatedAt)
+                   .ThenByDescending(x => x.Id)
+                   .Skip((pageNumber - 1) * pageSize)
+                   .Take(pageSize)
+                   .Select(x => new NotificationSummaryResponse
+                   {
+                       Id = x.Id,
+                       Title = x.Title,
+                       CreatedAt = x.CreatedAt,
+                       Status = x.Status,
+                       CreatedByUserName = $"{x.CreatedByUser.FirstName} {x.CreatedByUser.LastName}",
+                       RecipientCount = x.Recipients.Count(),
+                       ReadCount = x.Recipients.Count(r => r.IsRead)
+                   })
+                   .ToListAsync(ct);
 
             return (items, totalCount);
         }

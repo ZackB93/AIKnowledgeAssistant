@@ -38,11 +38,11 @@ namespace KnowledgeAssistant.API.Controllers
                 Message = "Notification sent successfully."
             };
 
-            return CreatedAtAction(nameof(GetNotificationById), new { id = notification.Id }, result);
+            return Ok(result);
         }
 
 
-        [HttpGet("GetById/{Id}")]
+        [HttpGet("GetById")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> GetNotificationById(int id, CancellationToken ct)
         {
@@ -64,7 +64,7 @@ namespace KnowledgeAssistant.API.Controllers
             });
         }
 
-        [HttpGet("GetByUserId/{Id}")]
+        [HttpGet("GetByUserId")]
         [Authorize]
         public async Task<ActionResult<ApiResult>> GetNotificationsByUserId(int userId, int pageNumber, CancellationToken ct, int? pageSize = 10)
         {
