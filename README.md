@@ -396,6 +396,8 @@ Contains automated tests covering important application behaviour across control
 <p>User</p>
 <img src="screenshots/user_notifications.png" alt="Notifications" width="850">
 <img src="screenshots/user_notification_read.png" alt="Notifications" width="850">
+
+</div>
 ---
 
 ## 06 · Features
