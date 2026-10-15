@@ -130,7 +130,7 @@
             <MudButton Variant="Variant.Filled"
                        Color="@Color.Primary"
                        Size="Size.Small"
-                       StartIcon="@Icons.Material.Filled.ArrowBack"
+                       StartIcon="@Icons.Material.Filled.Check"
                        Disabled="@(!SelectedUserIds.Any())"
                        OnClick="() => SelectingRecipients = false">
                         Confirm @(SelectedUserIds.Count > 0 ? $"{SelectedUserIds.Count} selection{(SelectedUserIds.Count > 1 ? "s" : string.Empty)}" : string.Empty)

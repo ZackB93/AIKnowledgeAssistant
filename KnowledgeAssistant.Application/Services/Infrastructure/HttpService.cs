@@ -51,7 +51,7 @@ namespace KnowledgeAssistant.Application.Services.Infrastructure
                 {
                     if (TokenExpired())
                     {
-                        _navigationManager.NavigateTo($"/signin?error=Session+expired&returnUrl={Uri.EscapeDataString(_navigationManager.Uri)}");
+                        _navigationManager.NavigateTo($"/signin?error=Session+expired&returnUrl={Uri.EscapeDataString(_navigationManager.Uri)}", forceLoad: true);
                     }
 
                     Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);

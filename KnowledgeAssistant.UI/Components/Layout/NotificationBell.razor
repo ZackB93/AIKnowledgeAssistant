@@ -1,0 +1,112 @@
+﻿@using KnowledgeAssistant.Application.DTOs.Notifications
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.SignalR.Client
+@using MudBlazor
+
+@implements IAsyncDisposable
+
+<MudBadge Content="@UnreadCount"
+          Visible="@(UnreadCount > 0)"
+          Color="Color.Error"
+          Overlap="true">
+
+    <MudIconButton Icon="@Icons.Material.Filled.NotificationsNone"
+                   Color="Color.Inherit"
+                   Class="ml-2"
+                   OnClick="ToggleNotifications" />
+</MudBadge>
+
+@code {
+
+    [Inject]
+    private IConfiguration Configuration {get; set;} = null!;
+
+    [Inject]
+    private IHttpService HttpService { get; set; } = null!;
+
+    [Inject]
+    private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
+
+    private bool NotificationPopupVisible = false;
+    private HubConnection? _hubConnection;
+    private int UnreadCount;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ConnectToNotificationHubAsync();
+        }
+    }
+
+    private async Task ConnectToNotificationHubAsync()
+    {
+        var apiBaseUrl = Configuration["ApiSettings:ExternalClientUrl"]!;
+
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl($"{apiBaseUrl}hubs/notifications", options =>
+            {
+                options.AccessTokenProvider = async () =>
+                {
+                    var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+                    return authState.User.FindFirst("access_token")?.Value;
+                };
+            })
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hubConnection.On<int>("UnreadCountUpdated", async count =>
+        {
+            await InvokeAsync(() =>
+            {
+                UnreadCount = count;
+                StateHasChanged();
+            });
+        });
+
+        _hubConnection.Reconnected += async _ =>
+        {
+            await LoadUnreadCountAsync();
+        };
+
+        try
+        {
+            await _hubConnection.StartAsync();
+        }
+        catch(Exception ex)
+        {
+            throw ex;
+        }
+
+        await LoadUnreadCountAsync();
+
+    }
+
+    private async Task LoadUnreadCountAsync()
+    {
+        var response = await HttpService.GetDataAsync("/Notification/GetUnreadCount");
+        if (response.IsSuccessful == true && response.Data is not null)
+        {
+            var data = response.GetData<NotificationCountResponse>() ?? new();
+
+            await InvokeAsync(() =>
+            {
+                UnreadCount = data.Count;
+                StateHasChanged();
+            });
+        }
+    }
+
+    private void ToggleNotifications()
+    {
+        NotificationPopupVisible = !NotificationPopupVisible;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hubConnection is not null)
+        {
+            await _hubConnection.DisposeAsync();
+        }
+    }
+}

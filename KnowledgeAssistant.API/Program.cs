@@ -1,6 +1,7 @@
 using CallRatingService.API.Middleware;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using KnowledgeAssistant.API.Hubs;
 using KnowledgeAssistant.Application.Handlers;
+using KnowledgeAssistant.Application.Interfaces.Hubs;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
 using KnowledgeAssistant.Application.Services.Auditing;
 using KnowledgeAssistant.Application.Services.Communication;
@@ -51,6 +52,21 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(key),
         ClockSkew = TimeSpan.Zero
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            if (!string.IsNullOrEmpty(accessToken) && context.HttpContext.Request.Path.StartsWithSegments("/hubs/notifications"))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -128,6 +144,7 @@ builder.Services.AddOpenApi(options =>
     });
 });
 
+builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
@@ -153,6 +170,7 @@ builder.Services.AddScoped<IActivityAuditService, ActivityAuditService>();
 builder.Services.AddScoped<ActivityAuditInterceptor>();
 builder.Services.AddScoped<IMessageHandler<SendEmailMessage>, SendEmailHandler>();
 builder.Services.AddScoped<IMessageHandler<InsertRecipientsChunkMessage>, InsertRecipientsChunkHandler>();
+builder.Services.AddScoped<INotificationRealtimeNotifier, NotificationRealtimeNotifier>();
 
 builder.Services.AddSingleton<IResend>(ResendClient.Create(builder.Configuration["Resend:Key"]!));
 builder.Services.AddHostedService<RabbitMQBackgroundService>();
@@ -178,15 +196,25 @@ builder.Services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(ser
 
 var app = builder.Build();
 
-app.UseOutputCache();
-app.UseRateLimiter();
 app.UseExceptionHandler();
+
 app.UseHttpsRedirection();
-app.MapOpenApi();
-app.MapScalarApiReference();
-app.MapGet("/", () => Results.Redirect("/scalar/v1")).ExcludeFromDescription();
-app.MapHealthChecks("/health");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseOutputCache();
+app.UseRateLimiter();
+
+app.MapOpenApi();
+app.MapScalarApiReference();
+
+app.MapGet("/", () => Results.Redirect("/scalar/v1"))
+    .ExcludeFromDescription();
+
+app.MapHealthChecks("/health");
+
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
+
 app.Run();
