@@ -87,6 +87,7 @@ From the solution directory:
 dotnet ef database update --project KnowledgeAssistant.Infrastructure --startup-project KnowledgeAssistant.API
 ```
 Make sure the connection string in the appsettings.json is pointing to your SQL server express path and the 'KnowledgeDatabase'.
+
 ### 3. Run
 
 Start the application from Visual Studio.
