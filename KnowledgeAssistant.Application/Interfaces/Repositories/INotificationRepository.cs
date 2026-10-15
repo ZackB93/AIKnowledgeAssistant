@@ -7,8 +7,9 @@ namespace KnowledgeAssistant.Application.Interfaces.Repositories
     {
         Task AddAsync(Notification notification, CancellationToken ct);
         Task<bool> SetReadAsync(int notificationId, int userId, CancellationToken ct);
-        Task<int> AddRecipientsChunkAsync(int notificationId, IReadOnlyCollection<int> userIds, CancellationToken ct);
+        Task<List<int>> AddRecipientsChunkAsync(int notificationId, IReadOnlyCollection<int> userIds, CancellationToken ct);
         Task<Notification?> GetByIdAsync(int notificationId, CancellationToken ct);
+        Task<Dictionary<int, int>> GetUnreadCountsByUserIdsAsync(IReadOnlyCollection<int> userIds, CancellationToken ct);
         Task<(List<NotificationRecipientResponse> items, int totalCount)> GetRecipientsPaginatedAsync(int notificationId, int pageNumber, int pageSize, CancellationToken ct);
         Task<NotificationCountResponse> GetUnreadNotificationCountByUserId(int userId, CancellationToken ct);
         Task<NotificationResponse?> GetResponseByIdAsync(int notificationId, CancellationToken ct);

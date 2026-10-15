@@ -39,7 +39,17 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
             return true;
         }
 
-        public async Task<int> AddRecipientsChunkAsync(int notificationId, IReadOnlyCollection<int> userIds, CancellationToken ct)
+        public async Task<Dictionary<int, int>> GetUnreadCountsByUserIdsAsync(IReadOnlyCollection<int> userIds, CancellationToken ct)
+        {
+            return await _context.NotificationRecipients
+                .AsNoTracking()
+                .Where(r => userIds.Contains(r.UserId) && !r.IsRead)
+                .GroupBy(r => r.UserId)
+                .Select(g => new { UserId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.UserId, x => x.Count, ct);
+        }
+
+        public async Task<List<int>> AddRecipientsChunkAsync(int notificationId, IReadOnlyCollection<int> userIds, CancellationToken ct)
         {
             var strategy = _context.Database.CreateExecutionStrategy();
 
@@ -90,7 +100,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                 // Detach so a long-lived/scoped context doesn't keep 1000 tracked entities around
                 _context.ChangeTracker.Clear();
 
-                return newRows.Count;
+                return newRows.Select(r => r.UserId).ToList();
             });
         }
 
