@@ -11,7 +11,7 @@ namespace KnowledgeAssistant.Application.Services.Infrastructure
     public interface IHttpService
     {
         Task<ApiResult> GetDataAsync(string Endpoint, Cache? CacheData = null, CancellationToken ct = default);
-        Task<ApiResult> PostDataAsync<TRequest>(string Endpoint, TRequest Payload, CancellationToken ct = default);
+        Task<ApiResult> PostDataAsync<TRequest>(string Endpoint, TRequest? Payload, CancellationToken ct = default);
         Task<ApiResult> PostFileAsync(string url, MultipartFormDataContent content, CancellationToken ct = default);
     }
 
@@ -87,7 +87,7 @@ namespace KnowledgeAssistant.Application.Services.Infrastructure
             }
         }
 
-        public async Task<ApiResult> PostDataAsync<TRequest>(string Endpoint, TRequest Payload, CancellationToken ct = default)
+        public async Task<ApiResult> PostDataAsync<TRequest>(string Endpoint, TRequest? Payload, CancellationToken ct = default)
         {
             try
             {

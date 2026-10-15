@@ -21,6 +21,24 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
             await _context.Notifications.AddAsync(notification, ct);
         }
 
+        public async Task<bool> SetReadAsync(int notificationId, int userId, CancellationToken ct)
+        {
+            var notificationRecipient = await _context.NotificationRecipients
+                .FirstOrDefaultAsync(r => r.UserId == userId && r.NotificationId == notificationId, ct);
+
+            if(notificationRecipient is null || notificationRecipient.IsRead)
+            {
+                return false;
+            }
+
+            notificationRecipient.IsRead = true;
+            notificationRecipient.ReadAt = DateTime.UtcNow;
+
+            await SaveChangesAsync(ct);
+
+            return true;
+        }
+
         public async Task<int> AddRecipientsChunkAsync(int notificationId, IReadOnlyCollection<int> userIds, CancellationToken ct)
         {
             var strategy = _context.Database.CreateExecutionStrategy();

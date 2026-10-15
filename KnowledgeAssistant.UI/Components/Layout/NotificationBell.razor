@@ -1,4 +1,5 @@
-﻿@using KnowledgeAssistant.Application.DTOs.Notifications
+﻿@using KnowledgeAssistant.Application.DTOs.API
+@using KnowledgeAssistant.Application.DTOs.Notifications
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.SignalR.Client
 @using MudBlazor
@@ -16,6 +17,160 @@
                    OnClick="ToggleNotifications" />
 </MudBadge>
 
+@if (NotificationPopupVisible)
+{
+    <Modal @bind-Visible="@(NotificationPopupVisible)" Title="My Notifications" ShowCloseButton="true">
+
+        @if (NotificationError)
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="my-2">
+                We couldn't load your notifications.
+                <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small"
+                           OnClick="@(() => LoadNotificationsAsync(Notifications?.PageNumber ?? 1))">
+                    Retry
+                </MudButton>
+            </MudAlert>
+        }
+        else if (Notifications is null)
+        {
+            <LoadingSpinner />
+        }
+        else if (SelectedNotification is not null)
+        {
+            @* ================= D: DETAIL VIEW ================= *@
+            var index = SelectedIndex;
+
+            <div>
+                <MudButton Variant="Variant.Text"
+                           StartIcon="@Icons.Material.Filled.ArrowBack"
+                           Class="notif-link mb-3"
+                           OnClick="@(() => SelectedNotification = null)">
+                    Back to notifications
+                </MudButton>
+
+                <div class="notif-detail">
+                    <div class="notif-detail-title">@SelectedNotification.Title</div>
+
+                    <div class="notif-chips">
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                 Icon="@Icons.Material.Filled.Person">
+                            @SelectedNotification.CreatedByUserName
+                        </MudChip>
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                 Icon="@Icons.Material.Filled.Schedule">
+                            @SelectedNotification.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                        </MudChip>
+                        @if (SelectedNotification.Read && SelectedNotification.ReadDate.HasValue)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
+                                     Icon="@Icons.Material.Filled.DoneAll">
+                                Read @SelectedNotification.ReadDate.Value.ToString("dd MMM yyyy HH:mm")
+                            </MudChip>
+                        }
+                    </div>
+
+                    <MudDivider Class="my-3" />
+
+                    <div class="notif-body">@SelectedNotification.Body</div>
+                </div>
+
+                <div class="notif-nav">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="notif-btn"
+                               StartIcon="@Icons.Material.Filled.ChevronLeft"
+                               Disabled="@(index <= 0)"
+                               OnClick="@(() => ViewAdjacentAsync(-1))">
+                        Newer
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="notif-btn"
+                               EndIcon="@Icons.Material.Filled.ChevronRight"
+                               Disabled="@(index >= Notifications.Items.Count - 1)"
+                               OnClick="@(() => ViewAdjacentAsync(1))">
+                        Older
+                    </MudButton>
+                </div>
+            </div>
+        }
+        else if (!Notifications.Items.Any())
+        {
+            <div class="notif-empty">
+                <MudIcon Icon="@Icons.Material.Outlined.NotificationsNone" Size="Size.Large" />
+                <div>You have no notifications.</div>
+            </div>
+        }
+        else
+        {
+            @* ================= A: CARD LIST ================= *@
+            <div class="notif-toolbar">
+                <MudChip T="string" Color="Color.Primary"
+                         Variant="@(_unreadOnly ? Variant.Outlined : Variant.Filled)"
+                         OnClick="@(() => _unreadOnly = false)">
+                    All
+                </MudChip>
+                <MudChip T="string" Color="Color.Primary"
+                         Variant="@(_unreadOnly ? Variant.Filled : Variant.Outlined)"
+                         OnClick="@(() => _unreadOnly = true)">
+                    Unread · @UnreadCount
+                </MudChip>
+            </div>
+
+            @if (NotificationLoading)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+            }
+
+            <div class="notif-list">
+                @foreach (var n in VisibleNotifications)
+                {
+                    <div class="notif-card @(n.Read ? "" : "notif-unread")" @key="n.NotificationId">
+                        <div class="notif-avatar">@GetUserInitials(n.CreatedByUserName)</div>
+
+                        <div class="notif-main">
+                            <div class="notif-title">@n.Title</div>
+                            <div class="notif-meta">
+                                @n.CreatedByUserName · @n.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                            </div>
+                        </div>
+
+                        @if (!n.Read)
+                        {
+                            <span class="notif-dot" title="Unread"></span>
+                        }
+
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="notif-btn"
+                                   StartIcon="@Icons.Material.Filled.Visibility"
+                                   OnClick="@(() => ViewNotificationAsync(n))">
+                            View
+                        </MudButton>
+                    </div>
+                }
+
+                @if (!VisibleNotifications.Any())
+                {
+                    <div class="notif-empty">No unread notifications on this page.</div>
+                }
+            </div>
+
+            @if (Notifications.TotalPages > 1)
+            {
+                <div class="notif-pager-wrap">
+                    <MudPagination Class="notif-pager"
+                                   Count="Notifications.TotalPages"
+                                   Selected="Notifications.PageNumber"
+                                   SelectedChanged="LoadNotificationsAsync"
+                                   Disabled="NotificationLoading"
+                                   ShowFirstButton="true"
+                                   ShowLastButton="true"
+                                   Color="Color.Primary" />
+                    <div class="notif-meta">
+                        Page @Notifications.PageNumber of @Notifications.TotalPages (@Notifications.TotalCount total)
+                    </div>
+                </div>
+            }
+        }
+
+    </Modal>
+}
+
 @code {
 
     [Inject]
@@ -27,9 +182,25 @@
     [Inject]
     private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
 
-    private bool NotificationPopupVisible = false;
     private HubConnection? _hubConnection;
+    private PaginatedResponse<NotificationUserSummaryResponse>? Notifications;
+    private NotificationUserSummaryResponse? SelectedNotification;
+
+    private int NotificationPageSize = 10;
     private int UnreadCount;
+
+    private bool NotificationLoading;
+    private bool _unreadOnly;
+    private bool NotificationError;
+    private bool NotificationPopupVisible;
+
+    private IEnumerable<NotificationUserSummaryResponse> VisibleNotifications =>  Notifications is null
+         ? [] : _unreadOnly
+             ? Notifications.Items.Where(n => !n.Read)
+             : Notifications.Items;
+
+    private int SelectedIndex => Notifications is null || SelectedNotification is null
+            ? -1 : Notifications.Items.IndexOf(SelectedNotification);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -97,9 +268,83 @@
         }
     }
 
-    private void ToggleNotifications()
+    private async Task ToggleNotifications()
     {
         NotificationPopupVisible = !NotificationPopupVisible;
+
+        if (NotificationPopupVisible)
+        {
+            SelectedNotification = null;
+            Notifications = null;
+            _unreadOnly = false;
+            await LoadNotificationsAsync(1);
+        }
+    }
+
+    private async Task LoadNotificationsAsync(int pageNumber)
+    {
+        NotificationError = false;
+        NotificationLoading = true;
+
+        var response = await HttpService.GetDataAsync($"/Notification/GetForUser?pageNumber={pageNumber}&pageSize={10}");
+        if (response.IsSuccessful && response.Data is not null)
+        {
+            Notifications = response.GetData<PaginatedResponse<NotificationUserSummaryResponse>>() ?? new();
+        }
+        else
+        {
+            NotificationError = true;
+        }
+
+        NotificationLoading = false;
+    }
+
+    private async Task ViewNotificationAsync(NotificationUserSummaryResponse notification)
+    {
+        SelectedNotification = notification;
+
+        if (!notification.Read)
+        {
+            var response = await HttpService.PostDataAsync<object>($"/Notification/MarkAsRead?notificationId={notification.NotificationId}", null);
+
+            if (response.IsSuccessful)
+            {
+                notification.Read = true;
+                notification.ReadDate = DateTime.UtcNow;
+            }
+
+            await LoadUnreadCountAsync();
+        }
+    }
+
+    private async Task ViewAdjacentAsync(int offset)
+    {
+        if (Notifications is null) return;
+
+        var target = SelectedIndex + offset;
+        if (target < 0 || target >= Notifications.Items.Count) return;
+
+        await ViewNotificationAsync(Notifications.Items[target]);
+    }
+
+    private static string GetUserInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return string.Empty;
+        }
+
+        var parts = name
+            .Split([' ', '-'], StringSplitOptions.RemoveEmptyEntries)
+            .Where(p => char.IsLetter(p[0]))
+            .ToArray();
+
+        return parts.Length switch
+        {
+            0 => string.Empty,
+            1 => $"{char.ToUpperInvariant(parts[0][0])}",
+            _ => $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}"
+        };
     }
 
     public async ValueTask DisposeAsync()

@@ -591,7 +591,194 @@ h5 {
 }
 
 /* =========================================================
-   11. RESPONSIVE
+   11. NOTIFICATIONS MODAL  (.notif-*)
+   Card list + detail view. Colours match the glass-card theme.
+   ========================================================= */
+
+.notif-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.notif-spacer {
+    flex: 1;
+}
+
+.notif-link.mud-button-root {
+    color: #8ec5ff;
+    text-transform: none;
+}
+
+/* ---- List ---- */
+.notif-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.notif-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    transition: background-color 0.15s ease;
+}
+
+.notif-card:hover {
+    background: rgba(255, 255, 255, 0.10);
+}
+
+.notif-card.notif-unread {
+    background: rgba(77, 127, 199, 0.18);
+    border-color: #4d7fc7;
+}
+
+.notif-avatar {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 400;
+    background: rgba(255, 255, 255, 0.10);
+}
+
+.notif-main {
+    flex: 1;
+    min-width: 0; /* lets the preview ellipsis work inside flex */
+}
+
+.notif-title {
+    font-size: 15px;
+    font-weight: 400;
+}
+
+.notif-unread .notif-title {
+    font-weight: 400;
+}
+
+.notif-meta {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.notif-preview {
+    margin-top: 4px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.notif-dot {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #5aa9ff;
+}
+
+/* Safeguard in case the modal isn't wrapped in .glass-card / .glass-card-modal */
+.notif-btn.mud-button-outlined {
+    color: #ffffff;
+    border-color: #4d7fc7;
+}
+
+.notif-btn.mud-button-outlined:hover {
+    background-color: rgba(61, 118, 196, 0.15);
+}
+
+.notif-btn.mud-button-outlined.mud-disabled {
+    color: rgba(255, 255, 255, 0.35);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.notif-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 32px 0;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* ---- Pagination ---- */
+.notif-pager-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+}
+
+.notif-pager .mud-button-root {
+    color: #ffffff;
+}
+
+    .notif-pager .mud-button-root.mud-disabled {
+        color: rgba(255, 255, 255, 0.35);
+    }
+
+/* ---- Detail ---- */
+.notif-detail {
+    padding: 20px;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+}
+
+.notif-detail-title {
+    font-size: 20px;
+    font-weight: 400;
+    margin-bottom: 12px;
+}
+
+.notif-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+    .notif-chips .mud-chip.mud-chip-outlined:not(.mud-chip-color-success) {
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+.notif-detail .mud-divider {
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.notif-body {
+    font-size: 15px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.notif-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+}
+
+.mud-badge.mud-badge-top.right.mud-badge-overlap {
+    inset: auto auto calc(100% - 22px) calc(100% - 19px) !important;
+}
+
+/* =========================================================
+   12. RESPONSIVE
    ========================================================= */
 
 .mobile-menu-button {

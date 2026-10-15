@@ -12,6 +12,7 @@ namespace KnowledgeAssistant.Application.Services.Communication
     public interface INotificationService
     {
         Task<NotificationResponse> SendNotificationAsync(CreateNotificationRequest request, CancellationToken ct);
+        Task<bool> MarkNotificationAsReadAsync(int notificationId, int userId, CancellationToken ct);
         Task<NotificationResponse?> GetNotificationByIdAsync(int notificationId, CancellationToken ct);
         Task<PaginatedResponse<NotificationUserSummaryResponse>> GetNotificationsByUserIdAsync(int userId, int pageNumber, int pageSize, CancellationToken ct);
         Task<PaginatedResponse<NotificationSummaryResponse>> GetNotificationsAsync(int pageNumber, int pageSize, CancellationToken ct);
@@ -34,6 +35,12 @@ namespace KnowledgeAssistant.Application.Services.Communication
             _notificationRepository = notificationRepository;
             _rabbitMQService = rabbitMQService;
             _rabbitMQEnabled = configuration.GetValue<bool>("RabbitMQ:Enabled");
+        }
+
+        public async Task<bool> MarkNotificationAsReadAsync(int notificationId, int userId, CancellationToken ct)
+        {
+            var read = await _notificationRepository.SetReadAsync(notificationId, userId, ct);
+            return read;
         }
 
         public async Task<NotificationResponse> SendNotificationAsync(CreateNotificationRequest request, CancellationToken ct)

@@ -42,6 +42,26 @@ namespace KnowledgeAssistant.API.Controllers
             return Ok(result);
         }
 
+        [HttpPost("MarkAsRead")]
+        [Authorize]
+        public async Task<ActionResult<ApiResult>> MarkAsRead(int notificationId, CancellationToken ct)
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var read = await _notificationService.MarkNotificationAsReadAsync(notificationId, userId, ct);
+
+            return Ok(new ApiResult
+            {
+                IsSuccessful = read,
+                Data = null,
+                Message = read ? "Notification set as read" : "Unable to set notification to read"
+            });
+        }
 
         [HttpGet("GetById")]
         [Authorize(Roles = "Admin")]
@@ -85,10 +105,17 @@ namespace KnowledgeAssistant.API.Controllers
             });
         }
 
-        [HttpGet("GetByUserId")]
+        [HttpGet("GetForUser")]
         [Authorize]
-        public async Task<ActionResult<ApiResult>> GetNotificationsByUserId(int userId, int pageNumber, CancellationToken ct, int? pageSize = 10)
+        public async Task<ActionResult<ApiResult>> GetNotificationsForUser(int pageNumber, CancellationToken ct, int? pageSize = 10)
         {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return Unauthorized();
+            }
+
             var notifications = await _notificationService.GetNotificationsByUserIdAsync(userId, pageNumber, (int)pageSize!, ct);
 
             return Ok(new ApiResult()
