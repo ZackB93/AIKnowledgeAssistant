@@ -86,6 +86,7 @@ From the solution directory:
 ```bash
 dotnet ef database update --project KnowledgeAssistant.Infrastructure --startup-project KnowledgeAssistant.API
 ```
+Make sure the connection string in the appsettings.json is pointing to your SQL server express path and the 'KnowledgeDatabase'.
 
 ### 3. Run
 
@@ -136,6 +137,9 @@ RabbitMQ must be running locally, either as a Windows service or through Docker.
 
 * **Blazor Web App**
 * **MudBlazor**
+* **SignalR**
+* **SAPBlazorAnimate**
+* **Blazor-ApexCharts**
 * **HTML / CSS**
 * **JavaScript**
 
@@ -392,6 +396,8 @@ Contains automated tests covering important application behaviour across control
 <p>User</p>
 <img src="screenshots/user_notifications.png" alt="Notifications" width="850">
 <img src="screenshots/user_notification_read.png" alt="Notifications" width="850">
+
+</div>
 ---
 
 ## 06 · Features
@@ -572,14 +578,24 @@ For this project, the additional complexity is useful because it demonstrates a 
 
 ---
 
-### OpenAI Dependency
+### Entity Framework Core
 
-The application currently uses OpenAI for chat and embedding generation.
+Microsoft's full featured ORM. It works with C# entities and LINQ rather than writing SQL.
 
-The use of `Microsoft.Extensions.AI` and `IChatClient` helps keep the application less tightly coupled to a specific AI implementation.
+Advantages
+- LINQ queries and strongly typed entities.
+- Change tracking and automatic updates.
+- Relationships, migrations and navigation properties.
+- Excellent integration with dependency injection and transactions.
+  
+Trade-offs
+- Change tracking and entity materialisation add overhead.
+- Complex LINQ can generate inefficient SQL.
+- Less direct control over the SQL that executes.
+- Can be excessive for simple reporting queries.
 
-This makes changing AI providers easier in the future.
-
+  A much more smaller, lightweight solution would be Dapper.
+  
 ---
 
 ## 08 · To Do
