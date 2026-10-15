@@ -136,6 +136,9 @@ RabbitMQ must be running locally, either as a Windows service or through Docker.
 
 * **Blazor Web App**
 * **MudBlazor**
+* **SignalR**
+* **SAPBlazorAnimate**
+* **Blazor-ApexCharts**
 * **HTML / CSS**
 * **JavaScript**
 
