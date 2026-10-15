@@ -53,11 +53,11 @@ The main goal is to demonstrate practical **.NET + AI development** rather than 
 | -------------- | -------------------------------- |
 | Application    | ASP.NET Core / Blazor            |
 | AI             | OpenAI + Microsoft.Extensions.AI |
-| RAG            | Embeddings + similarity search   |
+| RAG            | Embeddings + Similarity search   |
 | Database       | SQL Server + EF Core             |
 | Messaging      | RabbitMQ                         |
-| Authentication | JWT + role-based authorisation   |
-| UI             | Blazor + MudBlazor               |
+| Authentication | JWT + Role-based authorisation   |
+| UI             | Blazor + MudBlazor + SignalR     |
 | Testing        | xUnit + bUnit (UI)               |
 
 ---
@@ -178,6 +178,7 @@ KnowledgeAssistant
 │
 ├── KnowledgeAssistant.API
 │   ├── Controllers
+│   ├── Hubs
 │   ├── Middleware
 │   └── Program.cs
 │
@@ -185,6 +186,7 @@ KnowledgeAssistant
 │   ├── DTOs
 │   ├── Handlers
 │   ├── Interfaces
+│   │   ├── Hubs
 │   │   └── Repositories
 │   └── Services
 │
@@ -215,12 +217,6 @@ KnowledgeAssistant
 │   │   └── Routes.razor
 │   ├── Helpers
 │   ├── Pages
-│   │   ├── Account
-│   │   ├── Admin
-│   │   ├── Features
-│   │   ├── Error.razor
-│   │   ├── Home.razor
-│   │   └── Notfound.razor
 │   ├── _Imports.razor
 │   ├── appsettings.json
 │   └── Program.cs
@@ -386,12 +382,16 @@ Contains automated tests covering important application behaviour across control
 
 <div align="center">
 
+<p>Admin</p>
 <img src="screenshots/admin_notifications.png" alt="Notifications" width="850">
 <img src="screenshots/admin_notification_details.png" alt="Notifications" width="850">
 <img src="screenshots/admin_notification_recipients.png" alt="Notifications" width="850">
 <img src="screenshots/admin_notification_send1.png" alt="Notifications" width="850">
 <img src="screenshots/admin_notification_send2.png" alt="Notifications" width="850">
 
+<p>User</p>
+<img src="screenshots/user_notifications.png" alt="Notifications" width="850">
+<img src="screenshots/user_notification_read.png" alt="Notifications" width="850">
 ---
 
 ## 06 · Features
@@ -520,10 +520,6 @@ Email Sent
 ### Rate Limiting
 
 The API includes rate limiting to prevent excessive requests.
-
-### Output Caching
-
-Selected API responses can use ASP.NET Core output caching where appropriate.
 
 ### Automated Testing
 
