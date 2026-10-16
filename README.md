@@ -132,7 +132,8 @@ RabbitMQ must be running locally, either as a Windows service or through Docker.
 * **JWT Authentication**
 * **Role-based Authorisation**
 * **Serilog Logging**
-  
+* **Scalar**
+
 ### Frontend
 
 * **Blazor Web App**
