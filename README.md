@@ -95,9 +95,6 @@ You can sign in using the following details:
 | ----------- | --- |
 | zack.bucci@example.com | test |
 
-**Email:** zack.bucci@example.com
-**Password:** test
-
 ---
 
 ## 03 · Technology Used
@@ -283,6 +280,7 @@ Responsible for:
 * Chat sessions
 * Document management
 * User management
+* Notifications
 * Administration
 * Navigation
 * User interface components and pages
@@ -290,6 +288,7 @@ Responsible for:
 ### Tests
 
 Contains automated tests covering important application behaviour across controllers, services and UI components.
+Strict Test Driven Development has not been followed in this project.
 
 </details>
 
