@@ -17,7 +17,7 @@ namespace KnowledgeAssistant.Infrastructure.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -345,7 +345,11 @@ namespace KnowledgeAssistant.Infrastructure.Data.Migrations
 
                     b.HasKey("NotificationId", "UserId");
 
-                    b.HasIndex("UserId", "IsRead", "NotificationId");
+                    b.HasIndex("UserId")
+                        .HasFilter("[IsRead] = 0");
+
+                    b.HasIndex("NotificationId", "UserId")
+                        .IsUnique();
 
                     b.ToTable("NotificationRecipients");
                 });
