@@ -95,6 +95,8 @@ You can sign in using the following details:
 | ----------- | --- |
 | zack.bucci@example.com | test |
 
+There is no sensitive or personal information within the database.
+
 ---
 
 ## 03 · Technology Used
