@@ -77,6 +77,6 @@ steps:
     inputs:
       azureSubscription: 'KnowledgeAssistant-Azure'
       appType: 'webApp'
-      appName: 'knowledgeassistant-ui-e2hwbcexacddeabz'
+      appName: 'knowledgeassistant-ui'
       package: '$(Build.ArtifactStagingDirectory)/ui/**/*.zip'
       deploymentMethod: 'zipDeploy'
