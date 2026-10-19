@@ -27,14 +27,14 @@ namespace KnowledgeAssistant.Application.Services.Communication
     {
         private readonly INotificationRepository _notificationRepository;
         private readonly IRabbitMQService _rabbitMQService;
-        private ILogger _logger;
+        private readonly ILogger<NotificationService> _logger;
         private INotificationRealtimeNotifier _notificationRealtimeNotifier;
         private readonly bool _rabbitMQEnabled;
 
         public NotificationService(
             INotificationRepository notificationRepository,
             IRabbitMQService rabbitMQService,
-            ILogger logger,
+            ILogger<NotificationService> logger,
             INotificationRealtimeNotifier notificationRealtimeNotifier,
             IConfiguration configuration)
         {
