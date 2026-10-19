@@ -91,6 +91,10 @@ The application is currently running on the **Azure Free Tier**, keeping hosting
 ### Login Details
 
 You can sign in using the following details:
+| Email | Password |
+| ----------- | --- |
+| zack.bucci@example.com | test |
+
 **Email:** zack.bucci@example.com
 **Password:** test
 
