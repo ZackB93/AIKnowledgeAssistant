@@ -62,3 +62,21 @@ steps:
       appName: 'knowledgeassistant-api'
       package: '$(Build.ArtifactStagingDirectory)/api/**/*.zip'
       deploymentMethod: 'zipDeploy'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Publish Blazor UI'
+    inputs:
+        command: 'publish'
+        publishWebProjects: false
+        projects: 'KnowledgeAssistant.UI/KnowledgeAssistant.UI.csproj'
+        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/ui --no-build'
+        zipAfterPublish: true
+
+  - task: AzureWebApp@1
+    displayName: 'Deploy Blazor UI to Azure App Service'
+    inputs:
+      azureSubscription: 'KnowledgeAssistant-Azure'
+      appType: 'webApp'
+      appName: 'knowledgeassistant-ui-e2hwbcexacddeabz'
+      package: '$(Build.ArtifactStagingDirectory)/ui/**/*.zip'
+      deploymentMethod: 'zipDeploy'
