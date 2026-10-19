@@ -53,3 +53,12 @@ steps:
       PathtoPublish: '$(Build.ArtifactStagingDirectory)/api'
       ArtifactName: 'api'
       publishLocation: 'Container'
+
+  - task: AzureWebApp@1
+    displayName: 'Deploy API to Azure App Service'
+    inputs:
+      azureSubscription: 'KnowledgeAssistant-Azure'
+      appType: 'webApp'
+      appName: 'knowledgeassistant-api'
+      package: '$(Build.ArtifactStagingDirectory)/api/**/*.zip'
+      deploymentMethod: 'zipDeploy'
