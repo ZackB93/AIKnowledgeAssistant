@@ -1,1 +1,4 @@
-﻿
+﻿.sign-in-wrapper {
+    opacity: 0;
+    animation-fill-mode: both;
+}
