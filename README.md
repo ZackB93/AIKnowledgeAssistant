@@ -585,8 +585,6 @@ A much smaller, lightweight solution would be Dapper.
 
 ## 08 · To Do
 
-The project is intentionally being developed incrementally, with the following features planned to extend the application's AI, messaging and background-processing capabilities.
-
 ### 1. Separate Vector Database (PostgreSQL + pgvector)
 
 Introduce a dedicated PostgreSQL database using the pgvector extension to store and query document embeddings independently of the existing SQL Server database.
@@ -618,31 +616,32 @@ Relevant Context
 OpenAI Chat Completion
 ```
 
-### 2. RabbitMQ Retry & Dead-Letter Handling
+### 2. Chat Conversation Memory
 
-Introduce retry and dead-letter handling for failed background operations.
+Introduce conversation memory so the AI can recall relevant information from a user's previous chat sessions and use it to provide more contextual, personalised responses.
 
-This will allow failed messages to be retried automatically and permanently failed messages to be isolated rather than silently lost.
+This will allow the AI to build on previous conversations rather than treating each new chat as an isolated interaction.
 
-```text
-RabbitMQ
-    ↓
-Consumer
-    ↓
-  Success ─────────→ Complete
-    │
-   Error
-    ↓
- Retry Queue
-    ↓
- Consumer
-    │
-   Error
-    ↓
-Dead-Letter Queue
-```
+This will initially include:
 
-This will initially support operations such as document processing, email and notifications.
+- Retrieving relevant context from previous chat sessions.
+- Incorporating historical messages into the AI prompt.
+- Using previous conversations alongside document-based RAG to generate more informed responses.
+
+### 4. LLM Tool Calling
+
+Introduce LLM tool calling to allow the AI to invoke approved application functions in response to user requests, rather than relying solely on text generation.
+
+This will allow the AI to interact with application functionality and retrieve relevant information dynamically.
+
+This will initially include:
+
+- Defining tools for operations such as searching documents and retrieving chat history.
+- Integrating tool calling through `Microsoft.Extensions.AI` and `IChatClient`.
+- Executing tools through existing application services and returning results to the AI model.
+- Enforcing authentication, authorisation and input validation for tool execution.
+
+For example, you could ask the AI chat how many users there are on the system, and it will come back with the response amount.
 
 ---
 
