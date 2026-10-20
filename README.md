@@ -478,6 +478,18 @@ Administrators can manage users and their assigned roles.
 
 The authenticated user's identity is taken from their claims rather than relying on a user ID supplied by the client.
 
+### Notification Management
+
+Administrators can create, send and view user notifications and it's recipients on the system. 
+
+SignalR on the UI is used with a Hub for a constant and immediate connection and update of the user's unread notification count.
+
+Notifications are queued, processed and sent in batches to support a large active user system.
+
+### Role Management
+
+Administrators can manage system roles that can be assigned to users.
+
 ### RabbitMQ
 
 RabbitMQ is used to move background operations away from the main HTTP request.
@@ -535,7 +547,7 @@ This avoids introducing a separate vector database while the project remains rel
 
 **Trade-off**
 
-A dedicated vector solution may provide better indexing and retrieval performance at a much larger scale.
+A dedicated vector solution will provide better indexing and retrieval performance at a much larger scale.
 
 ---
 
@@ -572,14 +584,13 @@ Microsoft's full featured ORM. It works with C# entities and LINQ rather than wr
 * Relationships, migrations and navigation properties.
 * Excellent integration with dependency injection and transactions.
 
-**Trade-offs**
+**Disadvantages**
 
 * Change tracking and entity materialisation add overhead.
 * Complex LINQ can generate inefficient SQL.
 * Less direct control over the SQL that executes.
 * Can be excessive for simple reporting queries.
-
-A much smaller, lightweight solution would be Dapper.
+* A much smaller and more lightweight solution would be Dapper.
 
 ---
 
