@@ -1,21 +1,23 @@
+
 <div align="center">
 
 # KnowledgeAssistant
 
-### AI-powered knowledge assistant built with .NET 10, Blazor, SQL Server and RAG
+### AI-powered knowledge assistant built with .NET 10, Blazor, SQL Server and RAG. Hosted on Microsoft Azure.
 
 <p>
   <img src="https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt=".NET 10">
   <img src="https://img.shields.io/badge/Blazor-Server-512BD4?style=flat-square&logo=blazor&logoColor=white" alt="Blazor">
   <img src="https://img.shields.io/badge/SQL%20Server-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="SQL Server">
   <img src="https://img.shields.io/badge/OpenAI-412991?style=flat-square&logo=openai&logoColor=white" alt="OpenAI">
+  <img src="https://img.shields.io/badge/Azure-0078D4?style=flat-square&logo=microsoftazure&logoColor=white" alt="Azure">
   <img src="https://img.shields.io/badge/RAG-194A8C?style=flat-square" alt="RAG">
   <img src="https://img.shields.io/badge/xUnit-512BD4?style=flat-square&logo=xunit&logoColor=white" alt="xUnit">
 </p>
 
 <p>
   A practical full-stack .NET application exploring AI integration, document retrieval,
-  authentication, asynchronous processing and modern application architecture.
+  authentication, asynchronous processing and modern application architecture hosted on Microsoft Azure.
 </p>
 
 </div>
@@ -27,7 +29,7 @@
 |        | Section                                 |
 | :----: | --------------------------------------- |
 | **01** | [Overview](#01--overview)               |
-| **02** | [Running Locally](#02--running-locally) |
+| **02** | [Azure](#02--azure)                     |
 | **03** | [Technology Used](#03--technology-used) |
 | **04** | [File Structure](#04--file-structure)   |
 | **05** | [Screenshots](#05--screenshots)         |
@@ -59,64 +61,41 @@ The main goal is to demonstrate practical **.NET + AI development** rather than 
 | Authentication | JWT + Role-based authorisation   |
 | UI             | Blazor + MudBlazor + SignalR     |
 | Testing        | xUnit + bUnit (UI)               |
+| Cloud          | Microsoft Azure + Azure DevOps   |
 
 ---
 
-## 02 · Running Locally
+## 02 · Microsoft Azure
 
-### Prerequisites
+The application is hosted in Microsoft Azure using Azure's **Free Tier** for this project.
 
-* **.NET 10 SDK**
-* **SQL Server**
-* **Visual Studio** or the **.NET CLI**
-* **RabbitMQ** — optional
+### Azure Services
 
-### 1. Clone & Build
+| Service | Purpose |
+| ------- | ------- |
+| **Azure DevOps** | CI/CD pipelines for building, testing and deploying the application. |
+| **Azure App Service** | Hosts the Blazor UI and ASP.NET Core API. |
+| **Azure SQL** | Hosts the SQL database. |
+| **Azure Application Insights** | Monitoring, diagnostics and logging for the UI and API. |
+| **Azure Key Vault** | Secure storage for application secrets. |
 
-Clone the repository and open the solution in Visual Studio, then build the solution:
+### Live Application
 
-```bash
-dotnet build
-```
+| Application | URL |
+| ----------- | --- |
+| **Blazor UI** | [Open KnowledgeAssistant](https://knowledgeassistant-ui-e2hwbcexacddeabz.ukwest-01.azurewebsites.net) |
+| **API** | [Open API](https://knowledgeassistant-api-g8gsadbuf2gueghr.ukwest-01.azurewebsites.net) |
 
-### 2. Create the Database
+The application is currently running on the **Azure Free Tier**, keeping hosting costs low while providing hands-on experience with cloud deployment, CI/CD and application monitoring.
 
-From the solution directory:
+### Login Details
 
-```bash
-dotnet ef database update --project KnowledgeAssistant.Infrastructure --startup-project KnowledgeAssistant.API
-```
-Make sure the connection string in the appsettings.json is pointing to your SQL server express path and the 'KnowledgeDatabase'.
+You can sign in using the following details:
+| Email | Password |
+| ----------- | --- |
+| zack.bucci@example.com | test |
 
-### 3. Run
-
-Start the application from Visual Studio.
-
-| Application      | URL                             |
-| ---------------- | ------------------------------- |
-| **Blazor UI**    | `https://localhost:7017`        |
-| **API / Scalar** | `https://localhost:7164/scalar` |
-
-Default local login:
-
-```text
-Email:    zack.bucci@example.com
-Password: test
-```
-
-### 4. Optional — RabbitMQ
-
-RabbitMQ is disabled by default.
-
-To enable it, set the following in `KnowledgeAssistant.API/appsettings.json`:
-
-```json
-"RabbitMQ": {
-  "Enabled": true
-}
-```
-
-RabbitMQ must be running locally, either as a Windows service or through Docker.
+There is no sensitive or personal information within the database.
 
 ---
 
@@ -160,7 +139,7 @@ RabbitMQ must be running locally, either as a Windows service or through Docker.
 * **ASP.NET Core Background Services**
 * **Queued email processing**
 * **Queued notification batch processing**
-  
+
 ### Testing & Development
 
 * **xUnit**
@@ -303,6 +282,7 @@ Responsible for:
 * Chat sessions
 * Document management
 * User management
+* Notifications
 * Administration
 * Navigation
 * User interface components and pages
@@ -310,6 +290,7 @@ Responsible for:
 ### Tests
 
 Contains automated tests covering important application behaviour across controllers, services and UI components.
+Strict Test Driven Development has not been followed in this project.
 
 </details>
 
@@ -399,6 +380,7 @@ Contains automated tests covering important application behaviour across control
 <img src="screenshots/user_notification_read.png" alt="Notifications" width="850">
 
 </div>
+
 ---
 
 ## 06 · Features
@@ -583,20 +565,22 @@ For this project, the additional complexity is useful because it demonstrates a 
 
 Microsoft's full featured ORM. It works with C# entities and LINQ rather than writing SQL.
 
-Advantages
-- LINQ queries and strongly typed entities.
-- Change tracking and automatic updates.
-- Relationships, migrations and navigation properties.
-- Excellent integration with dependency injection and transactions.
-  
-Trade-offs
-- Change tracking and entity materialisation add overhead.
-- Complex LINQ can generate inefficient SQL.
-- Less direct control over the SQL that executes.
-- Can be excessive for simple reporting queries.
+**Advantages**
 
-  A much more smaller, lightweight solution would be Dapper.
-  
+* LINQ queries and strongly typed entities.
+* Change tracking and automatic updates.
+* Relationships, migrations and navigation properties.
+* Excellent integration with dependency injection and transactions.
+
+**Trade-offs**
+
+* Change tracking and entity materialisation add overhead.
+* Complex LINQ can generate inefficient SQL.
+* Less direct control over the SQL that executes.
+* Can be excessive for simple reporting queries.
+
+A much smaller, lightweight solution would be Dapper.
+
 ---
 
 ## 08 · To Do
@@ -610,6 +594,7 @@ Introduce a dedicated PostgreSQL database using the pgvector extension to store 
 This will separate vector search from the application's relational data, providing a more specialised foundation for similarity search and future improvements to the RAG pipeline.
 
 This will initially include:
+
 - Storing document embeddings in PostgreSQL using pgvector.
 - Implementing vector similarity search using PostgreSQL's vector operators and indexing capabilities.
 - Integrating the vector database into the existing document ingestion and retrieval workflows.
@@ -658,47 +643,6 @@ Dead-Letter Queue
 ```
 
 This will initially support operations such as document processing, email and notifications.
-
-### 3. Azure Deployment & Cloud Infrastructure
-
-Prepare the application for deployment to Microsoft Azure, establishing a production-ready cloud environment using Azure's application hosting, database, security and DevOps services.
-
-This will demonstrate how the application's existing .NET architecture can be deployed, configured and maintained in a cloud environment, with automated build and deployment pipelines.
-
-This will initially include:
-- **Azure App Service:** Hosting the Blazor Web App and ASP.NET Core API.
-- **Azure SQL Database:** Hosting relational application data, including users, chat sessions, messages and document metadata.
-- **Azure Database for PostgreSQL:** Hosting the dedicated vector database using the pgvector extension for document embeddings and similarity search.
-- **Azure Key Vault:** Securely storing API keys, secrets and connection strings, using managed identities where supported.
-- **Azure DevOps CI/CD:** Implementing automated build, test and deployment pipelines to validate changes and deploy the application to Azure.
-- **Azure Application Insights:** Monitoring application performance, exceptions, requests and diagnostic telemetry.
-- **Azure Blob Storage:** Evaluating cloud-based file storage for uploaded documents and other file-based content.
-- **RabbitMQ Hosting:** Configuring the existing RabbitMQ messaging infrastructure for cloud connectivity, supporting background document processing, email and notifications.
-- **Infrastructure as Code:** Exploring Azure Bicep to provision and manage cloud resources consistently across environments.
-
-The deployment will retain the application's existing separation of concerns, with Azure SQL Database handling relational application data and PostgreSQL + pgvector providing specialised vector search capabilities.
-
-This will establish a repeatable deployment process with secure configuration, automated testing, centralised monitoring and a clear path from local development to a production Azure environment.
-
-```text
-GitHub Repository
-        ↓
-Azure DevOps CI/CD Pipeline
-        ↓
-Build & Automated Tests
-        ↓
-Deployment to Azure
-        ↓
-Azure App Service
-        ├── Azure SQL Database
-        ├── Azure Database for PostgreSQL + pgvector
-        ├── Azure Key Vault
-        ├── Azure Blob Storage
-        ├── RabbitMQ (Managed Hosting)
-        └── Application Insights
-```
-
-This will provide practical experience with Azure cloud hosting, DevOps automation, managed services, application security, messaging infrastructure and production monitoring.
 
 ---
 
