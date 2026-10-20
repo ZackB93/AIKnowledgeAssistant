@@ -1,7 +1,7 @@
 ﻿@using KnowledgeAssistant.Application.DTOs.Authentication
 @using Microsoft.Extensions.Caching.Memory
 
-<div class="sign-in-wrapper @AnimateBook.FadingEntrances.FadeIn">
+<div class="sign-in-wrapper @(ready ? AnimateBook.FadingEntrances.FadeIn : "")">
     <MudPaper Class="pa-8 sign-in-form" Elevation="0">
         <EditForm FormName="SignInForm" Model="@model" OnValidSubmit="HandleSignIn">
             <DataAnnotationsValidator />
@@ -79,6 +79,7 @@
 
     private SignIn model = new();
     private bool isSubmitting;
+    private bool ready;
     private string? errorMessage;
 
     private bool passwordVisible;
@@ -90,6 +91,15 @@
         if(!string.IsNullOrEmpty(error))
         {
             errorMessage = error;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            ready = true;
+            StateHasChanged();
         }
     }
 
