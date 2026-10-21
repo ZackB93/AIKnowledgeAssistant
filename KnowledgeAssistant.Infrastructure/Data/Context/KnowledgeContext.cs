@@ -28,7 +28,6 @@ namespace KnowledgeAssistant.Infrastructure.Data.Context
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<NotificationRecipient> NotificationRecipients => Set<NotificationRecipient>();
         public DbSet<ActivityAudit> ActivityAudit => Set<ActivityAudit>();
-
         public DbSet<UserMemory> UserMemory => Set<UserMemory>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

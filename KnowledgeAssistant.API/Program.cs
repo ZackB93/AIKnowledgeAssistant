@@ -167,6 +167,7 @@ builder.Services.AddScoped<IRabbitMQService, RabbitMQService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IActivityAuditService, ActivityAuditService>();
+builder.Services.AddScoped<IUserMemoryService, UserMemoryService>();
 builder.Services.AddScoped<ActivityAuditInterceptor>();
 builder.Services.AddScoped<IMessageHandler<SendEmailMessage>, SendEmailHandler>();
 builder.Services.AddScoped<IMessageHandler<InsertRecipientsChunkMessage>, InsertRecipientsChunkHandler>();
@@ -183,6 +184,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddScoped<IUserMemoryRepository, UserMemoryRepository>();
 
 builder.Services.AddChatClient(services => new ChatClient(
     builder.Configuration["OpenAI:Model"]!,

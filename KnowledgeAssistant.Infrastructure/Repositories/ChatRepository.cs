@@ -47,6 +47,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
         public async Task AddChatMessageAsync(ChatMessage message, CancellationToken ct)
         {
             await _context.ChatMessages.AddAsync(message, ct);
+            await SaveChangesAsync(ct);
         }
 
         public async Task<List<ChatMessage>> GetChatMessagesBySessionIdAsync(int sessionId, CancellationToken ct)
