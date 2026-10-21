@@ -323,6 +323,7 @@ Strict Test Driven Development has not been followed in this project.
 <div align="center">
 
 <img src="screenshots/chat_general_convo.png" alt="AI Chat" width="850">
+<img src="screenshots/chat_general_convo_memory.png" alt="AI Chat" width="850">
 <img src="screenshots/chat_attachment_convo1.png" alt="AI Chat" width="850">
 <img src="screenshots/chat_attachment_convo2.png" alt="AI Chat" width="850">
 <img src="screenshots/chat_attachment_convo3.png" alt="AI Chat" width="850">
@@ -385,11 +386,14 @@ Strict Test Driven Development has not been followed in this project.
 
 ## 06 · Features
 
-### AI Chat
+### AI Chat with memory
 
-The application uses `IChatClient` from `Microsoft.Extensions.AI` to provide the AI chat functionality.
+The application uses `IChatClient` from `Microsoft.Extensions.AI` to provide AI-powered chat functionality.
 
-Chat sessions and messages are persisted, allowing users to maintain multiple conversations.
+Chat sessions and messages are persisted, allowing users to maintain multiple conversations and revisit previous chats.
+
+The system extracts and stores user-specific facts, preferences, goals and project details in SQL Server, enabling personalised responses and continuity across conversations.
+
 
 ```text
 User
