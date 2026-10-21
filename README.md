@@ -616,19 +616,7 @@ The other part of the batch will not have been processed, a retry area within th
 
 ## 08 · To Do
 
-### 1. Chat Conversation Memory
-
-Introduce conversation memory so the AI can recall relevant information from a user's previous chat sessions and use it to provide more contextual, personalised responses.
-
-This will allow the AI to build on previous conversations rather than treating each new chat as an isolated interaction.
-
-This will initially include:
-
-- Retrieving relevant context from previous chat sessions.
-- Incorporating historical messages into the AI prompt.
-- Using previous conversations alongside document-based RAG to generate more informed responses.
-
-### 2. LLM Tool Calling
+### 1. LLM Tool Calling
 
 Introduce LLM tool calling to allow the AI to invoke approved application functions in response to user requests, rather than relying solely on text generation.
 
@@ -643,7 +631,7 @@ This will initially include:
 
 For example, you could ask the AI chat how many users there are on the system, and it will come back with the response amount.
 
-### 3. Separate Vector Database (PostgreSQL + pgvector)
+### 2. Separate Vector Database (PostgreSQL + pgvector)
 
 Introduce a dedicated PostgreSQL database using the pgvector extension to store and query document embeddings independently of the existing SQL Server database.
 
@@ -657,22 +645,6 @@ This will initially include:
 - Keeping application data, users, chat sessions and messages in SQL Server.
 
 This will allow the application to use purpose-built vector search alongside its existing relational data architecture.
-
-```text
-Document Upload
-      ↓
-Document Processing
-      ↓
-Chunking & Embedding Generation
-      ↓
-PostgreSQL + pgvector
-      ↓
-Vector Similarity Search
-      ↓
-Relevant Context
-      ↓
-OpenAI Chat Completion
-```
 
 ---
 
