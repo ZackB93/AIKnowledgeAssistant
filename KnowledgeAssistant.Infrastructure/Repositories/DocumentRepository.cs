@@ -26,16 +26,15 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
             await _context.Documents.AddAsync(document, ct);
         }
 
-        public async Task<List<DocumentChunkSearchProjection>> GetDocumentChunksForSearchAsync(
-            List<int> documentIds,
-            int userId,
-            CancellationToken ct)
+        public async Task<List<DocumentChunkSearchProjection>> GetDocumentChunksForSearchAsync(List<int>? documentIds, int userId, CancellationToken ct)
         {
             return await _context.DocumentChunks
                 .AsNoTracking()
                 .Where(x =>
-                    documentIds.Contains(x.DocumentId) &&
+                    (documentIds == null || !documentIds.Any() || documentIds.Contains(x.DocumentId)) &&
                     x.Document.UserId == userId)
+                .OrderBy(x => x.DocumentId)
+                .ThenBy(x => x.ChunkIndex)
                 .Select(x => new DocumentChunkSearchProjection(
                     x.Id,
                     x.DocumentId,
@@ -47,10 +46,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                 .ToListAsync(ct);
         }
 
-        public async Task<(List<DocumentResponse> Items, int TotalCount)> GetPaginatedDocumentsAsync(
-            int pageNumber,
-            int pageSize,
-            CancellationToken ct)
+        public async Task<(List<DocumentResponse> Items, int TotalCount)> GetPaginatedDocumentsAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
             var totalCount = await _context.Documents.CountAsync(ct);
 

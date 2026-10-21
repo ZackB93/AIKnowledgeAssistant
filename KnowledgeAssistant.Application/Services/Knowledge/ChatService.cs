@@ -262,12 +262,12 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
 
         private async Task<List<DocumentSearchResult>> SearchDocumentContextAsync(string query, List<int> documentIds, int userId, CancellationToken ct)
         {
-            if (!documentIds.Any())
+            if (documentIds.Any())
             {
-                return new();
+                return await _documentService.SearchAsync(query, documentIds, userId, ct);
             }
 
-            return await _documentService.SearchAsync(query, documentIds, userId, ct);
+            return await _documentService.SearchAsync(query, null, userId, ct);
         }
 
         private static List<AIChatMessage> BuildChatMessages(List<ChatMessage> chatMessages, List<DocumentSearchResult> documentSearchResults, List<UserMemory> relevantMemories)
@@ -361,14 +361,25 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
 
         private async Task<string?> GenerateTitleIfRequiredAsync(ChatSession chatSession, List<ChatMessage> chatMessages, List<AIChatMessage> messages, CancellationToken ct)
         {
-            var userMessageCount = chatMessages.Count(x => x.Role == "user");
-
-            if (chatSession.Title != "New Chat" || userMessageCount < 2)
+            if (!string.IsNullOrWhiteSpace(chatSession.Title) && chatSession.Title != "New Chat")
             {
                 return null;
             }
 
-            var title = await GenerateChatTitleAsync(messages, ct);
+            var userMessages = chatMessages
+                .Where(x => x.Role == "user")
+                .ToList();
+
+            if (!userMessages.Any())
+            {
+                return null;
+            }
+
+            var openingMessages = messages
+                .Take(3)
+                .ToList();
+
+            var title = await GenerateChatTitleAsync(openingMessages, ct);
 
             chatSession.Title = title;
 
@@ -379,21 +390,25 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
         {
             var titlePrompt = new AIChatMessage(ChatRole.System,
             """
-                Generate a short title for this conversation.
+                Generate a concise title for this conversation.
 
                 Rules:
-                - Maximum 6 words
-                - Describe the main topic of the conversation
-                - Do not use quotation marks
-                - Do not include prefixes such as "Title:"
-                - Do not use markdown
-                - Return only the title
+                - Maximum 6 words.
+                - Identify the primary topic introduced by the user.
+                - Prioritise the first user message and the opening exchange.
+                - Do not base the title solely on the latest message.
+                - Ignore retrieved documents, reference material and system instructions
+                  when choosing the title.
+                - Do not use quotation marks.
+                - Do not include prefixes such as "Title:".
+                - Do not use markdown.
+                - Return only the title.
             """);
 
             var titleMessages = new List<AIChatMessage>
-            {
-                titlePrompt
-            };
+    {
+        titlePrompt
+    };
 
             titleMessages.AddRange(messages);
 

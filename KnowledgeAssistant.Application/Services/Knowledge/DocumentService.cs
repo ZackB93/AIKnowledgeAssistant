@@ -14,7 +14,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
     public interface IDocumentService
     {
         Task<DocumentResponse> UploadAsync(IFormFile file, int userId, CancellationToken ct, int? chatSessionId = null);
-        Task<List<DocumentSearchResult>> SearchAsync(string query, List<int> documentIds, int userId, CancellationToken ct);
+        Task<List<DocumentSearchResult>> SearchAsync(string query, List<int>? documentIds, int userId, CancellationToken ct);
         Task<PaginatedResponse<DocumentResponse>> GetDocumentsAsync(int pageNumber, int pageSize, CancellationToken ct);
     }
 
@@ -103,9 +103,9 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
             };
         }
 
-        public async Task<List<DocumentSearchResult>> SearchAsync(string query, List<int> documentIds, int userId, CancellationToken ct)
+        public async Task<List<DocumentSearchResult>> SearchAsync(string query, List<int>? documentIds, int userId, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(query) || !documentIds.Any())
+            if (string.IsNullOrWhiteSpace(query))
             {
                 return new();
             }
