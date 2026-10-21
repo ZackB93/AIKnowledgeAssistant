@@ -600,6 +600,16 @@ Microsoft's full featured ORM. It works with C# entities and LINQ rather than wr
 
 ---
 
+### Notification Batch Processing
+
+Notifications are processed in batches, rather than having a message for each user.
+This helps with scalability and as the user table grows.
+
+The disadvantage is that on a unlikely occassion that if something happens to the system (an issue, blip in network connectivity) only part of the batch will be processed.
+The other part of the batch will not have been processed, a retry area within the admin section could be added in case.
+
+---
+
 ## 08 · To Do
 
 ### 1. Chat Conversation Memory
