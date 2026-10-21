@@ -490,6 +490,12 @@ Notifications are queued, processed and sent in batches to support a large activ
 
 Administrators can manage system roles that can be assigned to users.
 
+### Logging & Auditing
+
+The system uses Serilog for normal information and also error logging. It is implemented within the Middleware.
+
+The system has its own Audit table and Audit service so creations, updates, deletes are always audited.
+
 ### RabbitMQ
 
 RabbitMQ is used to move background operations away from the main HTTP request.
