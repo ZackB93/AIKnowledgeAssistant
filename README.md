@@ -478,6 +478,24 @@ Administrators can manage users and their assigned roles.
 
 The authenticated user's identity is taken from their claims rather than relying on a user ID supplied by the client.
 
+### Notification Management
+
+Administrators can create, send and view user notifications and it's recipients on the system. 
+
+SignalR on the UI is used with a Hub for a constant and immediate connection and update of the user's unread notification count.
+
+Notifications are queued, processed and sent in batches to support a large active user system.
+
+### Role Management
+
+Administrators can manage system roles that can be assigned to users.
+
+### Logging & Auditing
+
+The system uses Serilog for normal information and also error logging. It is implemented within the Middleware.
+
+The system has its own Audit table and Audit service so creations, updates, deletes are always audited.
+
 ### RabbitMQ
 
 RabbitMQ is used to move background operations away from the main HTTP request.
@@ -535,7 +553,7 @@ This avoids introducing a separate vector database while the project remains rel
 
 **Trade-off**
 
-A dedicated vector solution may provide better indexing and retrieval performance at a much larger scale.
+A dedicated vector solution will provide better indexing and retrieval performance at a much larger scale.
 
 ---
 
@@ -572,22 +590,56 @@ Microsoft's full featured ORM. It works with C# entities and LINQ rather than wr
 * Relationships, migrations and navigation properties.
 * Excellent integration with dependency injection and transactions.
 
-**Trade-offs**
+**Disadvantages**
 
 * Change tracking and entity materialisation add overhead.
 * Complex LINQ can generate inefficient SQL.
 * Less direct control over the SQL that executes.
 * Can be excessive for simple reporting queries.
+* A much smaller and more lightweight solution would be Dapper.
 
-A much smaller, lightweight solution would be Dapper.
+---
+
+### Notification Batch Processing
+
+Notifications are processed in batches, rather than having a message for each user.
+This helps with scalability and as the user table grows.
+
+The disadvantage is that on a unlikely occassion that if something happens to the system (an issue, blip in network connectivity) only part of the batch will be processed.
+The other part of the batch will not have been processed, a retry area within the admin section could be added in case.
 
 ---
 
 ## 08 · To Do
 
-The project is intentionally being developed incrementally, with the following features planned to extend the application's AI, messaging and background-processing capabilities.
+### 1. Chat Conversation Memory
 
-### 1. Separate Vector Database (PostgreSQL + pgvector)
+Introduce conversation memory so the AI can recall relevant information from a user's previous chat sessions and use it to provide more contextual, personalised responses.
+
+This will allow the AI to build on previous conversations rather than treating each new chat as an isolated interaction.
+
+This will initially include:
+
+- Retrieving relevant context from previous chat sessions.
+- Incorporating historical messages into the AI prompt.
+- Using previous conversations alongside document-based RAG to generate more informed responses.
+
+### 2. LLM Tool Calling
+
+Introduce LLM tool calling to allow the AI to invoke approved application functions in response to user requests, rather than relying solely on text generation.
+
+This will allow the AI to interact with application functionality and retrieve relevant information dynamically.
+
+This will initially include:
+
+- Defining tools for operations such as searching documents and retrieving chat history.
+- Integrating tool calling through `Microsoft.Extensions.AI` and `IChatClient`.
+- Executing tools through existing application services and returning results to the AI model.
+- Enforcing authentication, authorisation and input validation for tool execution.
+
+For example, you could ask the AI chat how many users there are on the system, and it will come back with the response amount.
+
+### 3. Separate Vector Database (PostgreSQL + pgvector)
 
 Introduce a dedicated PostgreSQL database using the pgvector extension to store and query document embeddings independently of the existing SQL Server database.
 
@@ -617,32 +669,6 @@ Relevant Context
       ↓
 OpenAI Chat Completion
 ```
-
-### 2. RabbitMQ Retry & Dead-Letter Handling
-
-Introduce retry and dead-letter handling for failed background operations.
-
-This will allow failed messages to be retried automatically and permanently failed messages to be isolated rather than silently lost.
-
-```text
-RabbitMQ
-    ↓
-Consumer
-    ↓
-  Success ─────────→ Complete
-    │
-   Error
-    ↓
- Retry Queue
-    ↓
- Consumer
-    │
-   Error
-    ↓
-Dead-Letter Queue
-```
-
-This will initially support operations such as document processing, email and notifications.
 
 ---
 
