@@ -273,8 +273,7 @@
 
                                 @if (!sendingMessage)
                                 {
-                                    <InputFile @key="fileInputKey"
-                                               class="attach-input"
+                                    <InputFile class="attach-input"
                                                accept=".pdf,.docx,.txt,.md"
                                                multiple
                                                OnChange="OnFilesSelected" />
@@ -327,7 +326,6 @@
     private ChatSessionResponse? selectedSession;
 
     private long? copiedMessageId;
-    private int fileInputKey;
 
     private bool loadingSessions;
     private bool loadingMessages;
@@ -335,7 +333,6 @@
     private bool sendingMessage;
     private bool scrollToBottom;
     private bool emojiPickerOpen;
-    private bool uploadingDocument;
 
     private string? uploadError;
     private string messageText = string.Empty;

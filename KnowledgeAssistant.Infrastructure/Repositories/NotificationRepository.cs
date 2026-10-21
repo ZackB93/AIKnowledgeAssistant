@@ -134,7 +134,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     Body = x.Body,
                     CreatedAt = x.CreatedAt,
                     CreatedByUserId = (int)x.CreatedByUserId!,
-                    CreatedByName = x.CreatedByUser.FirstName + " " + x.CreatedByUser.LastName,
+                    CreatedByName = x.CreatedByUser!.FirstName + " " + x.CreatedByUser.LastName,
                     Status = x.Status,
                     TotalRecipients = x.Recipients.Count()
                 })
@@ -160,8 +160,8 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     Title = r.Notification.Title,
                     Body = r.Notification.Body,
                     CreatedAt = r.Notification.CreatedAt,
-                    CreatedByUserId = (int)r.Notification.CreatedByUserId,
-                    CreatedByUserName = r.Notification.CreatedByUser.FirstName + " " + r.Notification.CreatedByUser.LastName,
+                    CreatedByUserId = (int)r.Notification.CreatedByUserId!,
+                    CreatedByUserName = r.Notification.CreatedByUser!.FirstName + " " + r.Notification.CreatedByUser.LastName,
                     Read = r.IsRead,
                     ReadDate = r.ReadAt
                 })
@@ -186,7 +186,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                        Title = x.Title,
                        CreatedAt = x.CreatedAt,
                        Status = x.Status,
-                       CreatedByUserName = $"{x.CreatedByUser.FirstName} {x.CreatedByUser.LastName}",
+                       CreatedByUserName = $"{x.CreatedByUser!.FirstName} {x.CreatedByUser.LastName}",
                        RecipientCount = x.Recipients.Count(),
                        ReadCount = x.Recipients.Count(r => r.IsRead)
                    })

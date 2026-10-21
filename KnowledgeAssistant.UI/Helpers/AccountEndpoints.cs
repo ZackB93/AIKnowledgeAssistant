@@ -26,7 +26,7 @@ namespace KnowledgeAssistant.UI.Helpers
 
                 var claims = new List<Claim>
                 {
-                    new(ClaimTypes.NameIdentifier, session.User.Id.ToString()),
+                    new(ClaimTypes.NameIdentifier, session.User!.Id.ToString()),
                     new(ClaimTypes.Name, $"{session.User.FirstName} {session.User.LastName}"),
                     new(ClaimTypes.Email, session.User.Email),
                     new("access_token", session.Token!),

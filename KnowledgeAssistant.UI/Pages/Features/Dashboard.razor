@@ -121,15 +121,15 @@ else
                           Icon="@Icons.Material.Filled.People" Color="Color.Info" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
-                <StatCard Label="Chats" Value="@admin.TotalChats.ToString("N0")" Hint="@($"{admin.ChatsThisMonth:N0} this month")"
+                <StatCard Label="Chats" Value="@admin!.TotalChats.ToString("N0")" Hint="@($"{admin.ChatsThisMonth:N0} this month")"
                           Icon="@Icons.Material.Filled.Forum" Color="Color.Warning" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
-                <StatCard Label="Documents" Value="@admin.TotalDocuments.ToString("N0")" Hint="@($"{admin.StorageUsedGb:0.#} GB stored")"
+                <StatCard Label="Documents" Value="@admin!.TotalDocuments.ToString("N0")" Hint="@($"{admin.StorageUsedGb:0.#} GB stored")"
                           Icon="@Icons.Material.Filled.Description" Color="Color.Primary" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
-                <StatCard Label="Notifications" Value="@admin.TotalNotificationsSent.ToString("N0")" Hint="@($"{admin.NotificationReadRate:P0} read")"
+                <StatCard Label="Notifications" Value="@admin!.TotalNotificationsSent.ToString("N0")" Hint="@($"{admin.NotificationReadRate:P0} read")"
                           Icon="@Icons.Material.Filled.Notifications" Color="Color.Success" />
             </MudItem>
 
@@ -139,7 +139,7 @@ else
                         <MudText Typo="Typo.h6">AI chats per month</MudText>
                         <MudText Typo="Typo.caption" Style="opacity:.7">Last 6 months</MudText>
                     </div>
-                    <MonthlyBarChart Data="admin.ChatsPerMonth" SeriesName="Chats" />
+                    <MonthlyBarChart Data="admin!.ChatsPerMonth" SeriesName="Chats" />
                 </MudPaper>
             </MudItem>
 
@@ -150,7 +150,7 @@ else
                         <MudButton Variant="Variant.Filled" Color="@Color.Primary" Size="Size.Small" Href="/admin/users">Manage users</MudButton>
                     </div>
 
-                    @if (!admin.NewestUsers.Any())
+                    @if (!admin!.NewestUsers.Any())
                     {
                         <MudText Typo="Typo.body2" Style="opacity:.7">No users yet.</MudText>
                     }
@@ -181,7 +181,7 @@ else
                 <MudPaper Class="glass-card pa-4" Elevation="0" Style="height: 292px; overflow-y: auto;">
                     <MudText Typo="Typo.h6" Class="mb-2">Recent activity</MudText>
 
-                    @if (!admin.RecentActivity.Any())
+                    @if (!admin!.RecentActivity.Any())
                     {
                         <MudText Typo="Typo.body2" Style="opacity:.7">Nothing yet.</MudText>
                     }
@@ -210,15 +210,15 @@ else
         <MudGrid Spacing="3">
 
             <MudItem xs="12" sm="4">
-                <StatCard Label="Notifications" Value="@user.UnreadNotifications.ToString()" Hint="unread"
+                <StatCard Label="Notifications" Value="@user!.UnreadNotifications.ToString()" Hint="unread"
                           Icon="@Icons.Material.Filled.Notifications" Color="Color.Warning" />
             </MudItem>
             <MudItem xs="12" sm="4">
-                <StatCard Label="AI chats" Value="@user.TotalChats.ToString("N0")" Hint="@($"{user.ChatsThisMonth} this month")"
+                <StatCard Label="AI chats" Value="@user!.TotalChats.ToString("N0")" Hint="@($"{user.ChatsThisMonth} this month")"
                           Icon="@Icons.Material.Filled.Chat" Color="Color.Info" />
             </MudItem>
             <MudItem xs="12" sm="4">
-                <StatCard Label="Documents" Value="@user.TotalDocuments.ToString("N0")" Hint="total"
+                <StatCard Label="Documents" Value="@user!.TotalDocuments.ToString("N0")" Hint="total"
                           Icon="@Icons.Material.Filled.Description" Color="Color.Success" />
             </MudItem>
 
@@ -228,7 +228,7 @@ else
                         <MudText Typo="Typo.h6">My AI chats per month</MudText>
                         <MudText Typo="Typo.caption" Style="opacity:.7">Last 6 months</MudText>
                     </div>
-                    <MonthlyBarChart Data="@user.ChatsPerMonth" SeriesName="My chats" />
+                    <MonthlyBarChart Data="@user!.ChatsPerMonth" SeriesName="My chats" />
                 </MudPaper>
             </MudItem>
 
@@ -239,7 +239,7 @@ else
                         <MudButton Variant="Variant.Filled" Color="@Color.Primary" Size="Size.Small" Href="/chat">View all</MudButton>
                     </div>
 
-                    @if (user.RecentChats.Count == 0)
+                    @if (user!.RecentChats.Count == 0)
                     {
                         <MudText Typo="Typo.body2" Style="opacity:.7">No chats yet. Start your first one!</MudText>
                     }
@@ -271,7 +271,7 @@ else
                 <MudPaper Class="glass-card pa-4" Elevation="0" Style="height: 292px; overflow-y: auto;">
                     <MudText Typo="Typo.h6" Class="mb-2">Notifications</MudText>
 
-                    @if (user.RecentNotifications.Count == 0)
+                    @if (user!.RecentNotifications.Count == 0)
                     {
                         <MudText Typo="Typo.body2" Style="opacity:.7">You're all caught up.</MudText>
                     }

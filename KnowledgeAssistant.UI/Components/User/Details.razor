@@ -79,7 +79,7 @@ else
                                 }
                                 else
                                 {
-                                    <MudTextField Value="_viewModel.Role.Name"
+                                    <MudTextField Value="_viewModel.Role?.Name"
                                               Label="Role"
                                               Variant="Variant.Outlined" />
                                 }
@@ -358,7 +358,7 @@ else
         Location = model.Location,
         CreatedDateTime = model.CreatedDateTime,
         Enabled = model.Enabled,
-        RoleIds = [model.Role.Id]!
+        RoleIds = [model.Role!.Id]!
     };
 
     private static CreateUserRequest MapToCreateModel(UserViewModel model) => new()
@@ -374,7 +374,7 @@ else
         Password = model.Password,
         ReenterPassword = model.ReenterPassword,
         Enabled = model.Enabled,
-        RoleIds = [model.Role.Id]!
+        RoleIds = [model.Role!.Id]!
     };
 
 
