@@ -400,6 +400,54 @@ namespace KnowledgeAssistant.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.UserMemory.UserMemory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("MemoryType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("NormalizedKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("SourceChatSessionId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceChatSessionId");
+
+                    b.HasIndex("UserId", "MemoryType");
+
+                    b.HasIndex("UserId", "NormalizedKey");
+
+                    b.ToTable("UserMemory");
+                });
+
             modelBuilder.Entity("KnowledgeAssistant.Domain.Entities.Users.User", b =>
                 {
                     b.Property<int>("Id")

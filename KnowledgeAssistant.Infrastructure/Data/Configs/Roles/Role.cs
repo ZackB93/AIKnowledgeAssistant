@@ -1,5 +1,4 @@
 ﻿using KnowledgeAssistant.Domain.Entities.Roles;
-using KnowledgeAssistant.Domain.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
