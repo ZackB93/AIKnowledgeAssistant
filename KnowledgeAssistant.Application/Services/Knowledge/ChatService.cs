@@ -279,8 +279,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
             return _aiSecurityService.SanitizeOutput(response.Text ?? string.Empty);
         }
 
-        private async Task TryExtractAndSaveMemoriesAsync(
-            int userId, int chatSessionId, string userContent, string assistantContent, CancellationToken ct)
+        private async Task TryExtractAndSaveMemoriesAsync(int userId, int chatSessionId, string userContent, string assistantContent, CancellationToken ct)
         {
             try
             {
@@ -288,7 +287,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
 
                 foreach (var memory in extractedMemories)
                 {
-                    var scan = _aiSecurityService.ScanDocument(memory.Content, ct);
+                    var scan = _aiSecurityService.ScanContent(memory.Content, ct);
 
                     if (scan.IsSuspicious || memory.Content.Length > MaxMemoryLength)
                     {

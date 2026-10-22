@@ -58,7 +58,7 @@ namespace KnowledgeAssistant.API.Controllers
                 return Unauthorized();
             }
 
-            var chatSessionMessages = await _chatService.GetChatMessagesBySessionIdAsync(sessionId, ct);
+            var chatSessionMessages = await _chatService.GetChatMessagesBySessionIdAsync(sessionId, userId, ct);
 
             if (!chatSessionMessages.Any())
             {

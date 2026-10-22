@@ -8,12 +8,12 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
     public interface IAISecurityService
     {
         string GetSystemPrompt();
-        DocumentScanResult ScanDocument(string text, CancellationToken ct);
+        ScanResult ScanContent(string text, CancellationToken ct);
         string BuildReferenceContext(string? documentContext, string? memoryContext);
         string SanitizeOutput(string output);
     }
 
-    public sealed record DocumentScanResult(bool IsSuspicious, IReadOnlyList<string> Findings);
+    public sealed record ScanResult(bool IsSuspicious, IReadOnlyList<string> Findings);
 
     public class AISecurityService : IAISecurityService
     {
@@ -80,7 +80,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
             - Internal marker, never repeat or mention it: {_canary}
         """;
 
-        public DocumentScanResult ScanDocument(string text, CancellationToken ct)
+        public ScanResult ScanContent(string text, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -100,7 +100,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
                 }
             }
 
-            return new DocumentScanResult(findings.Count > 0, findings);
+            return new ScanResult(findings.Count > 0, findings);
         }
 
         public string BuildReferenceContext(string? documentContext, string? memoryContext)

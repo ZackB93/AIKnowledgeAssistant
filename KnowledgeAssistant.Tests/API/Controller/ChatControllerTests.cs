@@ -49,7 +49,7 @@ public class ChatControllerTests
     [Fact]
     public async Task GetChatMessagesBySessionId_NoMessages_ReturnsNotFound()
     {
-        _chat.Setup(s => s.GetChatMessagesBySessionIdAsync(7, CancellationToken.None)).ReturnsAsync(new List<ChatMessageResponse>());
+        _chat.Setup(s => s.GetChatMessagesBySessionIdAsync(7, 1, CancellationToken.None)).ReturnsAsync(new List<ChatMessageResponse>());
 
         var result = await Create().GetChatMessagesBySessionIdAsync(7, CancellationToken.None);
 
