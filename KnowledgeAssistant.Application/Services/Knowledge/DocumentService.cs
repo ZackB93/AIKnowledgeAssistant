@@ -60,7 +60,11 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
 
             if (scanResult.IsSuspicious)
             {
-                
+                _logger.LogWarning($"Document upload rejected due to potential prompt injection. UserId: {userId}, Findings: {scanResult.Findings}",
+                    userId,
+                    string.Join(", ", scanResult.Findings)
+                );
+
                 throw new InvalidOperationException("The document potentially contains unsafe instructions and was rejected.");
             }
 
