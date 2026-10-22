@@ -173,9 +173,6 @@ builder.Services.AddScoped<IMessageHandler<SendEmailMessage>, SendEmailHandler>(
 builder.Services.AddScoped<IMessageHandler<InsertRecipientsChunkMessage>, InsertRecipientsChunkHandler>();
 builder.Services.AddScoped<INotificationRealtimeNotifier, NotificationRealtimeNotifier>();
 
-builder.Services.AddSingleton<IResend>(ResendClient.Create(builder.Configuration["Resend:Key"]!));
-builder.Services.AddHostedService<RabbitMQBackgroundService>();
-
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddScoped<IEmailRepository, EmailRepository>();
@@ -185,6 +182,11 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IUserMemoryRepository, UserMemoryRepository>();
+
+builder.Services.AddSingleton<IAISecurityService, AISecurityService>();
+builder.Services.AddSingleton<IResend>(ResendClient.Create(builder.Configuration["Resend:Key"]!));
+
+builder.Services.AddHostedService<RabbitMQBackgroundService>();
 
 builder.Services.AddChatClient(services => new ChatClient(
     builder.Configuration["OpenAI:Model"]!,

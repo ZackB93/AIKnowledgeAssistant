@@ -4,6 +4,7 @@ using KnowledgeAssistant.Application.Interfaces.Repositories;
 using KnowledgeAssistant.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
 using System.Runtime.InteropServices;
 using DocChunkEntity = KnowledgeAssistant.Domain.Entities.Documents.DocumentChunk;
 using DocEntity = KnowledgeAssistant.Domain.Entities.Documents.Document;
@@ -25,30 +26,42 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
         private const long MaxFileBytes = 10 * 1024 * 1024; // 10 MB
         private const int EmbeddingBatchSize = 64;
         private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase) { ".pdf", ".docx", ".txt", ".md" };
-
         private readonly IDocumentRepository _documentRepository;
+        private readonly IAISecurityService _aiSecurityService;
         private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddings;
+        private readonly ILogger<DocumentService> _logger;
 
         public DocumentService(
             IDocumentRepository documentRepository,
-            IEmbeddingGenerator<string, Embedding<float>> embeddings)
+            IAISecurityService aiSecurityService,
+            IEmbeddingGenerator<string, Embedding<float>> embeddings,
+            ILogger<DocumentService> logger)
         {
             _documentRepository = documentRepository;
+            _aiSecurityService = aiSecurityService;
             _embeddings = embeddings;
+            _logger = logger;
         }
 
         public async Task<DocumentResponse> UploadAsync(IFormFile file, int userId, CancellationToken ct, int? chatSessionId = null)
         {
             await ValidateUploadAsync(file, chatSessionId, userId, ct);
 
-            var extension = Path.GetExtension(file.FileName);
-
             // Extract, chunk, embed.
-            var text = await ExtractTextAsync(file, extension, ct);
+            var text = await ExtractTextAsync(file, Path.GetExtension(file.FileName), ct);
 
             if (string.IsNullOrWhiteSpace(text))
             {
                 throw new InvalidOperationException("No text could be extracted from this file.");
+            }
+
+            // Scan for any prompt injections
+            var scanResult = await _aiSecurityService.ScanDocumentAsync(text, ct);
+
+            if (scanResult.IsSuspicious)
+            {
+                
+                throw new InvalidOperationException("The document potentially contains unsafe instructions and was rejected.");
             }
 
             var chunks = Chunk(text);

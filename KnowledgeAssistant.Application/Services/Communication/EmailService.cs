@@ -82,7 +82,8 @@ namespace KnowledgeAssistant.Application.Services.Communication
                 await _resendService.EmailSendAsync(new EmailMessage
                 {
                     From = "onboarding@resend.dev",
-                    To = "zackzack93@hotmail.com",
+                    //To = email.To,
+                    To = "zackzack93@hotmail.com", // Using resend and no domain so can only send to my own resend account email for dev purposes.
                     Subject = email.Subject,
                     HtmlBody = email.Body
                 }, ct);

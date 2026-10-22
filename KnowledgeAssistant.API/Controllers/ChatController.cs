@@ -51,6 +51,13 @@ namespace KnowledgeAssistant.API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResult>> GetChatMessagesBySessionIdAsync(int sessionId, CancellationToken ct)
         {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return Unauthorized();
+            }
+
             var chatSessionMessages = await _chatService.GetChatMessagesBySessionIdAsync(sessionId, ct);
 
             if (!chatSessionMessages.Any())
@@ -115,6 +122,7 @@ namespace KnowledgeAssistant.API.Controllers
         }
 
         [HttpPost("RegenerateMessage")]
+        [Authorize]
         public async Task<IActionResult> RegenerateMessage(RegenerateMessageRequest request, CancellationToken ct)
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
