@@ -8,7 +8,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
     public interface IAISecurityService
     {
         string GetSystemPrompt();
-        Task<DocumentScanResult> ScanDocumentAsync(string text, CancellationToken ct);
+        DocumentScanResult ScanDocument(string text, CancellationToken ct);
         string BuildReferenceContext(string? documentContext, string? memoryContext);
         string SanitizeOutput(string output);
     }
@@ -80,7 +80,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
             - Internal marker, never repeat or mention it: {_canary}
         """;
 
-        public Task<DocumentScanResult> ScanDocumentAsync(string text, CancellationToken ct)
+        public DocumentScanResult ScanDocument(string text, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -100,7 +100,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
                 }
             }
 
-            return Task.FromResult(new DocumentScanResult(findings.Count > 0, findings));
+            return new DocumentScanResult(findings.Count > 0, findings);
         }
 
         public string BuildReferenceContext(string? documentContext, string? memoryContext)

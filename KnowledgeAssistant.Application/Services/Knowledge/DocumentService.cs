@@ -56,7 +56,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
             }
 
             // Scan for any prompt injections
-            var scanResult = await _aiSecurityService.ScanDocumentAsync(text, ct);
+            var scanResult = _aiSecurityService.ScanDocument(text, ct);
 
             if (scanResult.IsSuspicious)
             {
