@@ -250,35 +250,65 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
 
         private static async Task<string> ExtractTextAsync(IFormFile file, string extension, CancellationToken ct)
         {
+            var text = string.Empty;
+
+            extension = extension.ToLowerInvariant();
+
+            if (extension is ".txt" or ".md")
+            {
+                await using var stream = file.OpenReadStream();
+                using var reader = new StreamReader(stream);
+
+                text = await reader.ReadToEndAsync(ct);
+                return text.Replace("\0", "");
+            }
+
             await using var memory = new MemoryStream();
             await file.CopyToAsync(memory, ct);
-
             memory.Position = 0;
 
-            string text;
 
-            switch (extension.ToLowerInvariant())
+            switch (extension)
             {
-                case ".txt":
-                case ".md":
-                    using (var reader = new StreamReader(memory, leaveOpen: true))
-                        text = await reader.ReadToEndAsync(ct);
-                    break;
-
                 case ".pdf":
                     using (var pdf = UglyToad.PdfPig.PdfDocument.Open(memory))
-                        text = string.Join("\n\n", pdf.GetPages().Select(p => p.Text));
+                    {
+                        var pages = new List<string>();
+
+                        foreach (var page in pdf.GetPages())
+                        {
+                            ct.ThrowIfCancellationRequested();
+                            pages.Add(page.Text);
+                        }
+
+                        text = string.Join("\n\n", pages);
+                    }
                     break;
 
                 case ".docx":
                     using (var doc = OpenXml.Packaging.WordprocessingDocument.Open(memory, false))
                     {
-                        var paragraphs = doc.MainDocumentPart?.Document?.Body?
-                            .Descendants<OpenXml.Wordprocessing.Paragraph>()
-                            .Select(p => p.InnerText)
-                            .Where(p => !string.IsNullOrWhiteSpace(p));
+                        var body = doc.MainDocumentPart?.Document?.Body;
 
-                        text = paragraphs is null ? "" : string.Join("\n\n", paragraphs);
+                        if (body is null)
+                        {
+                            text = string.Empty;
+                            break;
+                        }
+
+                        var paragraphs = new List<string>();
+
+                        foreach (var paragraph in body.Descendants<OpenXml.Wordprocessing.Paragraph>())
+                        {
+                            ct.ThrowIfCancellationRequested();
+
+                            var paragraphText = paragraph.InnerText;
+
+                            if (!string.IsNullOrWhiteSpace(paragraphText))
+                                paragraphs.Add(paragraphText);
+                        }
+
+                        text = string.Join("\n\n", paragraphs);
                     }
                     break;
 
