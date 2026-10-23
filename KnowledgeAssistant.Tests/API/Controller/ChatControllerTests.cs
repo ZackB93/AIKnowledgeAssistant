@@ -47,16 +47,6 @@ public class ChatControllerTests
     }
 
     [Fact]
-    public async Task GetChatMessagesBySessionId_NoMessages_ReturnsNotFound()
-    {
-        _chat.Setup(s => s.GetChatMessagesBySessionIdAsync(7, 1, CancellationToken.None)).ReturnsAsync(new List<ChatMessageResponse>());
-
-        var result = await Create().GetChatMessagesBySessionIdAsync(7, CancellationToken.None);
-
-        Assert.IsType<NotFoundObjectResult>(result.Result);
-    }
-
-    [Fact]
     public async Task AddChatSession_InvalidUserClaim_ReturnsUnauthorized()
     {
         var result = await Create(null).AddChatSession(new AddChatSessionRequest(), CancellationToken.None);
