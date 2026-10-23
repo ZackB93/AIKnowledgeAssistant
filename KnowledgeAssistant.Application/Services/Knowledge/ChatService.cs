@@ -115,8 +115,6 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
                 userId,
                 chatSession.Id,
                 chatMessageRequest.Content,
-                // If documents were used, the answer is influenced by untrusted content,
-                // so keep it out of memory extraction.
                 documentSearchResults.Any() ? string.Empty : responseText,
                 ct);
 
@@ -211,10 +209,6 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
             };
         }
 
-        // ------------------------------------------------------------------
-        // Prompt building
-        // ------------------------------------------------------------------
-
         // Anything that isn't "assistant" is treated as a user message, so nothing stored
         // in the database can become a system message.
         private static List<AIChatMessage> ToAIMessages(IEnumerable<ChatMessage> chatMessages) =>
@@ -226,10 +220,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
 
         // System prompt first (the only system message), then history, with the untrusted
         // reference context as its own message just before the latest user message.
-        private List<AIChatMessage> BuildPrompt(
-            List<AIChatMessage> history,
-            List<DocumentSearchResult> documentSearchResults,
-            List<UserMemory> relevantMemories)
+        private List<AIChatMessage> BuildPrompt(List<AIChatMessage> history, List<DocumentSearchResult> documentSearchResults, List<UserMemory> relevantMemories)
         {
             var messages = new List<AIChatMessage>(history.Count + 2)
             {
