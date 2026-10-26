@@ -616,22 +616,7 @@ The other part of the batch will not have been processed, a retry area within th
 
 ## 08 · To Do
 
-### 1. LLM Tool Calling
-
-Introduce LLM tool calling to allow the AI to invoke approved application functions in response to user requests, rather than relying solely on text generation.
-
-This will allow the AI to interact with application functionality and retrieve relevant information dynamically.
-
-This will initially include:
-
-- Defining tools for operations such as searching documents and retrieving chat history.
-- Integrating tool calling through `Microsoft.Extensions.AI` and `IChatClient`.
-- Executing tools through existing application services and returning results to the AI model.
-- Enforcing authentication, authorisation and input validation for tool execution.
-
-For example, you could ask the AI chat how many users there are on the system, and it will come back with the response amount.
-
-### 2. Separate Vector Database (PostgreSQL + pgvector)
+### 1. Separate Vector Database (PostgreSQL + pgvector)
 
 Introduce a dedicated PostgreSQL database using the pgvector extension to store and query document embeddings independently of the existing SQL Server database.
 
