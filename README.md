@@ -1,4 +1,3 @@
-
 <div align="center">
 
 # KnowledgeAssistant
@@ -132,6 +131,7 @@ There is no sensitive or personal information within the database.
 * **Embedding models**
 * **Vector embeddings**
 * **Retrieval-Augmented Generation**
+* **LLM Function / Tool Calling**
 
 ### Messaging & Background Processing
 
@@ -172,7 +172,9 @@ KnowledgeAssistant
 │   ├── Interfaces
 │   │   ├── Hubs
 │   │   └── Repositories
-│   └── Services
+│   ├── Services
+│   └── Tools
+│       └── Knowledge
 │
 ├── KnowledgeAssistant.Domain
 │   ├── Entities
@@ -386,14 +388,13 @@ Strict Test Driven Development has not been followed in this project.
 
 ## 06 · Features
 
-### AI Chat with memory
+### AI Chat with memory and LLM tool calling
 
-The application uses `IChatClient` from `Microsoft.Extensions.AI` to provide AI-powered chat functionality.
+The application uses `IChatClient` from `Microsoft.Extensions.AI` to provide AI-powered chat functionality through OpenAI.
 
-Chat sessions and messages are persisted, allowing users to maintain multiple conversations and revisit previous chats.
+Chat sessions and messages are persisted, allowing users to maintain multiple conversations and revisit previous chats. The system also stores user-specific facts, preferences, goals and project details in SQL Server to support personalised responses and continuity across conversations.
 
-The system extracts and stores user-specific facts, preferences, goals and project details in SQL Server, enabling personalised responses and continuity across conversations.
-
+LLM tool calling allows the model to request specific operations exposed by the application when a question requires live application data. For example, a user could ask how many active users are registered. The model can request the relevant tool, the application executes the operation using its own services and repositories, and the result is returned to the model to help formulate the answer. The model does not receive unrestricted database access; only explicitly registered tools are available to it.
 
 ```text
 User
@@ -404,20 +405,28 @@ API
   ↓
 ChatService
   ↓
-RAG Retrieval
+Security Checks & Prompt Injection Safeguards
+  ↓
+RAG Retrieval & Memory
   ↓
 AI Context
   ↓
-IChatClient
+IChatClient / OpenAI
+  ↕
+LLM Tool Calling (when required)
   ↓
-OpenAI
-  ↓
-Response
+Output Sanitisation
   ↓
 Save Message
   ↓
 UI
 ```
+
+#### AI security considerations
+
+AI input, retrieved document content and tool results must be treated as untrusted data. Prompt-injection safeguards help reduce the risk of instructions embedded in user messages or uploaded documents influencing the model in unintended ways, but they cannot guarantee that every attack will be detected.
+
+Tools should expose narrow, purpose-specific operations rather than general database access. Authorisation must be enforced by the application before sensitive operations run; it must not depend on the model's judgement or on instructions in the prompt. For user-specific information, the authenticated identity should be obtained from trusted server-side claims rather than a user ID supplied by the model or client. Responses returned to users should be sanitised, and tool access and failures should be handled by the application.
 
 ### Retrieval-Augmented Generation
 
