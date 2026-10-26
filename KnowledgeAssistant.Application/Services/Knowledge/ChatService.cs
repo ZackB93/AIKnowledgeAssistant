@@ -268,17 +268,23 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
         }
 
         private async Task<string> GetSafeResponseTextAsync(List<AIChatMessage> messages, CancellationToken ct)
-        {
-            var userCountTool = AIFunctionFactory.Create(_userStatisticsTools.GetUserCount);
-
-            var options = new ChatOptions
-            {
-                Tools = [userCountTool]
-            };
-
-            var response = await _chatClient.GetResponseAsync(messages, options, cancellationToken: ct);
+        {   
+            var response = await _chatClient.GetResponseAsync(messages, GetAITools(), cancellationToken: ct);
 
             return _aiSecurityService.SanitizeOutput(response.Text ?? string.Empty);
+        }
+
+        private ChatOptions GetAITools()
+        {
+            return new ChatOptions
+            {
+                Tools =
+                [
+                      AIFunctionFactory.Create(_userStatisticsTools.GetUserCount),
+                      AIFunctionFactory.Create(_userStatisticsTools.GetEnabledUserCount),
+                      AIFunctionFactory.Create(_userStatisticsTools.GetUserCountCreatedSince)
+                ]
+            };
         }
 
         private async Task TryExtractAndSaveMemoriesAsync(int userId, int chatSessionId, string userContent, string assistantContent, CancellationToken ct)

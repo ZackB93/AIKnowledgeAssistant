@@ -27,6 +27,16 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
             return await _context.Users.CountAsync(x => !x.IsDeleted, ct);
         }
 
+        public async Task<int> GetActiveUserCountAsync(CancellationToken ct)
+        {
+            return await _context.Users.CountAsync(x => x.Enabled && !x.IsDeleted, ct);
+        }
+
+        public async Task<int> GetUserCountCreatedSinceAsync(DateTime since, CancellationToken ct)
+        {
+            return await _context.Users.CountAsync(x => !x.IsDeleted && x.CreatedDateTime >= since, ct);
+        }
+
         public async Task<User?> GetByIdWithCredentialsAndRolesAsync(int id, CancellationToken ct)
         {
             return await _context.Users
