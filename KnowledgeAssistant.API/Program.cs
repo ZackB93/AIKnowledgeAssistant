@@ -8,6 +8,7 @@ using KnowledgeAssistant.Application.Services.Communication;
 using KnowledgeAssistant.Application.Services.Identity;
 using KnowledgeAssistant.Application.Services.Infrastructure;
 using KnowledgeAssistant.Application.Services.Knowledge;
+using KnowledgeAssistant.Application.Tools.Knowledge;
 using KnowledgeAssistant.Domain.Entities.Emails;
 using KnowledgeAssistant.Domain.Entities.Notifications;
 using KnowledgeAssistant.Domain.Entities.Users;
@@ -183,6 +184,8 @@ builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IUserMemoryRepository, UserMemoryRepository>();
 
+builder.Services.AddScoped<IUserStatisticsTools, UserStatisticsTools>();
+
 builder.Services.AddSingleton<IAISecurityService, AISecurityService>();
 builder.Services.AddSingleton<IResend>(ResendClient.Create(builder.Configuration["Resend:Key"]!));
 
@@ -191,7 +194,8 @@ builder.Services.AddHostedService<RabbitMQBackgroundService>();
 builder.Services.AddChatClient(services => new ChatClient(
     builder.Configuration["OpenAI:Model"]!,
     builder.Configuration["OpenAI:ApiKey"]!
-).AsIChatClient());
+).AsIChatClient())
+.UseFunctionInvocation();
 
 builder.Services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(services => new EmbeddingClient(
     builder.Configuration["OpenAI:EmbeddingModel"]!,

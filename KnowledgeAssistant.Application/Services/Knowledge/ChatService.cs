@@ -1,6 +1,7 @@
 ﻿using KnowledgeAssistant.Application.DTOs.Chat;
 using KnowledgeAssistant.Application.DTOs.Documents;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
+using KnowledgeAssistant.Application.Tools.Knowledge;
 using KnowledgeAssistant.Domain.Entities.Chat;
 using KnowledgeAssistant.Domain.Entities.UserMemory;
 using Microsoft.Extensions.AI;
@@ -38,6 +39,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
         private readonly IDocumentService _documentService;
         private readonly IUserMemoryService _userMemoryService;
         private readonly IAISecurityService _aiSecurityService;
+        private readonly IUserStatisticsTools _userStatisticsTools;
         private readonly ILogger<ChatService> _logger;
 
         public ChatService(
@@ -46,6 +48,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
             IDocumentService documentService,
             IUserMemoryService userMemoryService,
             IAISecurityService aiSecurityService,
+            IUserStatisticsTools userStatisticsTools,
             ILogger<ChatService> logger)
         {
             _chatRepository = chatRepository;
@@ -53,6 +56,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
             _documentService = documentService;
             _userMemoryService = userMemoryService;
             _aiSecurityService = aiSecurityService;
+            _userStatisticsTools = userStatisticsTools;
             _logger = logger;
         }
 
@@ -265,7 +269,14 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
 
         private async Task<string> GetSafeResponseTextAsync(List<AIChatMessage> messages, CancellationToken ct)
         {
-            var response = await _chatClient.GetResponseAsync(messages, cancellationToken: ct);
+            var userCountTool = AIFunctionFactory.Create(_userStatisticsTools.GetUserCount);
+
+            var options = new ChatOptions
+            {
+                Tools = [userCountTool]
+            };
+
+            var response = await _chatClient.GetResponseAsync(messages, options, cancellationToken: ct);
 
             return _aiSecurityService.SanitizeOutput(response.Text ?? string.Empty);
         }

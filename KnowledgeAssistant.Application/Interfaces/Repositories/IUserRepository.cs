@@ -10,6 +10,7 @@ namespace KnowledgeAssistant.Application.Interfaces.Repositories
         Task<User?> GetByIdWithCredentialsAndRolesAsync(int id, CancellationToken ct);
         Task<SignInDetails?> GetSignInDetailsByEmailAsync(string email, CancellationToken ct);
         Task<UserResponse?> GetResponseByIdAsync(int id, CancellationToken ct);
+        Task<int> GetUserCountAsync(CancellationToken ct);
         Task<(List<UserResponse> Items, int TotalCount)> GetPagedResponsesAsync(int pageNumber, int pageSize, CancellationToken ct);
         Task<(List<UserResponse> Items, int TotalCount)> SearchPagedResponsesAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken ct);
         Task<bool> ExistsByEmailAsync(string email, CancellationToken ct);
