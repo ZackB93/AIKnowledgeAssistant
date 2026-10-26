@@ -326,6 +326,7 @@ Strict Test Driven Development has not been followed in this project.
 
 <img src="screenshots/chat_general_convo.png" alt="AI Chat" width="850">
 <img src="screenshots/chat_general_convo_memory.png" alt="AI Chat" width="850">
+<img src="screenshots/chat_general_convo_llm.png" alt="AI Chat" width="850">
 <img src="screenshots/chat_attachment_convo1.png" alt="AI Chat" width="850">
 <img src="screenshots/chat_attachment_convo2.png" alt="AI Chat" width="850">
 <img src="screenshots/chat_attachment_convo3.png" alt="AI Chat" width="850">
