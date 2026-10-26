@@ -27,7 +27,7 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
             return await _context.Users.CountAsync(x => !x.IsDeleted, ct);
         }
 
-        public async Task<int> GetActiveUserCountAsync(CancellationToken ct)
+        public async Task<int> GetEnabledUserCountAsync(CancellationToken ct)
         {
             return await _context.Users.CountAsync(x => x.Enabled && !x.IsDeleted, ct);
         }

@@ -183,7 +183,9 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IUserMemoryRepository, UserMemoryRepository>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+builder.Services.AddScoped<IChatTools, ChatTools>();
 builder.Services.AddScoped<IUserStatisticsTools, UserStatisticsTools>();
 
 builder.Services.AddSingleton<IAISecurityService, AISecurityService>();

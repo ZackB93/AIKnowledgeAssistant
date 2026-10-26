@@ -40,6 +40,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
         private readonly IUserMemoryService _userMemoryService;
         private readonly IAISecurityService _aiSecurityService;
         private readonly IUserStatisticsTools _userStatisticsTools;
+        private readonly IChatTools _chatTools;
         private readonly ILogger<ChatService> _logger;
 
         public ChatService(
@@ -49,6 +50,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
             IUserMemoryService userMemoryService,
             IAISecurityService aiSecurityService,
             IUserStatisticsTools userStatisticsTools,
+            IChatTools chatTools,
             ILogger<ChatService> logger)
         {
             _chatRepository = chatRepository;
@@ -57,6 +59,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
             _userMemoryService = userMemoryService;
             _aiSecurityService = aiSecurityService;
             _userStatisticsTools = userStatisticsTools;
+            _chatTools = chatTools;
             _logger = logger;
         }
 
@@ -82,7 +85,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
                 Title = chatSession.Title,
                 CreatedAt = chatSession.CreatedAt,
                 UpdatedAt = chatSession.UpdatedAt,
-                Messages = new()
+
             };
         }
 
@@ -280,9 +283,12 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
             {
                 Tools =
                 [
-                      AIFunctionFactory.Create(_userStatisticsTools.GetUserCount),
-                      AIFunctionFactory.Create(_userStatisticsTools.GetEnabledUserCount),
-                      AIFunctionFactory.Create(_userStatisticsTools.GetUserCountCreatedSince)
+                    AIFunctionFactory.Create(_userStatisticsTools.GetUserCount),
+                    AIFunctionFactory.Create(_userStatisticsTools.GetEnabledUserCount),
+                    AIFunctionFactory.Create(_userStatisticsTools.GetUserCountCreatedSince),
+                    AIFunctionFactory.Create(_chatTools.GetRecentChats),
+                    AIFunctionFactory.Create(_chatTools.SearchChatHistory),
+                    AIFunctionFactory.Create(_chatTools.GetChatSummary)
                 ]
             };
         }

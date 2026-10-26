@@ -12,5 +12,8 @@ namespace KnowledgeAssistant.Application.Interfaces.Repositories
         Task<List<ChatMessage>> GetChatMessagesBySessionIdAsync(int sessionId, CancellationToken ct);
         Task AttachDocumentsToMessageAsync(int chatSessionId, long messageId, List<int> documentIds, int userId, CancellationToken ct);
         Task SaveChangesAsync(CancellationToken ct);
+        Task<List<ChatSessionResponse>> GetRecentChatSessionsByUserIdAsync(int userId, int count, CancellationToken ct);
+        Task<List<ChatHistorySearchResult>> SearchChatHistoryAsync(int userId, string query, int limit, CancellationToken ct);
+        Task<List<ChatMessage>> GetChatMessagesBySessionIdAndUserIdAsync(int sessionId, int userId, int limit, CancellationToken ct);
     }
 }

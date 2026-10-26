@@ -39,7 +39,6 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
                     Title = x.Title,
                     CreatedAt = x.CreatedAt,
                     UpdatedAt = x.UpdatedAt,
-                    Messages = new()
                 })
                 .ToListAsync(ct);
         }
@@ -83,6 +82,75 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
         public async Task SaveChangesAsync(CancellationToken ct)
         {
             await _context.SaveChangesAsync(ct);
+        }
+
+        public async Task<List<ChatSessionResponse>> GetRecentChatSessionsByUserIdAsync(int userId, int count, CancellationToken ct)
+        {
+            count = Math.Clamp(count, 1, 20);
+
+            return await _context.ChatSessions
+                .AsNoTracking()
+                .Where(x => x.UserId == userId)
+                .OrderByDescending(x => x.UpdatedAt)
+                .Take(count)
+                .Select(x => new ChatSessionResponse
+                {
+                    Id = x.Id,
+                    UserId = x.UserId,
+                    Title = x.Title,
+                    CreatedAt = x.CreatedAt,
+                    UpdatedAt = x.UpdatedAt,
+                })
+                .ToListAsync(ct);
+        }
+
+        public async Task<List<ChatMessage>> GetChatMessagesBySessionIdAndUserIdAsync(int sessionId, int userId, int limit, CancellationToken ct)
+        {
+            limit = Math.Clamp(limit, 1, 50);
+
+            var messages = await _context.ChatMessages
+                .AsNoTracking()
+                .Where(x =>
+                    x.ChatSessionId == sessionId &&
+                    _context.ChatSessions.Any(s =>
+                        s.Id == x.ChatSessionId &&
+                        s.UserId == userId))
+                .OrderByDescending(x => x.CreatedAt)
+                .ThenByDescending(x => x.Id)
+                .Take(limit)
+                .ToListAsync(ct);
+
+            messages.Reverse();
+
+            return messages;
+        }
+
+        public async Task<List<ChatHistorySearchResult>> SearchChatHistoryAsync(int userId, string query, int limit, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return new();
+            }
+
+            limit = Math.Clamp(limit, 1, 20);
+
+            return await (
+                from message in _context.ChatMessages.AsNoTracking()
+                join session in _context.ChatSessions.AsNoTracking()
+                    on message.ChatSessionId equals session.Id
+                where session.UserId == userId &&
+                      message.Content.Contains(query)
+                orderby message.CreatedAt descending
+                select new ChatHistorySearchResult
+                {
+                    ChatSessionId = session.Id,
+                    ChatTitle = session.Title,
+                    Role = message.Role,
+                    Content = message.Content,
+                    CreatedAt = message.CreatedAt
+                })
+                .Take(limit)
+                .ToListAsync(ct);
         }
     }
 }
