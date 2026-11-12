@@ -2,6 +2,7 @@
 using KnowledgeAssistant.Application.Interfaces.Repositories;
 using KnowledgeAssistant.Domain.Entities.Documents;
 using KnowledgeAssistant.Infrastructure.Data.Context;
+using Microsoft.Data.SqlTypes;
 using Microsoft.EntityFrameworkCore;
 
 namespace KnowledgeAssistant.Infrastructure.Repositories
@@ -26,24 +27,44 @@ namespace KnowledgeAssistant.Infrastructure.Repositories
             await _context.Documents.AddAsync(document, ct);
         }
 
-        public async Task<List<DocumentChunkSearchProjection>> GetDocumentChunksForSearchAsync(List<int>? documentIds, int userId, CancellationToken ct)
+        public async Task<List<DocumentSearchResult>> SearchSimilarChunksAsync(SqlVector<float> queryEmbedding, List<int>? documentIds, int userId, CancellationToken ct)
         {
-            return await _context.DocumentChunks
+            var query = _context.DocumentChunks
                 .AsNoTracking()
-                .Where(x =>
-                    (documentIds == null || !documentIds.Any() || documentIds.Contains(x.DocumentId)) &&
-                    x.Document.UserId == userId)
-                .OrderBy(x => x.DocumentId)
-                .ThenBy(x => x.ChunkIndex)
-                .Select(x => new DocumentChunkSearchProjection(
-                    x.Id,
-                    x.DocumentId,
-                    x.ChunkIndex,
-                    x.Content,
-                    x.Embedding,
-                    x.Document.FileName
-                ))
+                .Where(x => x.Document.UserId == userId);
+
+            // Restrict the search to selected documents when supplied.
+            if (documentIds is { Count: > 0 })
+            {
+                query = query.Where(x => documentIds.Contains(x.DocumentId));
+            }
+
+            // Calculate vector distance inside SQL Server.
+            var results = await query
+                .Select(x => new
+                {
+                    Chunk = x,
+                    Distance = EF.Functions.VectorDistance(
+                        "cosine",
+                        x.Embedding,
+                        queryEmbedding)
+                })
+                .OrderBy(x => x.Distance)
+                .Take(5)
+                .Select(x => new DocumentSearchResult
+                {
+                    DocumentId = x.Chunk.DocumentId,
+                    ChunkId = x.Chunk.Id,
+                    FileName = x.Chunk.Document.FileName,
+                    ChunkIndex = x.Chunk.ChunkIndex,
+                    Content = x.Chunk.Content,
+
+                    // Convert cosine distance into cosine similarity.
+                    Similarity = 1 - x.Distance
+                })
                 .ToListAsync(ct);
+
+            return results;
         }
 
         public async Task<(List<DocumentResponse> Items, int TotalCount)> GetPaginatedDocumentsAsync(int pageNumber, int pageSize, CancellationToken ct)

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
 using System.Collections.Generic;
+using System.Reflection.Emit;
 using System.Text;
 
 namespace KnowledgeAssistant.Infrastructure.Data.Configs.Documents
@@ -20,6 +21,7 @@ namespace KnowledgeAssistant.Infrastructure.Data.Configs.Documents
                 .IsRequired();
 
             builder.Property(x => x.Embedding)
+                .HasColumnType("vector(1536)")
                 .IsRequired();
 
             builder.HasOne(x => x.Document)

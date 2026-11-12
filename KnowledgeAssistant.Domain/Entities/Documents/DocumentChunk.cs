@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Microsoft.Data.SqlTypes;
 
 namespace KnowledgeAssistant.Domain.Entities.Documents
 {
@@ -14,7 +12,7 @@ namespace KnowledgeAssistant.Domain.Entities.Documents
 
         public string Content { get; set; } = null!;
 
-        public byte[] Embedding { get; set; } = null!;
+        public SqlVector<float> Embedding { get; set; }
 
         public Document Document { get; set; } = null!;
     }

@@ -3,9 +3,9 @@ using KnowledgeAssistant.Application.DTOs.Documents;
 using KnowledgeAssistant.Application.Interfaces.Repositories;
 using KnowledgeAssistant.Domain.Enums;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Data.SqlTypes;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
-using System.Runtime.InteropServices;
 using DocChunkEntity = KnowledgeAssistant.Domain.Entities.Documents.DocumentChunk;
 using DocEntity = KnowledgeAssistant.Domain.Entities.Documents.Document;
 using OpenXml = DocumentFormat.OpenXml;
@@ -19,13 +19,16 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
         Task<PaginatedResponse<DocumentResponse>> GetDocumentsAsync(int pageNumber, int pageSize, CancellationToken ct);
     }
 
-    // TODO: Create seperate dedicated vector database and service using PostgreSQL and PGVector extension for better performance and scalability.
-    // This service is currently using the sql database to store embeddings, which may not be optimal for large-scale applications or as it grows.
     public class DocumentService : IDocumentService
     {
-        private const long MaxFileBytes = 10 * 1024 * 1024; // 10 MB
+        private const long MaxFileBytes = 10 * 1024 * 1024;
         private const int EmbeddingBatchSize = 64;
-        private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase) { ".pdf", ".docx", ".txt", ".md" };
+
+        private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
+            {
+                ".pdf", ".docx", ".txt", ".md"
+            };
+
         private readonly IDocumentRepository _documentRepository;
         private readonly IAISecurityService _aiSecurityService;
         private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddings;
@@ -47,31 +50,32 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
         {
             await ValidateUploadAsync(file, chatSessionId, userId, ct);
 
-            // Extract, chunk, embed.
+            // Extract text from the uploaded document.
             var text = await ExtractTextAsync(file, Path.GetExtension(file.FileName), ct);
 
             if (string.IsNullOrWhiteSpace(text))
             {
-                throw new InvalidOperationException("No text could be extracted from this file.");
+                throw new InvalidOperationException( "No text could be extracted from this file.");
             }
 
-            // Scan for any prompt injections
+            // Scan for potential prompt injections.
             var scanResult = _aiSecurityService.ScanContent(text, ct);
 
             if (scanResult.IsSuspicious)
             {
-                _logger.LogWarning($"Document upload rejected due to potential prompt injection. UserId: {userId}, Findings: {scanResult.Findings}",
+                _logger.LogWarning(
+                    "Document upload rejected due to potential prompt injection. UserId: {UserId}, Findings: {Findings}",
                     userId,
-                    string.Join(", ", scanResult.Findings)
-                );
+                    string.Join(", ", scanResult.Findings));
 
                 throw new InvalidOperationException("The document potentially contains unsafe instructions and was rejected.");
             }
 
+            // Split extracted text into chunks.
             var chunks = Chunk(text);
             var embeddings = new List<Embedding<float>>(chunks.Count);
 
-            // Generate embeddings in batches to avoid overwhelming the embedding service.
+            // Generate embeddings in batches.
             for (var i = 0; i < chunks.Count; i += EmbeddingBatchSize)
             {
                 var batch = chunks.Skip(i).Take(EmbeddingBatchSize).ToList();
@@ -82,10 +86,11 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
 
             if (embeddings.Count != chunks.Count)
             {
-                throw new InvalidOperationException("Embedding generation returned an unexpected number of results.");
+                throw new InvalidOperationException(
+                    "Embedding generation returned an unexpected number of results.");
             }
 
-            // Save the document and its chunks via repository.
+            // Create document and store native SQL vectors.
             var document = new DocEntity
             {
                 UserId = userId,
@@ -96,12 +101,13 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
                 Status = DocumentStatus.Ready,
                 EmbeddingModel = _embeddings.GetService<EmbeddingGeneratorMetadata>()?.DefaultModelId,
                 CreatedAt = DateTime.UtcNow,
-                Chunks = chunks.Select((content, index) => new DocChunkEntity
-                {
-                    ChunkIndex = index,
-                    Content = content,
-                    Embedding = MemoryMarshal.AsBytes(embeddings[index].Vector.Span).ToArray()
-                }).ToList()
+                Chunks = chunks.Select((content, index) =>
+                    new DocChunkEntity
+                    {
+                        ChunkIndex = index,
+                        Content = content,
+                        Embedding = new SqlVector<float>(embeddings[index].Vector)
+                    }).ToList()
             };
 
             await _documentRepository.AddDocumentAsync(document, ct);
@@ -127,65 +133,39 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
                 return new();
             }
 
-            // Generate an embedding for the user's question.
+            // Generate the embedding for the user's question.
             var queryEmbedding = await _embeddings.GenerateAsync(query, cancellationToken: ct);
 
-            // Keep as ReadOnlyMemory<float> (or float[] array) across await boundaries.
-            ReadOnlyMemory<float> queryMemory = queryEmbedding.Vector;
+            // Convert to SQL Server's native vector representation.
+            var vector = new SqlVector<float>(queryEmbedding.Vector);
 
-            // Only retrieve chunks belonging to the user's selected documents.
-            var chunks = await _documentRepository.GetDocumentChunksForSearchAsync(documentIds, userId, ct);
+            // SQL Server performs the similarity comparison.
+            var searchResult = await _documentRepository.SearchSimilarChunksAsync(vector, documentIds, userId, ct);
 
-            var results = new List<DocumentSearchResult>();
-
-            // Extract the span here, safely after all async/await calls are finished.
-            ReadOnlySpan<float> queryVector = queryMemory.Span;
-
-            // Compare the query embedding to each chunk's embedding and calculate similarity.
-            foreach (var chunk in chunks)
-            {
-                if (chunk.Embedding is null || chunk.Embedding.Length == 0)
-                {
-                    continue;
-                }
-
-                ReadOnlySpan<float> storedVector = MemoryMarshal.Cast<byte, float>(chunk.Embedding.AsSpan());
-
-                if (storedVector.Length != queryVector.Length)
-                {
-                    continue;
-                }
-
-                var similarity = CosineSimilarity(queryVector, storedVector);
-
-                results.Add(new DocumentSearchResult
-                {
-                    DocumentId = chunk.DocumentId,
-                    ChunkId = chunk.Id,
-                    FileName = chunk.FileName,
-                    ChunkIndex = chunk.ChunkIndex,
-                    Content = chunk.Content,
-                    Similarity = similarity
-                });
-            }
-
-            // Take the top 5 most similar chunks.
-            return results
-                .OrderByDescending(x => x.Similarity)
-                .Take(5)
-                .ToList();
+            return searchResult;
         }
 
         public async Task<PaginatedResponse<DocumentResponse>> GetDocumentsAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
-            var maxPageSize = 50;
+            const int maxPageSize = 50;
 
-            if (pageNumber < 1) pageNumber = 1;
-            if (pageSize < 1) pageSize = 10;
-            if (pageSize > maxPageSize) pageSize = maxPageSize;
+            if (pageNumber < 1)
+            {
+                pageNumber = 1;
+            }
 
-            var (documents, totalCount) = await _documentRepository.GetPaginatedDocumentsAsync(pageNumber, pageSize, ct);
-            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+            if (pageSize < 1)
+            {
+                pageSize = 10;
+            }
+
+            if (pageSize > maxPageSize)
+            {
+                pageSize = maxPageSize;
+            }
+
+            var (documents, totalCount) = await _documentRepository.GetPaginatedDocumentsAsync(pageNumber, pageSize,ct);
+            var totalPages = (int)Math.Ceiling( (double)totalCount / pageSize);
 
             return new PaginatedResponse<DocumentResponse>
             {
@@ -201,51 +181,38 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
         {
             if (file is null || file.Length == 0)
             {
-                throw new InvalidOperationException("No file was provided.");
+                throw new InvalidOperationException(
+                    "No file was provided.");
             }
 
             if (file.Length > MaxFileBytes)
             {
-                throw new InvalidOperationException("File is too large (max 10 MB).");
+                throw new InvalidOperationException(
+                    "File is too large (max 10 MB).");
             }
 
             var extension = Path.GetExtension(file.FileName);
 
             if (!AllowedExtensions.Contains(extension))
             {
-                throw new InvalidOperationException($"Unsupported file type: {extension}");
+                throw new InvalidOperationException(
+                    $"Unsupported file type: {extension}");
             }
 
             if (chatSessionId is not null)
             {
-                var ownsSession = await _documentRepository.DoesUserOwnChatSessionAsync(chatSessionId.Value, userId, ct);
+                var ownsSession =
+                    await _documentRepository.DoesUserOwnChatSessionAsync(
+                        chatSessionId.Value,
+                        userId,
+                        ct);
 
                 if (!ownsSession)
                 {
-                    throw new InvalidOperationException("Chat session was not found.");
+                    throw new InvalidOperationException(
+                        "Chat session was not found.");
                 }
             }
-        }
-
-        private static double CosineSimilarity(ReadOnlySpan<float> a, ReadOnlySpan<float> b)
-        {
-            double dot = 0;
-            double magnitudeA = 0;
-            double magnitudeB = 0;
-
-            for (var i = 0; i < a.Length; i++)
-            {
-                dot += a[i] * b[i];
-                magnitudeA += a[i] * a[i];
-                magnitudeB += b[i] * b[i];
-            }
-
-            if (magnitudeA == 0 || magnitudeB == 0)
-            {
-                return 0;
-            }
-
-            return dot / (Math.Sqrt(magnitudeA) * Math.Sqrt(magnitudeB));
         }
 
         private static async Task<string> ExtractTextAsync(IFormFile file, string extension, CancellationToken ct)
@@ -260,13 +227,14 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
                 using var reader = new StreamReader(stream);
 
                 text = await reader.ReadToEndAsync(ct);
+
                 return text.Replace("\0", "");
             }
 
             await using var memory = new MemoryStream();
+
             await file.CopyToAsync(memory, ct);
             memory.Position = 0;
-
 
             switch (extension)
             {
@@ -286,7 +254,8 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
                     break;
 
                 case ".docx":
-                    using (var doc = OpenXml.Packaging.WordprocessingDocument.Open(memory, false))
+                    using (var doc =
+                        OpenXml.Packaging.WordprocessingDocument.Open(memory, false))
                     {
                         var body = doc.MainDocumentPart?.Document?.Body;
 
@@ -298,14 +267,17 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
 
                         var paragraphs = new List<string>();
 
-                        foreach (var paragraph in body.Descendants<OpenXml.Wordprocessing.Paragraph>())
+                        foreach (var paragraph in
+                            body.Descendants<OpenXml.Wordprocessing.Paragraph>())
                         {
                             ct.ThrowIfCancellationRequested();
 
                             var paragraphText = paragraph.InnerText;
 
                             if (!string.IsNullOrWhiteSpace(paragraphText))
+                            {
                                 paragraphs.Add(paragraphText);
+                            }
                         }
 
                         text = string.Join("\n\n", paragraphs);
@@ -313,15 +285,20 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
                     break;
 
                 default:
-                    throw new InvalidOperationException($"Unsupported file type: {extension}");
+                    throw new InvalidOperationException(
+                        $"Unsupported file type: {extension}");
             }
 
             return text.Replace("\0", "");
         }
 
-        private static List<string> Chunk(string text, int size = 800, int overlap = 150)
+        private static List<string> Chunk(
+            string text,
+            int size = 800,
+            int overlap = 150)
         {
             text = text.Trim();
+
             var chunks = new List<string>();
             var start = 0;
 
@@ -332,16 +309,29 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
                 if (start + length < text.Length)
                 {
                     var window = text.AsSpan(start, length);
+
                     var breakAt = window.LastIndexOf("\n\n");
-                    if (breakAt < size / 2) breakAt = window.LastIndexOf(". ");
-                    if (breakAt < size / 2) breakAt = window.LastIndexOf(' ');
-                    if (breakAt >= size / 2) length = breakAt + 1;
+
+                    if (breakAt < size / 2)
+                        breakAt = window.LastIndexOf(". ");
+
+                    if (breakAt < size / 2)
+                        breakAt = window.LastIndexOf(' ');
+
+                    if (breakAt >= size / 2)
+                        length = breakAt + 1;
                 }
 
                 var chunk = text.Substring(start, length).Trim();
-                if (chunk.Length > 0) chunks.Add(chunk);
 
-                if (start + length >= text.Length) break;
+                if (chunk.Length > 0)
+                {
+                    chunks.Add(chunk);
+                }
+
+                if (start + length >= text.Length)
+                    break;
+
                 start += Math.Max(length - overlap, 1);
             }
 
