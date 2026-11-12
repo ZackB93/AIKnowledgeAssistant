@@ -624,25 +624,6 @@ The other part of the batch will not have been processed, a retry area within th
 
 ---
 
-## 08 · To Do
-
-### 1. Separate Vector Database (PostgreSQL + pgvector)
-
-Introduce a dedicated PostgreSQL database using the pgvector extension to store and query document embeddings independently of the existing SQL Server database.
-
-This will separate vector search from the application's relational data, providing a more specialised foundation for similarity search and future improvements to the RAG pipeline.
-
-This will initially include:
-
-- Storing document embeddings in PostgreSQL using pgvector.
-- Implementing vector similarity search using PostgreSQL's vector operators and indexing capabilities.
-- Integrating the vector database into the existing document ingestion and retrieval workflows.
-- Keeping application data, users, chat sessions and messages in SQL Server.
-
-This will allow the application to use purpose-built vector search alongside its existing relational data architecture.
-
----
-
 <div align="center">
 
 ### KnowledgeAssistant
