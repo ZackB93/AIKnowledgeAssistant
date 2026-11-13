@@ -366,6 +366,7 @@ Strict Test Driven Development has not been followed in this project.
 <div align="center">
 
 <img src="screenshots/admin_emails.png" alt="Emails Management" width="850">
+<img src="screenshots/admin_email_details.png" alt="Email Details" width="850">
 
 </div>
 
