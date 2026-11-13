@@ -819,7 +819,7 @@ h5 {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 4px 5pxt 16px 20px;
+    padding: 4px 5px 16px 20px;
     border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
