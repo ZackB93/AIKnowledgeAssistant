@@ -34,7 +34,6 @@
 | **05** | [Screenshots](#05--screenshots)         |
 | **06** | [Features](#06--features)               |
 | **07** | [Trade Offs](#07--trade-offs)           |
-| **08** | [To Do](#08--to-do)                     |
 
 ---
 
@@ -54,7 +53,7 @@ The main goal is to demonstrate practical **.NET + AI development** rather than 
 | -------------- | -------------------------------- |
 | Application    | ASP.NET Core / Blazor            |
 | AI             | OpenAI + Microsoft.Extensions.AI |
-| RAG            | Embeddings + Similarity search   |
+| RAG            | OpenAI embeddings + SQL Server native vector search |
 | Database       | SQL Server + EF Core             |
 | Messaging      | RabbitMQ                         |
 | Authentication | JWT + Role-based authorisation   |
@@ -130,6 +129,8 @@ There is no sensitive or personal information within the database.
 * **Chat models**
 * **Embedding models**
 * **Vector embeddings**
+* **SQL Server 2025 native `VECTOR(1536)` data type**
+* **SQL Server `VECTOR_DISTANCE` cosine similarity search**
 * **Retrieval-Augmented Generation**
 * **LLM Function / Tool Calling**
 
@@ -431,9 +432,13 @@ Tools should expose narrow, purpose-specific operations rather than general data
 
 ### Retrieval-Augmented Generation
 
-Documents are split into smaller chunks and embeddings are generated for those chunks.
+Documents are split into smaller chunks and embeddings are generated for those chunks using OpenAI's embedding model.
 
-When a user asks a question, the question is converted into an embedding and compared against the stored document embeddings.
+The embeddings are stored in SQL Server using its native `VECTOR(1536)` data type. This allows document content, metadata and vector data to remain together in the application's existing database, without introducing a separate vector database.
+
+When a user asks a question, the question is converted into an embedding using the same embedding model. SQL Server then compares this query vector against the stored document vectors using `VECTOR_DISTANCE` with cosine distance.
+
+The search is performed in the database rather than loading all embeddings into the application for comparison. Results are ordered by distance, with the closest matching chunks returned first. The query is also restricted to documents belonging to the authenticated user and can optionally be limited to selected document IDs.
 
 Relevant chunks are then supplied to the AI model as context.
 
@@ -442,17 +447,17 @@ Document
     ↓
 Chunking
     ↓
-Embedding Generation
+OpenAI Embedding Generation
     ↓
-SQL Server
+SQL Server VECTOR(1536)
     ↓
 User Question
     ↓
-Question Embedding
+Query Embedding
     ↓
-Similarity Search
+SQL Server VECTOR_DISTANCE (Cosine)
     ↓
-Relevant Chunks
+Top Matching Chunks
     ↓
 AI Context
     ↓
@@ -460,6 +465,15 @@ AI Response
 ```
 
 This allows the application to answer questions using its own documents rather than relying solely on the model's existing knowledge.
+
+**Vector search implementation**
+
+- Embeddings are stored as native SQL Server `VECTOR(1536)` values.
+- Query embeddings are generated using the same embedding model as the document chunks.
+- EF Core is used to query SQL Server and execute `VECTOR_DISTANCE` within the database.
+- Cosine distance is sorted in ascending order, so the closest matches are returned first.
+- Search results are scoped to the user's own documents, with optional filtering by selected document IDs.
+- The current implementation uses exact vector distance search and returns the five closest matching chunks.
 
 ### Document Management
 
@@ -552,22 +566,25 @@ The focus is on meaningful tests rather than attempting to achieve 100% code cov
 
 ## 07 · Trade Offs
 
-### SQL Server for Application Data and Embeddings
+### SQL Server for Application Data and Vector Search
 
-Document data and embeddings are currently stored alongside the application's other data in SQL Server.
+Document data, metadata and embeddings are stored together in SQL Server. The project uses SQL Server's native `VECTOR(1536)` data type and `VECTOR_DISTANCE` function to perform cosine-distance searches directly in the database.
 
-This avoids introducing a separate vector database while the project remains relatively small.
+This avoids introducing a separate vector database and keeps the RAG retrieval workflow within the existing SQL Server and EF Core infrastructure.
 
 **Benefits**
 
 * One database to maintain
-* Simple local development
+* Simple local development and deployment
 * Lower infrastructure requirements
 * Document metadata and embeddings remain together
+* Vector comparisons are executed in SQL Server rather than in application memory
 
-**Trade-off**
+**Trade-offs**
 
-A dedicated vector solution will provide better indexing and retrieval performance at a much larger scale.
+* The current implementation performs exact vector distance searches and returns the closest five chunks.
+* For larger datasets, vector indexing and approximate nearest-neighbour search could be evaluated to improve retrieval performance.
+* Search quality still depends on the embedding model, chunking strategy and relevance of the retrieved content.
 
 ---
 
@@ -621,25 +638,6 @@ This helps with scalability and as the user table grows.
 
 The disadvantage is that on a unlikely occassion that if something happens to the system (an issue, blip in network connectivity) only part of the batch will be processed.
 The other part of the batch will not have been processed, a retry area within the admin section could be added in case.
-
----
-
-## 08 · To Do
-
-### 1. Separate Vector Database (PostgreSQL + pgvector)
-
-Introduce a dedicated PostgreSQL database using the pgvector extension to store and query document embeddings independently of the existing SQL Server database.
-
-This will separate vector search from the application's relational data, providing a more specialised foundation for similarity search and future improvements to the RAG pipeline.
-
-This will initially include:
-
-- Storing document embeddings in PostgreSQL using pgvector.
-- Implementing vector similarity search using PostgreSQL's vector operators and indexing capabilities.
-- Integrating the vector database into the existing document ingestion and retrieval workflows.
-- Keeping application data, users, chat sessions and messages in SQL Server.
-
-This will allow the application to use purpose-built vector search alongside its existing relational data architecture.
 
 ---
 
