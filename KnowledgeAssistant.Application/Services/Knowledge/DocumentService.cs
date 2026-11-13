@@ -25,9 +25,9 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
         private const int EmbeddingBatchSize = 64;
 
         private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
-            {
-                ".pdf", ".docx", ".txt", ".md"
-            };
+        {
+            ".pdf", ".docx", ".txt", ".md"
+        };
 
         private readonly IDocumentRepository _documentRepository;
         private readonly IAISecurityService _aiSecurityService;
@@ -48,6 +48,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
 
         public async Task<DocumentResponse> UploadAsync(IFormFile file, int userId, CancellationToken ct, int? chatSessionId = null)
         {
+            // Validate the uploaded file and user permissions.
             await ValidateUploadAsync(file, chatSessionId, userId, ct);
 
             // Extract text from the uploaded document.
@@ -86,8 +87,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
 
             if (embeddings.Count != chunks.Count)
             {
-                throw new InvalidOperationException(
-                    "Embedding generation returned an unexpected number of results.");
+                throw new InvalidOperationException("Embedding generation returned an unexpected number of results.");
             }
 
             // Create document and store native SQL vectors.
@@ -101,8 +101,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
                 Status = DocumentStatus.Ready,
                 EmbeddingModel = _embeddings.GetService<EmbeddingGeneratorMetadata>()?.DefaultModelId,
                 CreatedAt = DateTime.UtcNow,
-                Chunks = chunks.Select((content, index) =>
-                    new DocChunkEntity
+                Chunks = chunks.Select((content, index) => new DocChunkEntity
                     {
                         ChunkIndex = index,
                         Content = content,
@@ -181,36 +180,28 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
         {
             if (file is null || file.Length == 0)
             {
-                throw new InvalidOperationException(
-                    "No file was provided.");
+                throw new InvalidOperationException("No file was provided.");
             }
 
             if (file.Length > MaxFileBytes)
             {
-                throw new InvalidOperationException(
-                    "File is too large (max 10 MB).");
+                throw new InvalidOperationException("File is too large (max 10 MB).");
             }
 
             var extension = Path.GetExtension(file.FileName);
 
             if (!AllowedExtensions.Contains(extension))
             {
-                throw new InvalidOperationException(
-                    $"Unsupported file type: {extension}");
+                throw new InvalidOperationException($"Unsupported file type: {extension}");
             }
 
             if (chatSessionId is not null)
             {
-                var ownsSession =
-                    await _documentRepository.DoesUserOwnChatSessionAsync(
-                        chatSessionId.Value,
-                        userId,
-                        ct);
+                var ownsSession = await _documentRepository.DoesUserOwnChatSessionAsync(chatSessionId.Value, userId, ct);
 
                 if (!ownsSession)
                 {
-                    throw new InvalidOperationException(
-                        "Chat session was not found.");
+                    throw new InvalidOperationException("Chat session was not found.");
                 }
             }
         }
@@ -254,8 +245,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
                     break;
 
                 case ".docx":
-                    using (var doc =
-                        OpenXml.Packaging.WordprocessingDocument.Open(memory, false))
+                    using (var doc = OpenXml.Packaging.WordprocessingDocument.Open(memory, false))
                     {
                         var body = doc.MainDocumentPart?.Document?.Body;
 
@@ -267,8 +257,7 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
 
                         var paragraphs = new List<string>();
 
-                        foreach (var paragraph in
-                            body.Descendants<OpenXml.Wordprocessing.Paragraph>())
+                        foreach (var paragraph in body.Descendants<OpenXml.Wordprocessing.Paragraph>())
                         {
                             ct.ThrowIfCancellationRequested();
 
@@ -285,17 +274,13 @@ namespace KnowledgeAssistant.Application.Services.Knowledge
                     break;
 
                 default:
-                    throw new InvalidOperationException(
-                        $"Unsupported file type: {extension}");
+                    throw new InvalidOperationException($"Unsupported file type: {extension}");
             }
 
             return text.Replace("\0", "");
         }
 
-        private static List<string> Chunk(
-            string text,
-            int size = 800,
-            int overlap = 150)
+        private static List<string> Chunk(string text, int size = 800, int overlap = 150)
         {
             text = text.Trim();
 
