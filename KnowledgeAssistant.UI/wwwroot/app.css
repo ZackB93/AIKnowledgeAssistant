@@ -778,7 +778,70 @@ h5 {
 }
 
 /* =========================================================
-   12. RESPONSIVE
+   12. EMAILS
+   ========================================================= */
+
+.email-details {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    min-height: 320px;
+    border: none !important;
+}
+
+.email-details__main {
+    padding: 0px;
+    border: none !important;
+}
+
+.email-details__body {
+    min-height: 250px;
+    line-height: 1.7;
+    background: rgba(30, 55, 95, 0.95) !important;
+    border: none !important;
+}
+
+.email-details__source,
+.email-details__plain {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: inherit;
+    color: white;
+
+}
+
+.email-details__source {
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+.email-details__side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 4px 5pxt 16px 20px;
+    border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+@media (max-width: 700px) {
+    .email-details {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .email-details__main {
+        padding-right: 0;
+    }
+
+    .email-details__side {
+        border-left: none;
+        border-top: 1px solid var(--mud-palette-lines-default);
+        padding: 16px 0 0 0;
+    }
+}
+
+
+/* =========================================================
+   13. RESPONSIVE
    ========================================================= */
 
 .mobile-menu-button {

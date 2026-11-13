@@ -1,6 +1,7 @@
 ﻿@using KnowledgeAssistant.Application.DTOs.API
 @using KnowledgeAssistant.Application.DTOs.Emails
 @using KnowledgeAssistant.Application.Services
+@using KnowledgeAssistant.Domain.Enums
 
 @page "/admin/emails"
 @attribute [Authorize(Roles = "Admin")]
@@ -100,38 +101,135 @@
     </MudPaper>
 </MudContainer>
 
-<Modal @bind-Visible="@(EmailModalVisible)"
-       Title="Email Details"
+<Modal @bind-Visible="@EmailModalVisible"
+       Title="@(SelectedEmail?.Subject ?? "Email details")"
        ShowCloseButton="true">
 
     @if (SelectedEmail is not null)
     {
-        <MudTextField Value="SelectedEmail?.To" Label="To" Variant="Variant.Outlined" ReadOnly="true" Style="margin-bottom: 5px;" />
-        <MudTextField Value="SelectedEmail?.Subject" Label="Subject" Variant="Variant.Outlined" ReadOnly="true" Style="margin-bottom: 5px;" />
+        var (statusColor, statusIcon) = GetStatusStyle(SelectedEmail.Status);
 
-        @if (!string.IsNullOrEmpty(SelectedEmail?.ErrorMessage))
-        {
-            <MudTextField Value="SelectedEmail?.ErrorMessage" Label="Error Message" Variant="Variant.Outlined" ReadOnly="true" Style="margin-bottom: 5px;" />
-        }
+        <MudPaper Class="email-details glass-card">
+            <div class="email-details__main">
+                @if (SelectedEmail.IsHtml)
+                {
+                    <MudTabs Elevation="0" Rounded="true" PanelClass="pt-3" ApplyEffectsToContainer="true">
+                        <MudTabPanel Text="Message">
+                            <MudPaper Outlined="true" Elevation="0" Class="email-details__body pa-4">
+                                @((MarkupString)SelectedEmail.Body)
+                            </MudPaper>
+                        </MudTabPanel>
 
-        <!--Currently just show the body. Probably use (MarkupString)(SelectedEmail?.Body) instead for showing HTML.-->
-        <MudTextField @bind-Value="SelectedEmail?.Body" Label="Body" Variant="Variant.Outlined" ReadOnly="true" Lines="16" />
+                        <MudTabPanel Text="HTML source">
+                            <MudPaper Outlined="true" Elevation="0" Class="email-details__body pa-4">
+                                <pre class="email-details__source">@SelectedEmail.Body</pre>
+                            </MudPaper>
+                        </MudTabPanel>
+                    </MudTabs>
+                }
+                else
+                {
+                    <MudPaper Outlined="true" Elevation="0" Class="email-details__body pa-4 mt-2">
+                        <pre class="email-details__plain">@SelectedEmail.Body</pre>
+                    </MudPaper>
+                }
+
+                @if (!string.IsNullOrEmpty(SelectedEmail.ErrorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Dense="true" Class="mt-3">
+                        @SelectedEmail.ErrorMessage
+                    </MudAlert>
+                }
+            </div>
+
+            <aside class="email-details__side">
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Status</MudText>
+                    <div>
+                        <MudChip T="string" Size="Size.Small" Color="@statusColor" Icon="@statusIcon" Class="ma-0">
+                            @SelectedEmail.Status
+                        </MudChip>
+                    </div>
+                </div>
+
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">To</MudText>
+                    <MudText Typo="Typo.body2" Style="word-break: break-all;">@SelectedEmail.To</MudText>
+                </div>
+
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Subject</MudText>
+                    <MudText Typo="Typo.body2">@SelectedEmail.Subject</MudText>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(SelectedEmail.UserName))
+                {
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Requested by</MudText>
+                        <MudText Typo="Typo.body2">@SelectedEmail.UserName</MudText>
+                    </div>
+                }
+
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Created</MudText>
+                    <MudText Typo="Typo.body2">@FormatDate(SelectedEmail.CreatedAt)</MudText>
+                </div>
+
+                @if (SelectedEmail.SentAt is not null)
+                {
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Sent</MudText>
+                        <MudText Typo="Typo.body2">@FormatDate(SelectedEmail.SentAt.Value)</MudText>
+                    </div>
+                }
+
+                @if (SelectedEmail.FailedAt is not null)
+                {
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Failed</MudText>
+                        <MudText Typo="Typo.body2">@FormatDate(SelectedEmail.FailedAt.Value)</MudText>
+                    </div>
+                }
+
+                @if (SelectedEmail.RetryCount > 0)
+                {
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Retries</MudText>
+                        <MudText Typo="Typo.body2">@SelectedEmail.RetryCount</MudText>
+                    </div>
+                }
+
+                <MudButton Variant="Variant.Filled"
+                           Color="@Color.Primary"
+                           Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.ContentCopy"
+                           OnClick="CopyBodyAsync"
+                           Class="mt-auto">
+                    Copy body
+                </MudButton>
+            </aside>
+        </MudPaper>
     }
 </Modal>
 
 @code
-{
+    {
     [Inject]
     private IHttpService HttpService { get; set; } = null!;
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
 
+    [Inject]
+    private IJSRuntime JS { get; set; } = null!;
+
     private MudTable<EmailResponse>? Table;
     private EmailResponse? SelectedEmail = null;
     private bool EmailModalVisible = false;
     private string SearchTerm = string.Empty;
     private CancellationTokenSource? SearchCancellationTokenSource;
+
+    private static string FormatDate(DateTime value) => value.ToString("dd MMM yyyy, HH:mm");
 
     private async Task SearchTermChanged(string Value)
     {
@@ -154,6 +252,22 @@
         {
             // A new character was typed before the 400ms delay completed.
         }
+    }
+
+    private static (Color Color, string Icon) GetStatusStyle(EmailStatus status)
+    {
+        var name = status.ToString().ToLowerInvariant();
+
+        if (name.Contains("fail") || name.Contains("error"))
+            return (Color.Error, Icons.Material.Filled.ErrorOutline);
+
+        if (name.Contains("sent") || name.Contains("deliver"))
+            return (Color.Success, Icons.Material.Filled.Check);
+
+        if (name.Contains("pending") || name.Contains("queue") || name.Contains("retry") || name.Contains("sending"))
+            return (Color.Warning, Icons.Material.Filled.Schedule);
+
+        return (Color.Default, Icons.Material.Filled.Mail);
     }
 
     private async Task ClearSearch()
@@ -196,6 +310,14 @@
             Items = [],
             TotalItems = 0
         };
+    }
+
+    private async Task CopyBodyAsync()
+    {
+        if (!string.IsNullOrEmpty(SelectedEmail?.Body))
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", SelectedEmail.Body);
+        }
     }
 
     private async Task OnUserSaved()
